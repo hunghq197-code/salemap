@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SaleMap">
+  <rect width="512" height="512" fill="#102033"/>
+  <circle cx="256" cy="256" r="220" fill="#22c58b" opacity="0.16"/>
+  <path d="M256 100c-75 0-136 61-136 136 0 101 136 186 136 186s136-85 136-186c0-75-61-136-136-136Z" fill="#22c58b"/>
+  <circle cx="256" cy="235" r="53" fill="#ffffff"/>
+  <path d="M171 389c30-23 63-34 100-34 30 0 55 7 73 21" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round"/>
+</svg>
