@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" role="img" aria-label="SaleMap mobile dashboard">
+  <rect width="390" height="844" fill="#f5f8fb"/>
+  <rect x="0" y="0" width="390" height="72" fill="#ffffff"/>
+  <rect x="20" y="18" width="36" height="36" rx="9" fill="#102033"/>
+  <circle cx="38" cy="34" r="10" fill="#22c58b"/>
+  <text x="68" y="42" fill="#102033" font-family="Arial, sans-serif" font-size="20" font-weight="700">SaleMap</text>
+  <rect x="20" y="104" width="350" height="116" rx="12" fill="#ffffff"/>
+  <text x="40" y="143" fill="#0b6f95" font-family="Arial, sans-serif" font-size="13" font-weight="700">DASHBOARD</text>
+  <text x="40" y="176" fill="#102033" font-family="Arial, sans-serif" font-size="25" font-weight="700">Follow-up hôm nay</text>
+  <rect x="40" y="238" width="150" height="96" rx="12" fill="#ffffff"/>
+  <rect x="210" y="238" width="150" height="96" rx="12" fill="#ffffff"/>
+  <text x="60" y="286" fill="#102033" font-family="Arial, sans-serif" font-size="28" font-weight="700">24</text>
+  <text x="230" y="286" fill="#102033" font-family="Arial, sans-serif" font-size="28" font-weight="700">7</text>
+  <rect x="20" y="360" width="350" height="92" rx="12" fill="#ffffff"/>
+  <rect x="20" y="468" width="350" height="92" rx="12" fill="#ffffff"/>
+  <rect x="20" y="584" width="350" height="92" rx="12" fill="#ffffff"/>
+  <rect x="0" y="774" width="390" height="70" fill="#ffffff"/>
+  <circle cx="45" cy="809" r="18" fill="#22c58b" opacity="0.25"/>
+  <circle cx="124" cy="809" r="18" fill="#e2e8f0"/>
+  <circle cx="195" cy="809" r="18" fill="#e2e8f0"/>
+  <circle cx="266" cy="809" r="18" fill="#e2e8f0"/>
+  <circle cx="345" cy="809" r="18" fill="#e2e8f0"/>
+</svg>

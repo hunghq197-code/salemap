@@ -1,0 +1,58 @@
+export const PRICING_PLANS = [
+  {
+    key: "free_beta",
+    name: "Free",
+    price: "0đ",
+    period: "tháng",
+    description: "Dành cho người dùng bắt đầu với SaleMap.",
+    cta: "Đang sử dụng",
+    highlighted: false,
+    features: [
+      "20 lượt tìm quanh tôi/ngày",
+      "20 lượt tìm theo khu vực/ngày",
+      "10 lượt tìm dọc tuyến/ngày",
+      "100 lead lưu từ map/ngày",
+      "10 lượt export/ngày",
+      "Không giới hạn lead thủ công",
+      "Không giới hạn ghi chú/follow-up",
+    ],
+  },
+  {
+    key: "pro",
+    name: "Pro",
+    price: "99.000đ",
+    period: "tháng",
+    description: "Dành cho sale cá nhân dùng SaleMap hằng ngày.",
+    cta: "Tôi quan tâm gói Pro",
+    highlighted: true,
+    features: [
+      "100 lượt tìm quanh tôi/ngày",
+      "100 lượt tìm theo khu vực/ngày",
+      "50 lượt tìm dọc tuyến/ngày",
+      "Không giới hạn lead cá nhân hợp lý",
+      "50 lượt export/ngày",
+      "Template sale nâng cao",
+      "Hỗ trợ ưu tiên",
+    ],
+  },
+  {
+    key: "pro_plus",
+    name: "Pro Plus",
+    price: "249.000đ",
+    period: "tháng",
+    description: "Dành cho người dùng nhiều hoặc sale B2B cần tìm khách thường xuyên.",
+    cta: "Tôi quan tâm gói Pro Plus",
+    highlighted: false,
+    features: [
+      "300 lượt tìm quanh tôi/ngày",
+      "300 lượt tìm theo khu vực/ngày",
+      "150 lượt tìm dọc tuyến/ngày",
+      "Export nâng cao",
+      "Template theo ngành",
+      "Ưu tiên góp ý tính năng",
+      "Hỗ trợ onboarding riêng",
+    ],
+  },
+] as const;
+
+export type PricingPlan = (typeof PRICING_PLANS)[number];

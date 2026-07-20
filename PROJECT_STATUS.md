@@ -1,0 +1,494 @@
+# SaleMap Project Status
+
+Last updated: 2026-07-18
+
+## Current State
+
+- Landing page SaleMap is built with Next.js App Router, TypeScript, and Tailwind CSS.
+- Beta signup form is connected to Supabase through `POST /api/beta-signup`.
+- PostHog and Microsoft Clarity tracking are integrated for the beta landing page.
+- PostHog only sends manually selected non-PII events. Name, phone/Zalo, email, main area, and free-text style fields are blocked from analytics payloads.
+- Clarity script only renders when `NEXT_PUBLIC_CLARITY_PROJECT_ID` is set, and PII inputs are masked.
+- Production readiness is prepared for Vercel deployment.
+- SEO metadata, robots.txt, sitemap.xml, privacy policy, terms of use, and a custom 404 page are in place.
+- Footer links point to real routes/anchors.
+- Hero desktop layout was tightened after visual QA so the primary CTA appears clearly in the first viewport.
+- Privacy policy and terms pages were changed from floating card layout to cleaner document-style sections.
+- PostHog initialization is now lazy and guarded so analytics cannot blank the page during initial render.
+- Product MVP foundation is in place: Supabase Auth, protected app shell, onboarding, dashboard, and app routes are in place.
+- Lead Core MVP has been implemented: manual lead create/read/update, archive/soft delete, filters, lead detail, interaction notes, follow-up reminders, dashboard data, and copyable templates.
+- Lead Core MVP was aligned to the latest spec: canonical lead statuses/priorities/interaction types, paginated lead data, dashboard `newLeadsThisWeek`, reminder empty states, lead detail quick actions, loading/error states, and five copyable templates.
+- Map Discovery MVP is implemented: `/app/discover` has near-me and area tabs, server-side Google Maps provider routes, daily quotas, duplicate-safe save-to-lead, dashboard CTA, app shell navigation, and map-source badges/actions in lead list/detail.
+- Route Search MVP is implemented: `/app/discover` has a third `Dọc tuyến` tab, `POST /api/discovery/route`, server-side Directions/Nearby provider logic, route quota, `routes`/`route_stops` schema, route stop save-to-lead support, dashboard CTA, route analytics events, and route-source badges in lead list/detail.
+- Beta Testing Ops MVP is implemented: beta guide, in-app feedback page, floating feedback button, dashboard beta banner/checklist, sample data button in settings, feedback/checklist Supabase helpers, and checklist auto-completion hooks.
+- New beta feedback/checklist schema is in `supabase/beta-testing-schema.sql`; run it in Supabase before testing feedback persistence and saved checklist progress.
+- Beta app registration now uses `POST /api/auth/beta-register` with the Supabase service role on the server to create auto-confirmed beta users, then the client logs in immediately. This avoids blocked email confirmation during local/beta testing.
+- Export + Template Library MVP is implemented: `/app/export`, CSV export API, export quota action, database-backed template library, template search/filter/detail, copy, favorites, export links in app shell/leads/settings, and template/export analytics events.
+- New export/template schema is in `supabase/export-template-schema.sql`; seed templates with `supabase/seed-templates.sql` before testing the database template library and export job history.
+- Pricing / Quota UI + Upgrade Interest MVP is implemented: `/app/billing`, three beta pricing cards, upgrade interest modal/API, dashboard quota card, settings/sidebar billing link, quota warnings with billing CTA, and non-PII billing/quota analytics events.
+- New billing schema is in `supabase/billing-upgrade-interest-schema.sql`; run it before testing upgrade interest persistence.
+- Admin Ops Dashboard MVP is implemented at `/admin`, `/admin/users`, `/admin/beta-signups`, `/admin/feedback`, `/admin/upgrade-interests`, and `/admin/usage`.
+- Admin access is checked server-side with `user_profiles.is_admin = true`; admin update APIs also check admin before changing status or admin notes.
+- New admin schema is in `supabase/admin-ops-schema.sql`; run it in Supabase, then set your founder/test user with `is_admin = true`.
+- Notification + Reminder Delivery MVP is implemented: `/app/notifications`, unread bell in app shell, notification preferences in settings, reminder delivery badges, protected cron endpoints, email provider abstraction, reminder due email, daily digest email, and admin notification KPIs.
+- New notification schema is in `supabase/notifications-schema.sql`; run it before testing notification center, settings persistence, and cron delivery.
+- Retention Measurement + Beta Round 2 Ops MVP is implemented: daily activity tracking, user health scores, `/admin/retention`, `/admin/beta-cohorts`, `/admin/surveys`, beta progress card, in-app Beta Round 2 survey, and protected retention cron.
+- New retention schema is in `supabase/retention-beta-round-2-schema.sql`; run it before testing activity snapshots, health score, cohorts, and surveys.
+- Manual Payment + Subscription MVP is implemented: `/app/billing` shows current subscription, plan-based quotas, manual Pro/Pro Plus upgrade requests, bank transfer instructions, payment request history, and `/app/billing/payment/[paymentRequestId]`.
+- Admin payment review is implemented at `/admin/payment-requests` with filters, approve/reject actions, server-side admin checks, subscription activation, and notifications when available.
+- New manual payment schema is in `supabase/manual-payment-subscription-schema.sql`; run it in Supabase before testing real payment requests and subscription persistence.
+- Manual payment bank transfer config is read from `PAYMENT_BANK_NAME`, `PAYMENT_BANK_ACCOUNT_NUMBER`, and `PAYMENT_BANK_ACCOUNT_NAME`.
+- Revenue Ops + Renewal / Churn MVP is implemented: renewal payment requests, cancellation reasons, subscription lifecycle cron, revenue snapshot cron, `/admin/revenue`, `/admin/subscriptions`, and quota fallback to Free when paid subscriptions expire.
+- New revenue lifecycle schema is in `supabase/revenue-renewal-churn-schema.sql`; run it after manual payment schema before testing renewals, churn, revenue snapshots, and subscription events.
+- payOS Payment Gateway MVP is implemented: billing can create payOS checkout links for Pro/Pro Plus, payOS transactions are stored separately, return/cancel pages are in place, webhook signature verification is enforced, paid webhook/status sync activates or renews subscriptions idempotently, and manual payment remains available as fallback.
+- New payOS schema is in `supabase/payos-payment-gateway-schema.sql`; run it in Supabase before testing automatic payment persistence.
+- payOS server env placeholders are in `.env.example` and `.env.local`: `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_PARTNER_CODE`, `PAYMENT_PROVIDER`.
+- payOS setup instructions are in `PAYOS_SETUP.md`.
+- AI Sales Assistant MVP is implemented: lead detail AI panel, `/app/ai-assistant`, template personalization, AI save/copy/note actions, server-side provider abstraction, quota action `ai_request`, feature flag `ai_assistant`, safe analytics events, and `/admin/ai-usage`.
+- New AI schema is in `supabase/ai-sales-assistant-schema.sql`; run it in Supabase before testing real AI request persistence.
+- AI server env placeholders are in `.env.example` and `.env.local`: `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_DAILY_COST_LIMIT_VND`. `AI_API_KEY` is server-only.
+- Mobile PWA Polish + Offline-lite MVP is implemented: manifest, PNG/maskable app icons, standalone startup config, service worker app-shell/recent-page cache, offline fallback page, online/offline banner, install prompt/instructions, `/app/install`, `/app/offline`, safe-area mobile navigation polish, and local draft protection for lead, note, and follow-up forms.
+- Offline-lite queue is implemented for lead notes and follow-up reminders: offline submits are stored per user in localStorage, `/app/offline` shows pending actions, and the queue retries through `POST /api/leads/notes` and `POST /api/reminders` when online. Logout clears user cache, drafts, and queue.
+- PWA/offline analytics events are added for install prompt, install guide, install outcome, offline/online state, service worker readiness, draft saved/restored, offline action queued/synced/failed, and offline cache usage. Form contents are not sent to analytics.
+- Map discovery now falls back to local demo results when `GOOGLE_MAPS_API_KEY` is not configured, so beta testing can still cover area search, near-me search, route search UI, lead saving, and quota flows before a real Google Maps key is added. `/app/discover` now defaults to the more reliable area-search tab instead of geolocation-first near-me.
+- Import Lead + Data Migration MVP is implemented: `/app/import`, `/app/import/[jobId]`, CSV/XLSX upload, preview, column mapping, validation, duplicate detection, duplicate strategy execution, initial notes, follow-up reminders, tags, error CSV download, import history, lead/settings CTA, and `/admin/imports`.
+- New import schema is in `supabase/import-leads-schema.sql`; run it in Supabase before testing import persistence.
+- Import analytics events are added for page view, file selected/uploaded, mapping saved, validation, execute, failure, and error CSV download. Raw rows, customer names, phone numbers, emails, addresses, and file names are not sent to analytics.
+- Lead Pipeline + Smart Segments + Saved Views MVP is implemented: `/app/pipeline`, `/app/leads/views`, `/app/leads/views/[viewId]`, advanced lead filters, pinned/system/custom saved views, smart counts, dashboard quick views, settings links, and `/admin/lead-views`.
+- New pipeline/saved views schema is in `supabase/lead-pipeline-saved-views-schema.sql`; run it in Supabase before testing real saved view persistence, pipeline event history, and usage analytics.
+- Pipeline/saved view analytics events are added for pipeline views/status changes, saved view create/update/delete/pin/open, smart view open, and advanced filter usage. Lead/customer PII is not sent to analytics.
+- Personal Sales Analytics + Goal Tracking MVP is implemented: `/app/analytics`, `/app/analytics/goals`, `/app/analytics/goals/new`, `/app/analytics/sources`, personal KPI cards, pipeline funnel, source/tag/category breakdown, daily trend, goal templates, pinned goals on dashboard, settings links, and `/admin/sales-analytics`.
+- New personal analytics schema is in `supabase/personal-sales-analytics-goals-schema.sql`; run it in Supabase before testing goal persistence, sales activity rebuild, goal events, and analytics snapshots.
+- Sales analytics APIs are in place for summary, funnel, trends, source/tag/category breakdown, rebuild, goals, goal templates, and protected cron snapshot. All user APIs filter server-side by current user; admin view is aggregate only and avoids lead PII.
+- Landing page now has a visible `/login` entry in the desktop header, mobile menu, footer, and a small access strip under the header.
+- UX/UI + bilingual polish is implemented for the public landing page, login/register screens, beta signup form, footer/header, and app shell navigation. Users can switch between Vietnamese and English with a persistent VI/EN control stored in localStorage.
+- Local development disables/unregisters SaleMap service workers on `localhost` and clears SaleMap PWA caches to avoid stale CSS/JS hydration mismatches while editing.
+- Optional beta module schema handling is more resilient: missing Supabase tables/schema cache errors for saved views, goals, sales analytics, usage quotas, templates, beta checklist, feedback, surveys, and admin lead views fall back gracefully instead of crashing core pages.
+- Full Supabase SQL setup order is documented in `SUPABASE_SQL_SETUP.md`.
+- `.env.local` exists locally and is ignored by git. Do not commit or share the service role key.
+- `.env.local` now includes empty Google Maps placeholders; fill `GOOGLE_MAPS_API_KEY` before testing real map search.
+- Supabase table `beta_signups` has been created successfully from `supabase/schema.sql`.
+- Form submit has been tested successfully:
+  - First submit inserts into Supabase.
+  - Re-submit with same phone/email returns `409 DUPLICATE_SIGNUP`.
+- Production build passed after Supabase integration.
+
+## Important Files
+
+- `components/BetaFormSection.tsx`
+- `app/api/beta-signup/route.ts`
+- `lib/supabase/server.ts`
+- `lib/validators/beta-signup.ts`
+- `instrumentation-client.ts`
+- `lib/analytics/client.ts`
+- `lib/analytics/events.ts`
+- `components/analytics/ClarityScript.tsx`
+- `app/chinh-sach-bao-mat/page.tsx`
+- `app/dieu-khoan-su-dung/page.tsx`
+- `app/not-found.tsx`
+- `app/robots.ts`
+- `app/sitemap.ts`
+- `app/manifest.ts`
+- `DEPLOYMENT.md`
+- `supabase/schema.sql`
+- `supabase/product-schema.sql`
+- `middleware.ts`
+- `lib/supabase/client.ts`
+- `lib/supabase/middleware.ts`
+- `app/login/page.tsx`
+- `app/register/page.tsx`
+- `app/onboarding/page.tsx`
+- `app/app/layout.tsx`
+- `app/app/dashboard/page.tsx`
+- `app/app/discover/page.tsx`
+- `app/app/find/page.tsx`
+- `app/app/leads/page.tsx`
+- `app/app/leads/[leadId]/page.tsx`
+- `app/app/leads/actions.ts`
+- `app/app/reminders/page.tsx`
+- `app/app/reminders/actions.ts`
+- `app/app/templates/page.tsx`
+- `app/app/billing/page.tsx`
+- `app/app/export/page.tsx`
+- `app/app/settings/page.tsx`
+- `app/app/settings/actions.ts`
+- `app/app/feedback/page.tsx`
+- `app/app/huong-dan-beta/page.tsx`
+- `app/api/beta-feedback/route.ts`
+- `app/api/beta-checklist/complete/route.ts`
+- `app/api/auth/beta-register/route.ts`
+- `app/api/export/leads/route.ts`
+- `app/api/upgrade-interest/route.ts`
+- `app/api/templates/favorite/route.ts`
+- `app/admin/layout.tsx`
+- `app/admin/page.tsx`
+- `app/admin/users/page.tsx`
+- `app/admin/beta-signups/page.tsx`
+- `app/admin/feedback/page.tsx`
+- `app/admin/upgrade-interests/page.tsx`
+- `app/admin/usage/page.tsx`
+- `app/admin/payment-requests/page.tsx`
+- `app/admin/payment-requests/actions.ts`
+- `app/admin/revenue/page.tsx`
+- `app/admin/revenue/actions.ts`
+- `app/admin/subscriptions/page.tsx`
+- `app/admin/subscriptions/actions.ts`
+- `app/admin/payment-gateway/page.tsx`
+- `app/admin/payment-gateway/actions.ts`
+- `app/admin/ai-usage/page.tsx`
+- `app/api/admin/beta-signups/[id]/route.ts`
+- `app/api/admin/feedback/[id]/route.ts`
+- `app/api/admin/upgrade-interests/[id]/route.ts`
+- `app/api/admin/payment-gateway/[id]/sync/route.ts`
+- `app/api/admin/payment-requests/[id]/approve/route.ts`
+- `app/api/admin/payment-requests/[id]/reject/route.ts`
+- `app/app/notifications/page.tsx`
+- `app/app/notifications/actions.ts`
+- `app/app/billing/payment/[paymentRequestId]/page.tsx`
+- `app/api/payment-requests/route.ts`
+- `app/api/payment-requests/[id]/route.ts`
+- `app/api/payments/payos/create-link/route.ts`
+- `app/api/payments/payos/status/route.ts`
+- `app/api/webhooks/payos/route.ts`
+- `app/api/ai/generate/route.ts`
+- `app/api/ai/save-output/route.ts`
+- `app/api/ai/save-to-note/route.ts`
+- `app/app/billing/payment/return/page.tsx`
+- `app/app/billing/payment/cancel/page.tsx`
+- `app/app/install/page.tsx`
+- `app/app/offline/page.tsx`
+- `app/app/import/page.tsx`
+- `app/app/import/[jobId]/page.tsx`
+- `app/app/pipeline/page.tsx`
+- `app/app/analytics/page.tsx`
+- `app/app/analytics/actions.ts`
+- `app/app/analytics/goals/page.tsx`
+- `app/app/analytics/goals/actions.ts`
+- `app/app/analytics/goals/new/page.tsx`
+- `app/app/analytics/sources/page.tsx`
+- `app/app/leads/views/page.tsx`
+- `app/app/leads/views/[viewId]/page.tsx`
+- `app/admin/lead-views/page.tsx`
+- `app/admin/sales-analytics/page.tsx`
+- `app/api/cancellation-requests/route.ts`
+- `app/api/analytics/sales/summary/route.ts`
+- `app/api/analytics/sales/funnel/route.ts`
+- `app/api/analytics/sales/trends/route.ts`
+- `app/api/analytics/sales/source-breakdown/route.ts`
+- `app/api/analytics/sales/tag-breakdown/route.ts`
+- `app/api/analytics/sales/category-breakdown/route.ts`
+- `app/api/analytics/sales/rebuild/route.ts`
+- `app/api/sales-goals/route.ts`
+- `app/api/sales-goals/[goalId]/route.ts`
+- `app/api/sales-goals/[goalId]/pin/route.ts`
+- `app/api/sales-goals/templates/route.ts`
+- `app/api/import/leads/upload/route.ts`
+- `app/api/import/leads/[jobId]/mapping/route.ts`
+- `app/api/import/leads/[jobId]/validate/route.ts`
+- `app/api/import/leads/[jobId]/execute/route.ts`
+- `app/api/import/leads/[jobId]/rows/route.ts`
+- `app/api/import/leads/[jobId]/error-csv/route.ts`
+- `app/api/leads/filter/route.ts`
+- `app/api/leads/pipeline/route.ts`
+- `app/api/leads/pipeline/update-status/route.ts`
+- `app/api/leads/smart-counts/route.ts`
+- `app/api/leads/views/route.ts`
+- `app/api/leads/views/[viewId]/route.ts`
+- `app/api/leads/views/[viewId]/pin/route.ts`
+- `app/api/leads/views/[viewId]/usage/route.ts`
+- `app/api/leads/notes/route.ts`
+- `app/api/reminders/route.ts`
+- `app/api/cron/reminders-due/route.ts`
+- `app/api/cron/daily-digest/route.ts`
+- `app/api/cron/calculate-retention/route.ts`
+- `app/api/cron/subscription-lifecycle/route.ts`
+- `app/api/cron/revenue-snapshot/route.ts`
+- `app/api/cron/sales-analytics-snapshot/route.ts`
+- `app/api/surveys/beta-round-2/route.ts`
+- `app/admin/retention/page.tsx`
+- `app/admin/beta-cohorts/page.tsx`
+- `app/admin/beta-cohorts/[cohortId]/page.tsx`
+- `app/admin/beta-cohorts/actions.ts`
+- `app/admin/surveys/page.tsx`
+- `components/beta/*`
+- `components/admin/*`
+- `components/notifications/*`
+- `components/surveys/BetaSurveyModal.tsx`
+- `components/export/ExportLeadsForm.tsx`
+- `components/billing/PaymentInstructionPanel.tsx`
+- `components/billing/RenewSubscriptionButton.tsx`
+- `components/billing/CancellationReasonModal.tsx`
+- `components/billing/*`
+- `components/ai/AIAssistantPanel.tsx`
+- `components/import/*`
+- `components/pipeline/PipelineBoard.tsx`
+- `components/saved-views/*`
+- `components/pwa/InstallPrompt.tsx`
+- `components/pwa/NetworkStatusBanner.tsx`
+- `components/pwa/OfflineUserProvider.tsx`
+- `components/pwa/ServiceWorkerRegister.tsx`
+- `components/pwa/useLocalFormDraft.ts`
+- `hooks/useNetworkStatus.ts`
+- `components/quota/*`
+- `components/leads/*`
+- `components/discovery/*`
+- `components/reminders/*`
+- `components/templates/TemplateCard.tsx`
+- `components/templates/TemplateLibrary.tsx`
+- `components/ui/Toast.tsx`
+- `lib/constants/lead-status.ts`
+- `lib/constants/lead-priority.ts`
+- `lib/constants/interaction-types.ts`
+- `lib/data/*`
+- `lib/constants/quota.ts`
+- `lib/constants/beta-checklist.ts`
+- `lib/constants/export.ts`
+- `lib/constants/plans.ts`
+- `lib/constants/subscription-plans.ts`
+- `lib/constants/subscription-lifecycle.ts`
+- `lib/providers/maps/*`
+- `lib/data/beta-feedback.ts`
+- `lib/data/beta-checklist.ts`
+- `lib/data/sample-data.ts`
+- `lib/data/export.ts`
+- `lib/data/templates.ts`
+- `lib/admin/auth.ts`
+- `lib/admin/data/*`
+- `lib/data/notifications.ts`
+- `lib/data/notification-settings.ts`
+- `lib/data/reminder-delivery.ts`
+- `lib/data/activity-tracking.ts`
+- `lib/data/user-health.ts`
+- `lib/data/surveys.ts`
+- `lib/admin/data/beta-cohorts.ts`
+- `lib/admin/data/payment-requests.ts`
+- `lib/admin/data/payment-gateway.ts`
+- `lib/admin/data/revenue.ts`
+- `lib/admin/data/subscriptions.ts`
+- `lib/data/subscriptions.ts`
+- `lib/data/payment-requests.ts`
+- `lib/data/payment-gateway-transactions.ts`
+- `lib/data/ai.ts`
+- `lib/data/subscription-events.ts`
+- `lib/data/cancellation-requests.ts`
+- `lib/data/subscription-lifecycle.ts`
+- `lib/constants/surveys.ts`
+- `lib/email/templates/reminder-due.ts`
+- `lib/email/templates/daily-digest.ts`
+- `lib/email/templates/subscription-renewal-reminder.ts`
+- `lib/email/templates/subscription-expired.ts`
+- `lib/providers/email/*`
+- `lib/providers/payments/*`
+- `lib/providers/ai/*`
+- `lib/ai/prompt-builder.ts`
+- `lib/payments/order-code.ts`
+- `lib/import/*`
+- `lib/leads/lead-filters.ts`
+- `lib/constants/lead-pipeline.ts`
+- `lib/constants/sales-analytics.ts`
+- `lib/analytics/sales-analytics.ts`
+- `lib/data/sales-activity.ts`
+- `lib/data/sales-goals.ts`
+- `lib/data/lead-filtered-list.ts`
+- `lib/data/lead-pipeline.ts`
+- `lib/data/lead-saved-views.ts`
+- `lib/admin/data/lead-views.ts`
+- `lib/admin/data/sales-analytics.ts`
+- `lib/offline/*`
+- `lib/validators/lead.ts`
+- `lib/validators/lead-note.ts`
+- `lib/validators/discovery.ts`
+- `lib/validators/reminder.ts`
+- `lib/validators/beta-feedback.ts`
+- `lib/validators/export.ts`
+- `lib/validators/upgrade-interest.ts`
+- `lib/validators/payment-request.ts`
+- `lib/validators/cancellation-request.ts`
+- `lib/validators/ai.ts`
+- `lib/validators/lead-views.ts`
+- `lib/validators/sales-analytics.ts`
+- `supabase/billing-upgrade-interest-schema.sql`
+- `supabase/admin-ops-schema.sql`
+- `supabase/notifications-schema.sql`
+- `supabase/retention-beta-round-2-schema.sql`
+- `supabase/manual-payment-subscription-schema.sql`
+- `supabase/revenue-renewal-churn-schema.sql`
+- `supabase/payos-payment-gateway-schema.sql`
+- `supabase/ai-sales-assistant-schema.sql`
+- `supabase/import-leads-schema.sql`
+- `supabase/lead-pipeline-saved-views-schema.sql`
+- `supabase/personal-sales-analytics-goals-schema.sql`
+- `supabase/map-discovery-schema.sql`
+- `supabase/route-search-schema.sql`
+- `supabase/beta-testing-schema.sql`
+- `supabase/export-template-schema.sql`
+- `supabase/seed-templates.sql`
+- `public/sw.js`
+- `public/offline.html`
+- `public/icons/icon-192.png`
+- `public/icons/icon-512.png`
+- `public/icons/maskable-icon-192.png`
+- `public/icons/maskable-icon-512.png`
+- `public/icons/salemap-screenshot-narrow.svg`
+- `.env.example`
+- `.env.local` local only, not committed
+
+## Verified
+
+- 2026-07-18 schema-readiness hardening typecheck: pass.
+- 2026-07-18 full `npm run build`: pass. Build has the known Supabase Edge middleware warning, but no TypeScript/build failure.
+- 2026-07-18 local smoke test on `http://localhost:3013`: `/`, `/login`, `/register`, `/manifest.webmanifest`, and CSS return 200 after dev compile; unauthenticated `/app/dashboard` redirects to `/login`; unauthenticated `POST /api/discovery/near-me` and `POST /api/analytics/sales/rebuild` return 401.
+- `npm.cmd run typecheck`: pass
+- `npm.cmd run lint`: pass
+- `npm.cmd run build`: pass
+- Supabase insert: pass
+- Duplicate check: pass
+- Analytics integration build check: pass
+- Production readiness build check: pass
+- Hero desktop/mobile visual QA: pass, no horizontal overflow at 375px.
+- Legal pages return full HTML locally: `/chinh-sach-bao-mat` and `/dieu-khoan-su-dung` both 200 with expected H1 content.
+- Product MVP build check: pass.
+- Lead Core MVP build check: pass.
+- Lead Core MVP spec alignment build check: pass.
+- Map Discovery MVP build check: pass.
+- Map Discovery local smoke test: `/` and `/login` return 200; unauthenticated `/app/discover` redirects to `/login`; unauthenticated `POST /api/discovery/area` returns 401.
+- Route Search MVP build check: pass.
+- Route Search local smoke test: `/` and `/login` return 200; unauthenticated `/app/discover?tab=route` redirects to `/login`; unauthenticated `POST /api/discovery/route` returns 401.
+- Beta Testing Ops build check: pass.
+- Beta Testing Ops local smoke test: `/` and `/login` return 200; unauthenticated `/app/feedback` and `/app/huong-dan-beta` redirect to `/login`; unauthenticated `POST /api/beta-feedback` returns 401.
+- Beta auto-confirm register build check: pass. Local smoke test: `/register` returns 200 and invalid `POST /api/auth/beta-register` returns 400.
+- Export + Template Library build check: pass.
+- Export + Template Library local smoke test: unauthenticated `/app/export` and `/app/templates` redirect to `/login`; unauthenticated `POST /api/export/leads` and `POST /api/templates/favorite` return 401; `/login` returns 200.
+- Pricing / Quota UI build check: pass.
+- Pricing / Quota UI local smoke test: unauthenticated `/app/billing` redirects to `/login`; unauthenticated `POST /api/upgrade-interest` returns 401.
+- Admin Ops typecheck: pass.
+- Admin Ops build check: pass. Build includes `/admin`, admin list pages, and admin update APIs.
+- Admin Ops local smoke test on `http://localhost:3006`: `/` and `/login` return 200, unauthenticated `/admin` redirects to `/login`, CSS and JS assets return 200.
+- Notification + Reminder Delivery typecheck: pass.
+- Notification + Reminder Delivery build check: pass. Build includes `/app/notifications`, `/api/cron/reminders-due`, and `/api/cron/daily-digest`.
+- Notification + Reminder Delivery local smoke test on `http://localhost:3007`: `/` and `/login` return 200, unauthenticated `/app/notifications` redirects to `/login`, unauthorized cron returns 401, CSS and JS assets return 200.
+- Retention + Beta Round 2 typecheck: pass.
+- Retention + Beta Round 2 build check: pass. Build includes `/admin/retention`, `/admin/beta-cohorts`, `/admin/surveys`, `/api/cron/calculate-retention`, and `/api/surveys/beta-round-2`.
+- Retention + Beta Round 2 local smoke test on `http://localhost:3008`: `/` and `/login` return 200, unauthenticated `/admin/retention` redirects to `/login`, unauthorized retention cron returns 401, CSS and JS assets return 200.
+- Public Beta Readiness typecheck: pass.
+- Public Beta Readiness build check: pass. Build includes `/register` invite code support, `/beta-status`, `/admin/invite-codes`, `/admin/feature-flags`, `/admin/qa`, `/api/beta-invite/validate`, and feature-gated app routes.
+- Public Beta Readiness local smoke test on `http://localhost:3009`: `/`, `/register`, and `/beta-status` return 200; unauthenticated `/admin/invite-codes`, `/admin/feature-flags`, and `/app/dashboard` redirect to `/login`; invalid invite validate returns 400 with generic message.
+- Manual Payment + Subscription typecheck: pass.
+- Manual Payment + Subscription build check: pass. Build includes `/app/billing`, `/app/billing/payment/[paymentRequestId]`, `/admin/payment-requests`, `/api/payment-requests`, `/api/payment-requests/[id]`, and admin approve/reject APIs.
+- Manual Payment + Subscription local smoke test on `http://localhost:3010`: `/`, `/login`, and `/register` return 200; unauthenticated `/app/billing` and `/admin/payment-requests` redirect to `/login`; unauthenticated payment request APIs return 401.
+- Revenue Ops + Renewal / Churn typecheck: pass.
+- Revenue Ops + Renewal / Churn build check: pass. Build includes `/admin/revenue`, `/admin/subscriptions`, `/api/cancellation-requests`, `/api/cron/subscription-lifecycle`, and `/api/cron/revenue-snapshot`.
+- Revenue Ops + Renewal / Churn local smoke test on `http://localhost:3011`: `/`, `/login`, and `/register` return 200; unauthenticated `/app/billing`, `/admin/revenue`, and `/admin/subscriptions` redirect to `/login`; unauthenticated cancellation/payment APIs return 401; cron endpoints without `CRON_SECRET` return 401.
+- payOS Payment Gateway typecheck: pass.
+- payOS Payment Gateway build check: pass. Build includes `/api/payments/payos/create-link`, `/api/payments/payos/status`, `/api/webhooks/payos`, `/app/billing/payment/return`, `/app/billing/payment/cancel`, `/admin/payment-gateway`, and `/api/admin/payment-gateway/[id]/sync`.
+- payOS Payment Gateway local smoke test on `http://localhost:3013`: `/` returns 200; unauthenticated `/app/billing` and `/admin/payment-gateway` redirect to `/login`; unauthenticated payOS create/status APIs return 401; webhook with missing payOS env returns 503 instead of crashing.
+- AI Sales Assistant typecheck: pass.
+- AI Sales Assistant build check: pass. Build includes `/app/ai-assistant`, `/api/ai/generate`, `/api/ai/save-output`, `/api/ai/save-to-note`, and `/admin/ai-usage`.
+- AI Sales Assistant local smoke test on `http://localhost:3013`: `/`, `/login`, and `/register` return 200; unauthenticated `/app/ai-assistant` redirects to `/login`; unauthenticated `POST /api/ai/generate` returns 401 with a friendly message.
+- Dev server restarted cleanly with network at `http://localhost:3013`.
+- Mobile PWA Polish + Offline-lite typecheck: pass.
+- Mobile PWA Polish + Offline-lite build check: pass. Build includes `/manifest.webmanifest`, `/app/install`, `/app/offline`, `/api/leads/notes`, and `/api/reminders`.
+- Mobile PWA Polish local smoke test on `http://localhost:3013`: `/`, `/manifest.webmanifest`, `/sw.js`, `/offline.html`, and `/icons/icon-192.png` return 200. Manifest contains `display: standalone`, PNG/maskable icons, shortcuts, and `start_url`.
+- Mobile 375px browser check after Offline-lite: `/`, `/login`, and protected app redirect to `/onboarding` render content with no horizontal overflow.
+- Import Lead + Data Migration typecheck: pass.
+- Import Lead + Data Migration build check: pass. Build includes `/app/import`, `/app/import/[jobId]`, `/admin/imports`, and all `/api/import/leads/*` routes.
+- Import Lead + Data Migration local smoke test on `http://localhost:3013`: unauthenticated `/app/import` and `/admin/imports` redirect to `/login`; `/sample-import-leads.csv` returns 200; unauthenticated `POST /api/import/leads/upload` returns 401.
+- Lead Cleanup + Deduplication + Bulk Actions MVP implemented. Added SQL schema, duplicate scan, merge with notes/reminders/tags transfer, data quality scan, lead list bulk actions, cleanup pages, bulk history, and admin data quality dashboard.
+- Lead Cleanup + Deduplication + Bulk Actions typecheck: pass.
+- Lead Cleanup + Deduplication + Bulk Actions build check: pass. Build includes `/app/leads/cleanup`, `/app/leads/cleanup/duplicates`, `/app/leads/cleanup/duplicates/[groupId]`, `/app/leads/cleanup/quality`, `/app/leads/bulk-actions`, `/admin/data-quality`, and all cleanup/bulk API routes.
+- Lead Cleanup + Deduplication + Bulk Actions local smoke test on `http://localhost:3013`: unauthenticated app/admin routes redirect to `/login`; unauthenticated cleanup/bulk APIs return 401.
+- Lead Pipeline + Smart Segments + Saved Views typecheck: pass.
+- Lead Pipeline + Smart Segments + Saved Views build check: pass. Build includes `/app/pipeline`, `/app/leads/views`, `/app/leads/views/[viewId]`, `/admin/lead-views`, `/api/leads/filter`, `/api/leads/pipeline`, `/api/leads/pipeline/update-status`, `/api/leads/smart-counts`, and saved view APIs.
+- Lead Pipeline + Smart Segments + Saved Views local smoke test on `http://localhost:3013`: unauthenticated `/app/pipeline`, `/app/leads/views`, and `/admin/lead-views` redirect to `/login`; unauthenticated pipeline/saved-view/smart-count APIs return 401.
+- Personal Sales Analytics + Goal Tracking typecheck: pass.
+- Personal Sales Analytics + Goal Tracking build check: pass. Build includes `/app/analytics`, `/app/analytics/goals`, `/app/analytics/goals/new`, `/app/analytics/sources`, `/admin/sales-analytics`, analytics APIs, sales goals APIs, and `/api/cron/sales-analytics-snapshot`.
+- Personal Sales Analytics + Goal Tracking local smoke test on `http://localhost:3013`: unauthenticated `/app/analytics`, `/app/analytics/goals`, and `/admin/sales-analytics` redirect to `/login`; unauthenticated sales analytics/goals APIs and sales analytics cron return 401.
+- Dev server restarted cleanly with network at `http://localhost:3013` after build cache invalidated the previous dev process.
+- Register HTML check: `/register` renders `inviteCode` input and "Mã mời beta" label.
+- Beta status HTML check: `/beta-status` renders "Trạng thái SaleMap Beta" and "Tính năng đã mở".
+- Mobile browser check at 375px: landing page and login have no horizontal overflow; `/app/discover` redirects to login when unauthenticated.
+- Dev server restarted cleanly at `http://localhost:3002`; `/` and `/login` return 200, unauthenticated `/app/leads` redirects to `/login`.
+- Local route smoke test after lead core: `/`, `/login`, and `/chinh-sach-bao-mat` return 200; unauthenticated `/app/leads` redirects to `/login`.
+- Local route smoke test: `/`, `/login`, and `/register` return HTML; unauthenticated `/app/dashboard` redirects to `/login`.
+
+## Next Session Ideas
+
+- Run `supabase/personal-sales-analytics-goals-schema.sql` in Supabase before testing personal analytics goals, sales activity rebuild, goal events, and snapshot cron persistence.
+- As a logged-in beta user, test `/app/analytics`: create a few leads, notes, reminders, complete one reminder, change pipeline status to won/lost/not_fit, then verify Today/7 days/30 days KPI cards, funnel, source breakdown, tags/categories, and daily trend.
+- As a logged-in beta user, test `/app/analytics/goals`: create a custom goal, create a goal from template, pin/unpin, pause, archive, and verify pinned goals appear on `/app/dashboard`.
+- Test `POST /api/analytics/sales/rebuild` from the UI button and confirm analytics does not crash if optional module tables are missing.
+- Test `/api/cron/sales-analytics-snapshot` with `Authorization: Bearer <CRON_SECRET>` after setting `CRON_SECRET`, then verify `sales_analytics_snapshots` rows.
+- As admin, open `/admin/sales-analytics` after a few users have activity/goals and confirm only aggregate usage numbers are visible, with no phone/email/address/note/lead details.
+- Run `supabase/lead-pipeline-saved-views-schema.sql` in Supabase before testing pipeline event history, saved views, pinned views, and saved view usage analytics.
+- As a logged-in beta user, test `/app/pipeline`: move a lead through statuses, verify `status_changed_at` changes, and confirm follow-up suggestion appears when moving to follow-up.
+- As a logged-in beta user, test `/app/leads/views`: open system smart views, create a custom saved view from advanced filters, pin/unpin it, update/delete custom views, and confirm system views cannot be deleted.
+- Test `/app/leads/views/[viewId]` with bulk actions enabled, then verify the same filtered lead set appears from `/app/leads` advanced filters.
+- As admin, open `/admin/lead-views` after view usage and confirm KPIs/tables appear without raw phone/email/address/note content.
+- Run `supabase/import-leads-schema.sql` in Supabase before testing CSV/XLSX import persistence.
+- Run `supabase/lead-cleanup-bulk-actions-schema.sql` in Supabase before testing duplicate scan, merge, data quality issues, and bulk action history persistence.
+- As a logged-in beta user, test `/app/leads/cleanup`: scan duplicates, scan data quality, dismiss a duplicate group, merge two duplicate leads, resolve/dismiss quality issues, and verify merged lead links.
+- With several selected leads in `/app/leads`, test bulk update status, set priority, add/remove tags, archive, soft delete, restore, then verify `/app/leads/bulk-actions`.
+- As admin, open `/admin/data-quality` after user cleanup activity and confirm KPI/table data appears without raw phone/email/address/note content.
+- As a logged-in beta user, test `/app/import`: upload CSV, review preview, adjust mapping, validate rows, execute import with duplicate strategy `skip`, then verify leads, notes, reminders, and tags.
+- Test invalid import rows and download `/api/import/leads/[jobId]/error-csv`.
+- As admin, open `/admin/imports` after a few jobs and verify KPIs/table/filtering.
+- Run `supabase/manual-payment-subscription-schema.sql` in Supabase before testing manual payment/subscription persistence.
+- Run `supabase/revenue-renewal-churn-schema.sql` after the manual payment schema before testing renewals, cancellations, subscription events, lifecycle cron, and revenue snapshots.
+- Run `supabase/payos-payment-gateway-schema.sql` before testing automatic payOS checkout, webhook persistence, and admin payment gateway sync.
+- Run `supabase/ai-sales-assistant-schema.sql` before testing AI generation, saved AI outputs, AI quota, and `/admin/ai-usage`.
+- Fill `AI_PROVIDER`, `AI_API_KEY`, optional `AI_MODEL`, and optional `AI_DAILY_COST_LIMIT_VND` locally/deployment before testing real AI output generation.
+- As a logged-in beta user, test AI in lead detail: generate Zalo message, follow-up, summarize notes, copy output, save output, and save to lead note.
+- As a logged-in beta user, test `/app/templates` AI personalization and `/app/ai-assistant` generic content generation.
+- As admin, test `/admin/ai-usage` after generating a few AI requests and confirm prompt/output content is not shown by default.
+- Test PWA install on a real Android Chrome device: open `/`, verify install prompt, install, launch from home screen, and confirm standalone mode.
+- Test iPhone Safari install instructions: open `/`, verify the "Thêm vào Màn hình chính" guidance appears when not installed.
+- Test offline-lite manually on a phone: open dashboard/leads/one lead while online, turn off network, revisit cached pages, verify the offline banner and `/offline.html` fallback.
+- Test local drafts: start typing a lead, note, and follow-up, turn off network, try submit, restore network, then confirm the draft remains available for retry.
+- Fill `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, optional `PAYOS_PARTNER_CODE`, and `NEXT_PUBLIC_SITE_URL` locally/deployment before testing real payOS checkout.
+- Configure payOS webhook URL to `https://your-domain.com/api/webhooks/payos`, then test paid webhook, cancel return, idempotency, amount mismatch, and admin sync.
+- Fill `PAYMENT_BANK_NAME`, `PAYMENT_BANK_ACCOUNT_NUMBER`, and `PAYMENT_BANK_ACCOUNT_NAME` locally and in deployment env before asking real users to transfer.
+- Test renewal end to end: set a Pro user with `current_period_end` close to today, create a renewal request from `/app/billing`, mark transferred, approve from `/admin/payment-requests`, and verify `current_period_end` is extended plus `subscription_events` has `subscription_renewed`.
+- Test cancellation reason flow: Pro user submits a reason from `/app/billing`, then admin reviews it in `/admin/revenue`.
+- Test subscription lifecycle cron with `Authorization: Bearer <CRON_SECRET>`: near-expiring subscriptions get reminders, expired paid subscriptions become `expired`, and quota falls back to Free Beta.
+- Test `/admin/revenue` and `/admin/subscriptions` with real paid/cancelled/expired sample data after running SQL.
+- Test manual upgrade end to end with a logged-in beta user: create Pro request, open transfer instruction, copy transfer content, mark transferred, then approve/reject from `/admin/payment-requests`.
+- After approving a Pro/Pro Plus request, verify `/app/billing` shows the active plan and quota cards change to the new daily limits.
+- Test the actual browser form end to end from the landing page UI.
+- Add real `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_CLARITY_PROJECT_ID` when ready to verify events in dashboards.
+- Set Vercel environment variables from `.env.example`, especially `NEXT_PUBLIC_SITE_URL`.
+- Run the post-deploy checklist in `DEPLOYMENT.md`.
+- Run `supabase/product-schema.sql` in Supabase before testing app auth/onboarding.
+- Test real register/login/onboarding flow against Supabase Auth.
+- After logging in, test lead create/edit/note/reminder flows against the live Supabase project.
+- Run `supabase/map-discovery-schema.sql` in Supabase before testing Map Discovery.
+- Run `supabase/route-search-schema.sql` in Supabase before testing Route Search.
+- Run `supabase/beta-testing-schema.sql` in Supabase before testing Beta Testing Ops.
+- Run `supabase/export-template-schema.sql`, then `supabase/seed-templates.sql`, before testing Export + Template Library.
+- Run `supabase/billing-upgrade-interest-schema.sql` before testing Upgrade Interest persistence.
+- Run `supabase/admin-ops-schema.sql`, then mark the founder/test account as admin before opening `/admin`.
+- Test admin flows with an admin account: overview KPIs, user list, beta signups, feedback status/priority update, upgrade interest status update, and usage filters.
+- Run `supabase/notifications-schema.sql` before testing notification center, notification settings, reminder due cron, and daily digest cron.
+- Add `CRON_SECRET` locally and in Vercel before calling cron endpoints. Add `RESEND_API_KEY` and `EMAIL_FROM` before testing real email delivery.
+- With a logged-in beta user, test `/app/notifications`: create/read notifications, mark one read, mark all read, and verify the bell badge changes.
+- Test `/api/cron/reminders-due` with `Authorization: Bearer <CRON_SECRET>` after creating a past-due reminder; call it twice to confirm no duplicate notification/email.
+- Test `/api/cron/daily-digest` with a few reminders due today; call it twice to confirm no duplicate daily digest.
+- Run `supabase/retention-beta-round-2-schema.sql` before testing retention dashboards, activity tracking, health score, beta cohorts, and surveys.
+- Run `supabase/public-beta-readiness-schema.sql` before testing invite codes, feature flags, QA checklist, and public beta launch controls.
+- As admin, test `/admin/invite-codes`: create `SALEMAP-BETA-TEST`, copy it, disable/enable it, then register with that code and verify `used_count` plus `beta_invite_redemptions`.
+- As admin, test `/admin/feature-flags`: toggle `route_search`, confirm `/app/discover` disables the Dọc tuyến tab, then turn it back on.
+- As admin, test `/admin/qa`: mark one product checklist item `passed` and one launch checklist item `needs_review`, refresh, and verify persistence.
+- Test activity tracking with a logged-in beta user: create lead, add note, create reminder, complete reminder, search route, save map lead, export, then check `user_activity_daily`.
+- Test `/api/cron/calculate-retention` with `Authorization: Bearer <CRON_SECRET>` and verify `user_health_scores` updates.
+- As admin, test `/admin/retention`, `/admin/beta-cohorts`, and `/admin/surveys`.
+- With a user that has at least one lead, test the dashboard beta progress card and submit the Beta Round 2 survey.
+- Add `GOOGLE_MAPS_API_KEY` locally and in Vercel before testing real map search.
+- With a logged-in beta user, test area search, near-me search, save place, duplicate save, and lead detail map badges/actions.
+- With a logged-in beta user, test `/app/discover?tab=route`: Quận 1 to Quận 7, keyword `nhà thuốc`, buffer `1km`, save one result, duplicate-save it, and confirm the lead detail badge says `Từ tuyến đường`.
+- With a logged-in beta user, test `/app/dashboard`, `/app/huong-dan-beta`, `/app/feedback`, feedback submit, checklist progress, and the sample data button in `/app/settings`.
+- With a logged-in beta user, test `/app/export`: filter status/source/tag/date, select fields, download CSV, verify Vietnamese in Excel, and confirm `export_jobs` gets a record.
+- With a logged-in beta user, test `/app/templates`: search, category filter, detail modal, copy, favorite, favorites filter, and unfavorite.
+- With a logged-in beta user, test `/app/billing`: view quota, open Pro/Pro Plus interest modal, submit upgrade interest, and confirm `upgrade_interests` gets a record.
+- Review app UI on a real 375px mobile viewport with authenticated data.
+- Improve success/error UX around form submission if needed.
+- Add an admin/export view later if beta lead management becomes necessary.
+- Prepare deployment settings for Vercel, especially environment variables.

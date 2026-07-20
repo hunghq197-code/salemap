@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reminders-due",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/daily-digest",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/calculate-retention",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/subscription-lifecycle",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/revenue-snapshot",
+      "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/cron/sales-analytics-snapshot",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
