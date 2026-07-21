@@ -213,8 +213,8 @@ git push origin main
 
 High-value next tasks, in order:
 
-1. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
-2. Add targeted smoke tests for the high-value app flows once test accounts/env data are available.
+1. Add optional authenticated smoke coverage once a stable test account/session strategy is available.
+2. Review the production environment/deploy checklist before the first staging or production deployment.
 
 ## 2026-07-21 Update - Google Maps Hardening
 
@@ -377,6 +377,44 @@ Suggested commit:
 ```powershell
 git add app/admin/payment-gateway/actions.ts app/admin/retention/page.tsx app/api/import/leads/[jobId]/execute/route.ts app/app/analytics/page.tsx app/app/leads/cleanup/page.tsx app/app/offline/page.tsx components/admin/AdminShell.tsx components/billing/UpgradeInterestModal.tsx components/export/ExportLeadsForm.tsx components/i18n/LanguageProvider.tsx components/pwa/OfflineUserProvider.tsx components/pwa/PWAProvider.tsx components/pwa/useLocalFormDraft.ts components/ui/Toast.tsx hooks/useNetworkStatus.ts lib/analytics/sales-analytics.ts lib/data/lead-filtered-list.ts lib/data/lead-pipeline.ts lib/data/reminder-delivery.ts lib/data/sales-activity.ts lib/data/sales-goals.ts lib/data/user-health.ts lib/import/execute-import.ts lib/leads/lead-filters.ts CODEX_HANDOFF.md
 git commit -m "chore: clean lint warnings"
+git push origin main
+```
+
+## 2026-07-21 Update - Smoke Test Script
+
+This phase added a local smoke test command for fast regression checks.
+
+Implemented changes:
+
+- `package.json`
+  - Added `npm run smoke`.
+- `scripts/smoke.mjs`
+  - Starts a Next dev server on `127.0.0.1:3210` unless `SMOKE_BASE_URL` is provided.
+  - Checks public pages, manifest, robots, offline fallback, and baseline security headers.
+  - Checks major guarded API endpoints reject a bad `Origin` with `INVALID_REQUEST_ORIGIN`.
+  - Uses only built-in Node APIs, no new dependencies.
+
+Validation run after the change:
+
+```powershell
+npm run smoke
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Results:
+
+- Smoke passed 18/18 checks.
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+
+Suggested commit:
+
+```powershell
+git add package.json scripts/smoke.mjs CODEX_HANDOFF.md
+git commit -m "test: add smoke checks"
 git push origin main
 ```
 
