@@ -9,6 +9,7 @@ import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
 import { searchNearbyPlaces } from "@/lib/providers/maps/google-maps";
 import { nearMeSearchSchema } from "@/lib/validators/discovery";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
+import { getMapProviderApiError } from "../map-provider-errors";
 
 function errorResponse(code: string, message: string, status = 400) {
   return NextResponse.json(
@@ -113,12 +114,12 @@ export async function POST(request: Request) {
         ? String((error as Error & { code?: string }).code)
         : "MAP_PROVIDER_ERROR";
 
-    return errorResponse(
-      code,
-      code === "QUOTA_EXCEEDED"
-        ? "Bạn đã dùng hết lượt tìm hôm nay. Vui lòng quay lại vào ngày mai hoặc nâng cấp khi gói Pro được mở."
-        : "Không thể tìm dữ liệu bản đồ lúc này. Vui lòng thử lại sau.",
-      code === "QUOTA_EXCEEDED" ? 429 : 502,
-    );
+    const providerError = getMapProviderApiError(code, {
+      fallback: "Không thể tìm dữ liệu bản đồ lúc này. Vui lòng thử lại sau.",
+      quotaExceeded:
+        "Bạn đã dùng hết lượt tìm hôm nay. Vui lòng quay lại vào ngày mai hoặc nâng cấp khi gói Pro được mở.",
+    });
+
+    return errorResponse(code, providerError.message, providerError.status);
   }
 }

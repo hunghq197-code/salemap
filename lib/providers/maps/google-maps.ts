@@ -149,11 +149,19 @@ const demoAreaCenters = [
 ] as const;
 
 export class MapProviderError extends Error {
-  code = "MAP_PROVIDER_ERROR";
+  code: string;
 
-  constructor(message = "Không thể tìm dữ liệu bản đồ lúc này.") {
+  constructor(message = "Không thể tìm dữ liệu bản đồ lúc này.", code = "MAP_PROVIDER_ERROR") {
     super(message);
     this.name = "MapProviderError";
+    this.code = code;
+  }
+}
+
+export class MapProviderConfigError extends MapProviderError {
+  constructor(message = "Thiếu GOOGLE_MAPS_API_KEY.") {
+    super(message, "MAP_PROVIDER_NOT_CONFIGURED");
+    this.name = "MapProviderConfigError";
   }
 }
 
@@ -161,11 +169,15 @@ function hasGoogleMapsApiKey() {
   return Boolean(process.env.GOOGLE_MAPS_API_KEY?.trim());
 }
 
+function shouldUseDemoMaps() {
+  return process.env.ENABLE_DEMO_MAPS === "true" && process.env.NODE_ENV !== "production";
+}
+
 function getApiKey() {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY?.trim();
 
   if (!apiKey) {
-    throw new MapProviderError("Thiếu GOOGLE_MAPS_API_KEY.");
+    throw new MapProviderConfigError();
   }
 
   return apiKey;
@@ -339,6 +351,20 @@ function searchDemoPlacesAlongRoute(input: {
 function assertGoogleStatus(payload: GoogleMapsStatus) {
   if (payload.status === "OK" || payload.status === "ZERO_RESULTS") {
     return;
+  }
+
+  if (payload.status === "OVER_QUERY_LIMIT") {
+    throw new MapProviderError(
+      payload.error_message || `Google Maps error: ${payload.status}`,
+      "MAP_PROVIDER_QUOTA_EXCEEDED",
+    );
+  }
+
+  if (payload.status === "REQUEST_DENIED") {
+    throw new MapProviderError(
+      payload.error_message || `Google Maps error: ${payload.status}`,
+      "MAP_PROVIDER_ACCESS_DENIED",
+    );
   }
 
   throw new MapProviderError(payload.error_message || `Google Maps error: ${payload.status}`);
@@ -557,7 +583,7 @@ async function fetchNearbyPlaces(input: {
 }
 
 export async function geocodeArea(areaText: string) {
-  if (!hasGoogleMapsApiKey()) {
+  if (!hasGoogleMapsApiKey() && shouldUseDemoMaps()) {
     const center = getDemoCenter(areaText);
 
     return {
@@ -614,7 +640,7 @@ export async function getRoute(input: {
   destinationText: string;
   originText: string;
 }): Promise<MapRouteResult> {
-  if (!hasGoogleMapsApiKey()) {
+  if (!hasGoogleMapsApiKey() && shouldUseDemoMaps()) {
     return getDemoRoute(input);
   }
 
@@ -673,7 +699,7 @@ export async function searchNearbyPlaces(input: {
   longitude: number;
   radiusMeters: number;
 }): Promise<MapPlaceResult[]> {
-  if (!hasGoogleMapsApiKey()) {
+  if (!hasGoogleMapsApiKey() && shouldUseDemoMaps()) {
     return buildDemoPlaces(input);
   }
 
@@ -702,7 +728,7 @@ export async function searchAreaPlaces(input: {
   center: { latitude: number; longitude: number };
   results: MapPlaceResult[];
 }> {
-  if (!hasGoogleMapsApiKey()) {
+  if (!hasGoogleMapsApiKey() && shouldUseDemoMaps()) {
     const area = getDemoCenter(input.areaText);
     const center = {
       latitude: area.latitude,
@@ -743,7 +769,7 @@ export async function searchPlacesAlongRoute(input: {
   results: RoutePlaceResult[];
   route: MapRouteResult;
 }> {
-  if (!hasGoogleMapsApiKey()) {
+  if (!hasGoogleMapsApiKey() && shouldUseDemoMaps()) {
     return searchDemoPlacesAlongRoute(input);
   }
 

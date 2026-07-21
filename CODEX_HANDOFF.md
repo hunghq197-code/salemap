@@ -213,11 +213,57 @@ git push origin main
 
 High-value next tasks, in order:
 
-1. Harden Google Maps production fallback so production does not silently return demo places/routes when `GOOGLE_MAPS_API_KEY` is missing.
-2. Add consistent same-origin/rate-limit guard to authenticated mutating API routes.
-3. Fix the Next/Turbopack root warning in `next.config.mjs`.
-4. Reduce lint warnings gradually, starting with unused imports and easy hook warnings.
-5. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
+1. Add consistent same-origin/rate-limit guard to authenticated mutating API routes.
+2. Fix the Next/Turbopack root warning in `next.config.mjs`.
+3. Reduce lint warnings gradually, starting with unused imports and easy hook warnings.
+4. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
+
+## 2026-07-21 Update - Google Maps Hardening
+
+This phase continued from the "Google Maps hardening + smoke test" task.
+
+Implemented changes:
+
+- `lib/providers/maps/google-maps.ts`
+  - Added `MapProviderConfigError` with code `MAP_PROVIDER_NOT_CONFIGURED`.
+  - Trimmed `GOOGLE_MAPS_API_KEY` before use.
+  - Demo map data now only runs when `ENABLE_DEMO_MAPS=true` and `NODE_ENV !== "production"`.
+  - Missing server API key now raises a clear config error instead of silently returning demo places/routes.
+  - Google `OVER_QUERY_LIMIT` maps to `MAP_PROVIDER_QUOTA_EXCEEDED`.
+  - Google `REQUEST_DENIED` maps to `MAP_PROVIDER_ACCESS_DENIED`.
+- `app/api/discovery/map-provider-errors.ts`
+  - Added shared API error mapping for map provider errors.
+- `app/api/discovery/area/route.ts`
+  - Uses shared map provider error mapping.
+- `app/api/discovery/near-me/route.ts`
+  - Uses shared map provider error mapping.
+- `app/api/discovery/route/route.ts`
+  - Uses shared map provider error mapping.
+- `.env.example`
+  - Added `ENABLE_DEMO_MAPS=false`.
+
+Validation run after the change:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with the same existing 41 warnings and 0 errors.
+- Build passed.
+- Build still shows the known Next/Turbopack workspace-root warning caused by multiple lockfiles.
+
+Suggested commit:
+
+```powershell
+git add .env.example app/api/discovery/map-provider-errors.ts app/api/discovery/area/route.ts app/api/discovery/near-me/route.ts app/api/discovery/route/route.ts lib/providers/maps/google-maps.ts CODEX_HANDOFF.md
+git commit -m "fix: harden google maps fallback"
+git push origin main
+```
 
 ## Notes For Future Codex Sessions
 
