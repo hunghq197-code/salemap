@@ -27,20 +27,24 @@ Tối thiểu cần chạy:
 
 1. `supabase/schema.sql`
 2. `supabase/product-schema.sql`
-3. `supabase/export-template-schema.sql`
-4. `supabase/map-discovery-schema.sql`
-5. `supabase/route-search-schema.sql`
-6. `supabase/billing-upgrade-interest-schema.sql`
-7. `supabase/admin-ops-schema.sql`
-8. `supabase/notifications-schema.sql`
-9. `supabase/public-beta-readiness-schema.sql`
-10. `supabase/manual-payment-subscription-schema.sql`
-11. `supabase/import-leads-schema.sql`
-12. `supabase/lead-cleanup-bulk-actions-schema.sql`
-13. `supabase/lead-pipeline-saved-views-schema.sql`
-14. `supabase/personal-sales-analytics-goals-schema.sql`
+3. `supabase/map-discovery-schema.sql`
+4. `supabase/route-search-schema.sql`
+5. `supabase/beta-testing-schema.sql`
+6. `supabase/export-template-schema.sql`
+7. `supabase/seed-templates.sql`
+8. `supabase/billing-upgrade-interest-schema.sql`
+9. `supabase/admin-ops-schema.sql`
+10. `supabase/notifications-schema.sql`
+11. `supabase/retention-beta-round-2-schema.sql`
+12. `supabase/public-beta-readiness-schema.sql`
+13. `supabase/manual-payment-subscription-schema.sql`
+14. `supabase/revenue-renewal-churn-schema.sql`
 15. `supabase/payos-payment-gateway-schema.sql`
 16. `supabase/ai-sales-assistant-schema.sql`
+17. `supabase/import-leads-schema.sql`
+18. `supabase/lead-cleanup-bulk-actions-schema.sql`
+19. `supabase/lead-pipeline-saved-views-schema.sql`
+20. `supabase/personal-sales-analytics-goals-schema.sql`
 
 Nếu Supabase báo table/column đã tồn tại, chỉ chạy lại file đã có `if not exists`, hoặc tạo migration fix-forward nhỏ.
 
@@ -80,8 +84,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 Khuyến nghị staging ban đầu:
 
 ```env
-NEXT_PUBLIC_ENABLE_AI_ASSISTANT=false
-NEXT_PUBLIC_ENABLE_PAYMENT_GATEWAY=false
+# Feature flags are controlled in Supabase public.feature_flags
+# or from /admin/feature-flags after admin setup.
 AI_PROVIDER=
 AI_API_KEY=
 PAYMENT_PROVIDER=

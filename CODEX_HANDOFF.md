@@ -418,6 +418,55 @@ git commit -m "test: add smoke checks"
 git push origin main
 ```
 
+## 2026-07-21 Update - API And Module Audit
+
+This phase audited API/module coverage and runtime readiness.
+
+Implemented documentation changes:
+
+- `API_MODULE_AUDIT.md`
+  - Added a full API/module audit summary.
+  - Records that 70 API routes exist and 0 direct `/api/...` source references are missing routes.
+  - Records that 51 Supabase tables are referenced and all have SQL definitions in `supabase/*.sql`.
+  - Lists module readiness and the exact information needed for live/authenticated testing.
+- `.env.example`
+  - Removed stale `NEXT_PUBLIC_ENABLE_*` feature flag env entries.
+  - Documented that runtime feature flags are stored in Supabase tables `feature_flags` and `user_feature_flags`.
+- `DEPLOYMENT.md`
+  - Updated the minimum SQL setup list to match `SUPABASE_SQL_SETUP.md`.
+  - Replaced old env-based feature flag guidance with Supabase feature flag guidance.
+
+Validation run after the audit:
+
+```powershell
+npm run smoke
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Results:
+
+- Smoke passed 18/18 checks.
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+
+Suggested next phase:
+
+- Create/fill `.env.local` or staging env.
+- Run all SQL files from `SUPABASE_SQL_SETUP.md`.
+- Create a normal test account and an admin test account.
+- Run authenticated staging smoke tests for lead, note, reminder, map discovery, import/export, pipeline, cleanup, and admin pages.
+
+Suggested commit:
+
+```powershell
+git add API_MODULE_AUDIT.md .env.example DEPLOYMENT.md CODEX_HANDOFF.md
+git commit -m "docs: audit api module readiness"
+git push origin main
+```
+
 ## Notes For Future Codex Sessions
 
 - Prefer reading this file first, then run `git status --short --branch`.
