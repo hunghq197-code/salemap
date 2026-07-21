@@ -1,3 +1,7 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === "production";
 
 const contentSecurityPolicy = [
@@ -94,6 +98,9 @@ const nextConfig = {
     remotePatterns: [],
   },
   poweredByHeader: false,
+  turbopack: {
+    root: projectRoot,
+  },
   async headers() {
     return [
       {

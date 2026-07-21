@@ -213,9 +213,8 @@ git push origin main
 
 High-value next tasks, in order:
 
-1. Fix the Next/Turbopack root warning in `next.config.mjs`.
-2. Reduce lint warnings gradually, starting with unused imports and easy hook warnings.
-3. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
+1. Reduce lint warnings gradually, starting with unused imports and easy hook warnings.
+2. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
 
 ## 2026-07-21 Update - Google Maps Hardening
 
@@ -307,6 +306,39 @@ Suggested commit:
 ```powershell
 git add lib/security/request.ts app/api/admin/beta-signups/[id]/route.ts app/api/admin/feedback/[id]/route.ts app/api/admin/payment-gateway/[id]/sync/route.ts app/api/admin/payment-requests/[id]/approve/route.ts app/api/admin/payment-requests/[id]/reject/route.ts app/api/admin/upgrade-interests/[id]/route.ts app/api/ai/save-output/route.ts app/api/ai/save-to-note/route.ts app/api/analytics/sales/rebuild/route.ts app/api/beta-checklist/complete/route.ts app/api/discovery/area/route.ts app/api/discovery/near-me/route.ts app/api/discovery/route/route.ts app/api/discovery/save-place/route.ts app/api/export/leads/route.ts app/api/import/leads/[jobId]/execute/route.ts app/api/import/leads/[jobId]/mapping/route.ts app/api/import/leads/[jobId]/validate/route.ts app/api/leads/bulk-actions/route.ts app/api/leads/cleanup/issues/[issueId]/route.ts app/api/leads/cleanup/merge-groups/[groupId]/route.ts app/api/leads/cleanup/merge/route.ts app/api/leads/cleanup/scan-duplicates/route.ts app/api/leads/cleanup/scan-quality/route.ts app/api/leads/filter/route.ts app/api/leads/notes/route.ts app/api/leads/pipeline/update-status/route.ts app/api/leads/views/[viewId]/pin/route.ts app/api/leads/views/[viewId]/route.ts app/api/leads/views/[viewId]/usage/route.ts app/api/leads/views/route.ts app/api/payment-requests/[id]/route.ts app/api/reminders/route.ts app/api/sales-goals/[goalId]/pin/route.ts app/api/sales-goals/[goalId]/route.ts app/api/sales-goals/route.ts app/api/sales-goals/templates/route.ts app/api/surveys/beta-round-2/route.ts app/api/templates/favorite/route.ts CODEX_HANDOFF.md
 git commit -m "fix: guard mutating api routes"
+git push origin main
+```
+
+## 2026-07-21 Update - Next Turbopack Root
+
+This phase fixed the Next/Turbopack workspace-root warning that appeared during production builds.
+
+Implemented changes:
+
+- `next.config.mjs`
+  - Added Node ESM path helpers.
+  - Set `turbopack.root` to the SaleMap project directory instead of letting Next infer from parent lockfiles.
+
+Validation run after the change:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with the same existing 41 warnings and 0 errors.
+- Build passed.
+- The previous Next/Turbopack workspace-root warning no longer appears.
+
+Suggested commit:
+
+```powershell
+git add next.config.mjs CODEX_HANDOFF.md
+git commit -m "fix: set turbopack project root"
 git push origin main
 ```
 
