@@ -10,6 +10,12 @@ const routeBufferSchema = z.coerce.number().refine(
   "Khoảng cách lệch tuyến chưa hợp lệ.",
 );
 
+const keywordSchema = z
+  .string()
+  .trim()
+  .min(2, "Vui lòng nhập từ khóa ít nhất 2 ký tự.")
+  .max(100, "Từ khóa không được dài quá 100 ký tự.");
+
 const optionalText = (maxLength: number) =>
   z
     .string()
@@ -19,23 +25,35 @@ const optionalText = (maxLength: number) =>
     .or(z.literal(""));
 
 export const nearMeSearchSchema = z.object({
-  keyword: z.string().trim().min(2, "Vui lòng nhập từ khóa ít nhất 2 ký tự."),
+  keyword: keywordSchema,
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
   radiusMeters: radiusSchema,
 });
 
 export const areaSearchSchema = z.object({
-  areaText: z.string().trim().min(2, "Vui lòng nhập khu vực ít nhất 2 ký tự."),
-  keyword: z.string().trim().min(2, "Vui lòng nhập từ khóa ít nhất 2 ký tự."),
+  areaText: z
+    .string()
+    .trim()
+    .min(2, "Vui lòng nhập khu vực ít nhất 2 ký tự.")
+    .max(200, "Khu vực không được dài quá 200 ký tự."),
+  keyword: keywordSchema,
   radiusMeters: radiusSchema,
 });
 
 export const routeSearchSchema = z.object({
   bufferMeters: routeBufferSchema,
-  destinationText: z.string().trim().min(2, "Vui lòng nhập điểm đến.").max(200),
-  keyword: z.string().trim().min(2, "Vui lòng nhập từ khóa ít nhất 2 ký tự.").max(100),
-  originText: z.string().trim().min(2, "Vui lòng nhập điểm đi.").max(200),
+  destinationText: z
+    .string()
+    .trim()
+    .min(2, "Vui lòng nhập điểm đến.")
+    .max(200),
+  keyword: keywordSchema,
+  originText: z
+    .string()
+    .trim()
+    .min(2, "Vui lòng nhập điểm đi.")
+    .max(200),
 });
 
 export const savePlaceSchema = z.object({

@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "seed:staging": "node scripts/seed-staging.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "smoke:staging": "node scripts/smoke-staging.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

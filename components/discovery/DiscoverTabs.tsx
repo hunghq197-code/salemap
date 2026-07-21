@@ -11,7 +11,10 @@ import { RouteSummaryCard } from "@/components/discovery/RouteSummaryCard";
 import { SearchResultsList } from "@/components/discovery/SearchResultsList";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
-import { trackBetaChecklistItemCompleted, trackMapEvent } from "@/lib/analytics/client";
+import {
+  trackBetaChecklistItemCompleted,
+  trackMapEvent,
+} from "@/lib/analytics/client";
 import { DAILY_QUOTAS, type DailyQuotaAction } from "@/lib/constants/quota";
 import type {
   DiscoveryPlaceResult,
@@ -66,6 +69,12 @@ type QuotaReachedState = {
   used: number;
 };
 
+type CurrentLocation = {
+  accuracyMeters: number;
+  latitude: number;
+  longitude: number;
+};
+
 function getApiErrorMessage(payload: ApiError, source?: DiscoverySource) {
   if (payload.error?.message) {
     return payload.error.message;
@@ -80,10 +89,31 @@ function getCurrentPosition() {
   return new Promise<GeolocationPosition>((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      maximumAge: 60000,
-      timeout: 12000,
+      maximumAge: 30_000,
+      timeout: 15_000,
     });
   });
+}
+
+function getGeolocationErrorMessage(error: unknown) {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? Number((error as { code?: unknown }).code)
+      : 0;
+
+  if (!code) {
+    return "Không lấy được vị trí hiện tại. Hãy thử lại hoặc dùng tìm theo khu vực.";
+  }
+
+  if (code === 1) {
+    return "Bạn chưa cho phép SaleMap truy cập vị trí. Hãy bật quyền vị trí cho trang này rồi thử lại, hoặc dùng tab Theo khu vực.";
+  }
+
+  if (code === 2) {
+    return "Thiết bị chưa xác định được vị trí. Hãy bật GPS/Wi-Fi rồi thử lại, hoặc dùng tab Theo khu vực.";
+  }
+
+  return "Việc lấy vị trí mất quá lâu. Hãy thử lại ở nơi có tín hiệu tốt hơn hoặc dùng tab Theo khu vực.";
 }
 
 function getSearchEvents(source: DiscoverySource) {
@@ -111,26 +141,14 @@ function getSearchEvents(source: DiscoverySource) {
 }
 
 function getChecklistKeyForSearch(source: DiscoverySource) {
-  if (source === "map_area") {
-    return "search_area";
-  }
-
-  if (source === "route_search") {
-    return "search_route";
-  }
-
+  if (source === "map_area") return "search_area";
+  if (source === "route_search") return "search_route";
   return null;
 }
 
 function getQuotaActionForSource(source: DiscoverySource): DailyQuotaAction {
-  if (source === "route_search") {
-    return "route_search";
-  }
-
-  if (source === "map_near_me") {
-    return "near_me_search";
-  }
-
+  if (source === "route_search") return "route_search";
+  if (source === "map_near_me") return "near_me_search";
   return "area_search";
 }
 
@@ -152,6 +170,7 @@ export function DiscoverTabs({
   const [activeTab, setActiveTab] = useState<ActiveTab>(
     initialTab === "route" && !routeSearchEnabled ? "near-me" : initialTab,
   );
+  const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
   const [searchState, setSearchState] = useState<SearchState | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingPlaceId, setSavingPlaceId] = useState<string | null>(null);
@@ -162,7 +181,7 @@ export function DiscoverTabs({
 
   function handleTabChange(tab: ActiveTab) {
     if (tab === "route" && !routeSearchEnabled) {
-      setError("Tính năng này đang được mở dần. Vui lòng quay lại sau.");
+      setError("Tính năng tìm dọc tuyến hiện chưa được bật.");
       return;
     }
 
@@ -196,9 +215,7 @@ export function DiscoverTabs({
     try {
       const response = await fetch(endpoint, {
         body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         method: "POST",
       });
       const result = (await response.json()) as SearchResponse;
@@ -225,6 +242,7 @@ export function DiscoverTabs({
         route: result.data.route,
         source,
       });
+
       trackMapEvent(events.completed, {
         bufferMeters: Number(payload.bufferMeters || 0),
         hasRouteDistance: Boolean(result.data.route?.distanceMeters),
@@ -237,17 +255,13 @@ export function DiscoverTabs({
       });
 
       const checklistKey = getChecklistKeyForSearch(source);
-
-      if (checklistKey) {
-        trackBetaChecklistItemCompleted({ checklistKey });
-      }
+      if (checklistKey) trackBetaChecklistItemCompleted({ checklistKey });
     } catch (searchError) {
-      const message =
+      setError(
         searchError instanceof Error
           ? searchError.message
-          : getApiErrorMessage({}, source);
-
-      setError(message);
+          : getApiErrorMessage({}, source),
+      );
       trackMapEvent(events.failed, {
         bufferMeters: Number(payload.bufferMeters || 0),
         keyword: String(payload.keyword || ""),
@@ -259,10 +273,13 @@ export function DiscoverTabs({
     }
   }
 
-  async function handleNearMeSearch(input: { keyword: string; radiusMeters: number }) {
+  async function handleNearMeSearch(input: {
+    keyword: string;
+    radiusMeters: number;
+  }) {
     if (!navigator.geolocation) {
       setNotice(
-        "Không lấy được vị trí hiện tại. Bạn có thể dùng tab “Theo khu vực” để nhập khu vực thủ công.",
+        "Trình duyệt này không hỗ trợ định vị. Bạn có thể dùng tab Theo khu vực để nhập địa điểm thủ công.",
       );
       return;
     }
@@ -274,21 +291,26 @@ export function DiscoverTabs({
 
     try {
       const position = await getCurrentPosition();
+      const location = {
+        accuracyMeters: position.coords.accuracy,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+      setCurrentLocation(location);
+
       await submitSearch(
         "/api/discovery/near-me",
         {
           keyword: input.keyword,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: location.latitude,
+          longitude: location.longitude,
           radiusMeters: input.radiusMeters,
         },
         "map_near_me",
       );
-    } catch {
+    } catch (locationError) {
       setLoading(false);
-      setNotice(
-        "Không lấy được vị trí hiện tại. Hãy cho phép truy cập vị trí hoặc dùng tìm theo khu vực.",
-      );
+      setNotice(getGeolocationErrorMessage(locationError));
     }
   }
 
@@ -307,7 +329,7 @@ export function DiscoverTabs({
     originText: string;
   }) {
     if (!routeSearchEnabled) {
-      setError("Tính năng này đang được mở dần. Vui lòng quay lại sau.");
+      setError("Tính năng tìm dọc tuyến hiện chưa được bật.");
       return;
     }
 
@@ -315,9 +337,7 @@ export function DiscoverTabs({
   }
 
   async function handleSavePlace(place: DiscoveryPlaceResult) {
-    if (place.isSaved) {
-      return;
-    }
+    if (place.isSaved) return;
 
     setSavingPlaceId(place.placeId);
     setError(null);
@@ -343,9 +363,7 @@ export function DiscoverTabs({
           userRatingsTotal: place.userRatingsTotal,
           website: place.website,
         }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         method: "POST",
       });
       const result = (await response.json()) as SaveResponse;
@@ -354,7 +372,6 @@ export function DiscoverTabs({
         if (result.error?.code === "QUOTA_EXCEEDED") {
           setQuotaReached(getReachedQuota("save_map_lead"));
         }
-
         throw new Error(getApiErrorMessage(result, searchState?.source));
       }
 
@@ -376,7 +393,6 @@ export function DiscoverTabs({
       );
 
       const isRouteSearch = searchState?.source === "route_search";
-
       if (result.data.alreadySaved) {
         setSuccessMessage("Địa điểm này đã có trong lead cá nhân của bạn.");
         trackMapEvent(
@@ -451,7 +467,11 @@ export function DiscoverTabs({
 
       <div className="mt-5">
         {activeTab === "near-me" ? (
-          <NearMeSearchForm loading={loading} onSubmit={handleNearMeSearch} />
+          <NearMeSearchForm
+            loading={loading}
+            locationAccuracyMeters={currentLocation?.accuracyMeters}
+            onSubmit={handleNearMeSearch}
+          />
         ) : activeTab === "area" ? (
           <AreaSearchForm loading={loading} onSubmit={handleAreaSearch} />
         ) : (

@@ -24,6 +24,20 @@ type PlaceResultCardProps = {
   source: DiscoverySource;
 };
 
+const categoryLabels: Record<string, string> = {
+  auto_parts_store: "Phụ tùng / dầu nhớt",
+  beauty_salon: "Spa / salon",
+  car_repair: "Sửa xe",
+  car_wash: "Rửa xe",
+  doctor: "Phòng khám",
+  electronics_store: "Điện máy",
+  grocery_or_supermarket: "Tạp hóa / siêu thị",
+  hardware_store: "Cửa hàng vật liệu",
+  pharmacy: "Nhà thuốc",
+  restaurant: "Quán ăn",
+  store: "Cửa hàng",
+};
+
 function formatDistance(value?: number) {
   if (!value) {
     return null;
@@ -32,10 +46,19 @@ function formatDistance(value?: number) {
   return value >= 1000 ? `${(value / 1000).toFixed(1)}km` : `${value}m`;
 }
 
+function formatCategory(value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  return categoryLabels[value] || value.replaceAll("_", " ");
+}
+
 export function PlaceResultCard({ onSave, place, saving, source }: PlaceResultCardProps) {
   const distance = formatDistance(place.distanceMeters);
   const routeDistance = formatDistance(place.distanceFromRouteMeters);
   const originDistance = formatDistance(place.distanceFromOriginMeters);
+  const categoryLabel = formatCategory(place.category);
   const directionsUrl =
     place.googleMapsUrl ||
     (place.latitude != null && place.longitude != null
@@ -65,9 +88,9 @@ export function PlaceResultCard({ onSave, place, saving, source }: PlaceResultCa
         <div className="min-w-0">
           <h3 className="text-lg font-bold leading-7 text-ink">{place.name}</h3>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-600">
-            {place.category ? (
+            {categoryLabel ? (
               <span className="rounded-full bg-cloud px-3 py-1 text-xs font-bold text-ocean">
-                {place.category}
+                {categoryLabel}
               </span>
             ) : null}
             {place.rating ? (

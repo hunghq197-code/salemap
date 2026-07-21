@@ -11,11 +11,9 @@ type DiscoverPageProps = {
 function getInitialTab(value?: string | string[]) {
   const tab = Array.isArray(value) ? value[0] : value;
 
-  if (tab === "near-me") {
-    return "near-me";
-  }
-
-  return tab === "route" ? "route" : "area";
+  if (tab === "area") return "area";
+  if (tab === "route") return "route";
+  return "near-me";
 }
 
 export default async function DiscoverPage(props: DiscoverPageProps) {
@@ -24,18 +22,21 @@ export default async function DiscoverPage(props: DiscoverPageProps) {
     isFeatureEnabled("map_discovery"),
     isFeatureEnabled("route_search"),
   ]);
-  const initialTab = routeSearchEnabled ? getInitialTab(searchParams?.tab) : "area";
+  const requestedTab = getInitialTab(searchParams?.tab);
+  const initialTab =
+    requestedTab === "route" && !routeSearchEnabled ? "near-me" : requestedTab;
 
   return (
     <div className="mx-auto max-w-6xl">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-        Discovery
+        Khám phá địa điểm
       </p>
       <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-        Tìm khách
+        Tìm khách quanh bạn
       </h1>
       <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-        Dùng Tìm khách để phát hiện địa điểm phù hợp, sau đó lưu thành lead để chăm sóc tiếp.
+        Nhập bất kỳ từ khóa nào để tìm địa điểm thật trên Google Maps quanh vị trí hiện tại,
+        trong một khu vực hoặc dọc tuyến đường. Sau đó lưu địa điểm phù hợp thành lead để chăm sóc.
       </p>
 
       {mapDiscoveryEnabled ? (

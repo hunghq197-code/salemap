@@ -114,6 +114,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       data: {
+        center: {
+          latitude: parsed.data.latitude,
+          longitude: parsed.data.longitude,
+        },
         quota: usage,
         results: decoratedResults,
       },
