@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { ClarityScript } from "@/components/analytics/ClarityScript";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
+import { RouteTransitionProgress } from "@/components/navigation/RouteTransitionProgress";
 import { PostHogBootstrap } from "@/components/analytics/PostHogBootstrap";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { getSiteUrl } from "@/lib/site-url";
@@ -106,6 +107,9 @@ export default function RootLayout({
         ) : null}
         <LanguageProvider>
           <PostHogBootstrap />
+          <Suspense fallback={null}>
+            <RouteTransitionProgress />
+          </Suspense>
           {children}
           <ServiceWorkerRegister />
           <ClarityScript />

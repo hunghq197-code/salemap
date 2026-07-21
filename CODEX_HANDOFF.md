@@ -467,6 +467,56 @@ git commit -m "docs: audit api module readiness"
 git push origin main
 ```
 
+## 2026-07-21 Update - Navigation Smoothness
+
+This phase improved perceived speed when clicking menus/internal links and after login.
+
+Implemented changes:
+
+- `components/navigation/RouteTransitionProgress.tsx`
+  - Added a global client-side top progress bar for internal link navigation.
+  - Ignores external links, downloads, modified-clicks, and same-route links.
+- `app/layout.tsx`
+  - Mounted the route progress component inside `Suspense` so it works across public, auth, app, and admin pages.
+- `app/globals.css`
+  - Added the `salemap-route-progress` keyframes.
+- `app/app/layout.tsx`
+  - Removed blocking `trackUserActivity("session_started")` from the critical render path.
+  - Reused the existing server Supabase client for unread notification count.
+  - Added a short timeout fallback for auxiliary unread notification data.
+- `lib/data/activity-tracking.ts`
+  - Added `trackUserActivityForUser` so known-user tracking does not need another auth lookup.
+- `proxy.ts`
+  - Removed duplicate profile/onboarding query from proxy.
+  - App/onboarding pages and layouts still enforce onboarding redirects.
+- `components/auth/LoginForm.tsx`
+  - Removed the extra `supabase.auth.getUser()` call after password login.
+  - Keeps the form disabled with a redirecting state after successful login until the next route renders.
+
+Validation run after the change:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run smoke
+npm run build
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Smoke passed 18/18 checks.
+- Build passed.
+
+Suggested commit:
+
+```powershell
+git add app/layout.tsx app/globals.css app/app/layout.tsx components/navigation/RouteTransitionProgress.tsx components/auth/LoginForm.tsx lib/data/activity-tracking.ts proxy.ts CODEX_HANDOFF.md
+git commit -m "perf: improve navigation responsiveness"
+git push origin main
+```
+
 ## Notes For Future Codex Sessions
 
 - Prefer reading this file first, then run `git status --short --branch`.

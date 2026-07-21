@@ -23,6 +23,7 @@ const loginCopy = {
     rateLimit: "Supabase is rate-limiting login attempts. Please wait a moment and try again.",
     submit: "Log in",
     submitting: "Logging in...",
+    redirecting: "Opening SaleMap...",
     unknown: "Could not log in right now. Please check the account or Supabase Auth settings.",
     unknownCatch: "Could not log in right now. Please try again later.",
   },
@@ -39,6 +40,7 @@ const loginCopy = {
     rateLimit: "Supabase đang giới hạn số lần đăng nhập. Vui lòng chờ một lúc rồi thử lại.",
     submit: "Đăng nhập",
     submitting: "Đang đăng nhập...",
+    redirecting: "Dang mo SaleMap...",
     unknown:
       "Không thể đăng nhập lúc này. Vui lòng kiểm tra lại tài khoản hoặc cài đặt Auth trong Supabase.",
     unknownCatch: "Không thể đăng nhập lúc này. Vui lòng thử lại sau.",
@@ -75,16 +77,18 @@ export function LoginForm() {
   const copy = loginCopy[locale];
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isSubmitting) {
+    if (isSubmitting || isRedirecting) {
       return;
     }
 
     setError("");
     setIsSubmitting(true);
+    setIsRedirecting(false);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
@@ -96,9 +100,11 @@ export function LoginForm() {
       return;
     }
 
+    let shouldKeepBusy = false;
+
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -108,9 +114,7 @@ export function LoginForm() {
         return;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = signInData.user;
 
       const { data: profile } = user
         ? await supabase
@@ -121,12 +125,17 @@ export function LoginForm() {
         : { data: null };
 
       trackUserLoggedIn();
+      shouldKeepBusy = true;
+      setIsRedirecting(true);
       router.replace(profile?.onboarding_completed ? "/app/dashboard" : "/onboarding");
       router.refresh();
     } catch {
       setError(copy.unknownCatch);
     } finally {
-      setIsSubmitting(false);
+      if (!shouldKeepBusy) {
+        setIsSubmitting(false);
+        setIsRedirecting(false);
+      }
     }
   }
 
@@ -139,7 +148,7 @@ export function LoginForm() {
         <input
           autoComplete="email"
           className={inputClasses()}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isRedirecting}
           id="login-email"
           name="email"
           placeholder="ban@email.com"
@@ -154,7 +163,7 @@ export function LoginForm() {
         <input
           autoComplete="current-password"
           className={inputClasses()}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isRedirecting}
           id="login-password"
           name="password"
           placeholder={copy.passwordPlaceholder}
@@ -170,10 +179,10 @@ export function LoginForm() {
 
       <button
         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3] disabled:cursor-not-allowed disabled:opacity-70"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isRedirecting}
         type="submit"
       >
-        {isSubmitting ? copy.submitting : copy.submit}
+        {isRedirecting ? copy.redirecting : isSubmitting ? copy.submitting : copy.submit}
         <ArrowRight aria-hidden="true" className="h-5 w-5" />
       </button>
 

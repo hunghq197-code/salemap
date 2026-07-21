@@ -66,6 +66,22 @@ export async function trackUserActivity(actionType: string, incrementBy = 1) {
 
   try {
     const { userId } = await createAuthedSupabaseServerClient();
+    await trackUserActivityForUser(userId, actionType, incrementBy);
+  } catch {
+    // Retention tracking must never break product workflows.
+  }
+}
+
+export async function trackUserActivityForUser(
+  userId: string,
+  actionType: string,
+  incrementBy = 1,
+) {
+  if (incrementBy <= 0 || !isActivityAction(actionType)) {
+    return;
+  }
+
+  try {
     const supabase = createSupabaseAdminClient();
     const activityDate = todayDate();
     const action = ACTIVITY_ACTIONS[actionType];

@@ -45,30 +45,6 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  let profile: { onboarding_completed?: boolean | null } | null = null;
-
-  try {
-    const profileResult = await supabase
-      .from("user_profiles")
-      .select("onboarding_completed")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    profile = profileResult.data;
-  } catch {
-    profile = null;
-  }
-
-  const onboardingCompleted = Boolean(profile?.onboarding_completed);
-
-  if (isAppRoute && !onboardingCompleted) {
-    return redirectTo(request, "/onboarding");
-  }
-
-  if (isOnboardingRoute && onboardingCompleted) {
-    return redirectTo(request, "/app/dashboard");
-  }
-
   return response;
 }
 

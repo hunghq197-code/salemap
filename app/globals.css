@@ -20,6 +20,20 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+@keyframes salemap-route-progress {
+  0% {
+    transform: scaleX(0.08);
+  }
+
+  58% {
+    transform: scaleX(0.74);
+  }
+
+  100% {
+    transform: scaleX(0.94);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
