@@ -517,6 +517,43 @@ git commit -m "perf: improve navigation responsiveness"
 git push origin main
 ```
 
+## 2026-07-21 Update - Login Flow Fix
+
+This phase fixed a login issue where the form could show the generic "try again later" message after submitting credentials.
+
+Implemented changes:
+
+- `components/auth/LoginForm.tsx`
+  - Removed the post-login `user_profiles` query from the client form.
+  - Successful Supabase password login now redirects directly to `/app/dashboard`.
+  - The server app layout remains responsible for redirecting incomplete users to `/onboarding`.
+  - Added clearer catch messages for missing Supabase public env config and Supabase network failures.
+  - Restored a proper redirecting label for Vietnamese login copy.
+
+Validation run after the change:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run smoke
+npm run build
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Smoke passed 18/18 checks.
+- Build passed.
+
+Suggested commit:
+
+```powershell
+git add components/auth/LoginForm.tsx CODEX_HANDOFF.md
+git commit -m "fix: simplify login redirect flow"
+git push origin main
+```
+
 ## Notes For Future Codex Sessions
 
 - Prefer reading this file first, then run `git status --short --branch`.

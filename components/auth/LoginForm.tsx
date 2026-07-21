@@ -17,6 +17,10 @@ const loginCopy = {
     invalidCredentials:
       "Email or password is incorrect. If you just registered and have not received a confirmation email, check the Confirm Email setting in Supabase.",
     missingFields: "Please enter email and password.",
+    configMissing:
+      "Missing Supabase public config. Please set NEXT_PUBLIC_SUPABASE_URL and a public Supabase key.",
+    network:
+      "Could not reach Supabase right now. Please check your network or Supabase project URL.",
     password: "Password",
     passwordPlaceholder: "Enter password",
     registerLink: "Create an account",
@@ -40,7 +44,7 @@ const loginCopy = {
     rateLimit: "Supabase đang giới hạn số lần đăng nhập. Vui lòng chờ một lúc rồi thử lại.",
     submit: "Đăng nhập",
     submitting: "Đang đăng nhập...",
-    redirecting: "Dang mo SaleMap...",
+    redirecting: "Đang mở SaleMap...",
     unknown:
       "Không thể đăng nhập lúc này. Vui lòng kiểm tra lại tài khoản hoặc cài đặt Auth trong Supabase.",
     unknownCatch: "Không thể đăng nhập lúc này. Vui lòng thử lại sau.",
@@ -69,6 +73,35 @@ function getLoginErrorMessage(errorMessage: string, copy: LoginCopy) {
   }
 
   return copy.unknown;
+}
+
+function getUnexpectedLoginErrorMessage(
+  error: unknown,
+  locale: string,
+  copy: LoginCopy,
+) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (
+    message.includes("supabase public env") ||
+    message.includes("next_public_supabase")
+  ) {
+    return locale === "vi"
+      ? "Thiếu cấu hình Supabase public. Hãy kiểm tra NEXT_PUBLIC_SUPABASE_URL và public key."
+      : "Missing Supabase public config. Please set NEXT_PUBLIC_SUPABASE_URL and a public Supabase key.";
+  }
+
+  if (
+    message.includes("failed to fetch") ||
+    message.includes("fetch failed") ||
+    message.includes("networkerror")
+  ) {
+    return locale === "vi"
+      ? "Không kết nối được Supabase lúc này. Hãy kiểm tra mạng hoặc Supabase project URL."
+      : "Could not reach Supabase right now. Please check your network or Supabase project URL.";
+  }
+
+  return copy.unknownCatch;
 }
 
 export function LoginForm() {
@@ -114,23 +147,17 @@ export function LoginForm() {
         return;
       }
 
-      const user = signInData.user;
-
-      const { data: profile } = user
-        ? await supabase
-            .from("user_profiles")
-            .select("onboarding_completed")
-            .eq("user_id", user.id)
-            .maybeSingle()
-        : { data: null };
+      if (!signInData.user) {
+        setError(copy.unknown);
+        return;
+      }
 
       trackUserLoggedIn();
       shouldKeepBusy = true;
       setIsRedirecting(true);
-      router.replace(profile?.onboarding_completed ? "/app/dashboard" : "/onboarding");
-      router.refresh();
-    } catch {
-      setError(copy.unknownCatch);
+      router.replace("/app/dashboard");
+    } catch (loginError) {
+      setError(getUnexpectedLoginErrorMessage(loginError, locale, copy));
     } finally {
       if (!shouldKeepBusy) {
         setIsSubmitting(false);
