@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { isDuplicateStrategy } from "@/lib/constants/import";
 import { getImportJobById, updateImportJob } from "@/lib/data/import-jobs";
 import { executeImportJob } from "@/lib/import/execute-import";
@@ -11,6 +12,16 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-import-execute",
+    limit: 6,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

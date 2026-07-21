@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { AdminAuthError } from "@/lib/admin/auth";
 import { syncAdminPaymentGatewayTransaction } from "@/lib/admin/data/payment-gateway";
 import { PayOSConfigError } from "@/lib/providers/payments";
@@ -19,7 +20,17 @@ function errorResponse(code: string, message: string, status = 400) {
   );
 }
 
-export async function POST(_request: Request, props: AdminPaymentGatewaySyncRouteProps) {
+export async function POST(request: Request, props: AdminPaymentGatewaySyncRouteProps) {
+  const guardError = guardMutationRequest(request, {
+    key: "admin-payment-gateway-sync",
+    limit: 12,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   try {
     const transaction = await syncAdminPaymentGatewayTransaction(params.id);

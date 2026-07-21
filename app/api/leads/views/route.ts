@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { createSavedView, getSavedViews } from "@/lib/data/lead-saved-views";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSavedViewSchema } from "@/lib/validators/lead-views";
 
@@ -33,6 +34,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-saved-view-create",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const user = await requireUser();
 
   if (!user) {

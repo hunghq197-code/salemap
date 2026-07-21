@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { rebuildSalesActivityForUser } from "@/lib/data/sales-activity";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function jsonError(message: string, status = 400) {
@@ -10,7 +11,17 @@ function dateOnly(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "sales-analytics-rebuild",
+    limit: 6,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

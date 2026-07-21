@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { AdminAuthError } from "@/lib/admin/auth";
 import { rejectPaymentRequest } from "@/lib/admin/data/payment-requests";
 import { adminReviewPaymentRequestSchema } from "@/lib/validators/payment-request";
@@ -20,6 +21,16 @@ function errorResponse(code: string, message: string, status = 400) {
 }
 
 export async function POST(request: Request, props: AdminReviewRouteProps) {
+  const guardError = guardMutationRequest(request, {
+    key: "admin-payment-request-reject",
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const payload = await request.json().catch(() => ({}));
   const parsed = adminReviewPaymentRequestSchema.safeParse(payload);

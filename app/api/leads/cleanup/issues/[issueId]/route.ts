@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import {
   dismissDataQualityIssue,
   resolveDataQualityIssue,
@@ -16,6 +17,16 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function PATCH(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-quality-issue-update",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

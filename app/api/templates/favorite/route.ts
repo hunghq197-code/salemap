@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { z } from "zod";
+import { guardMutationRequest } from "@/lib/security/request";
 import { toggleTemplateFavorite } from "@/lib/data/templates";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,16 @@ function errorResponse(code: string, message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "template-favorite",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

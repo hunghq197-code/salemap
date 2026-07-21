@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import {
   getPaymentBankInfo,
   getPaymentRequestByIdForUser,
@@ -56,6 +57,16 @@ export async function GET(_request: Request, props: PaymentRequestRouteProps) {
 }
 
 export async function PATCH(request: Request, props: PaymentRequestRouteProps) {
+  const guardError = guardMutationRequest(request, {
+    key: "payment-request-update",
+    limit: 20,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const userId = await getUserId();
 

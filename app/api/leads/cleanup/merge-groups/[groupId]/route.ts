@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { dismissMergeGroup, getMergeGroupById } from "@/lib/leads/merge-leads";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { dismissMergeGroupSchema } from "@/lib/validators/lead-cleanup";
@@ -40,6 +41,16 @@ export async function GET(_request: Request, props: RouteContext) {
 }
 
 export async function PATCH(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-merge-group-update",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const user = await requireUser();
 

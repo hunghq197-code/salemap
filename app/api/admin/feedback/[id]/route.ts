@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { z } from "zod";
 import { AdminAuthError, requireAdminForApi } from "@/lib/admin/auth";
 import {
@@ -22,6 +23,16 @@ function toAdminNote(value?: string) {
 }
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const guardError = guardMutationRequest(request, {
+    key: "admin-feedback-update",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   try {
     await requireAdminForApi();

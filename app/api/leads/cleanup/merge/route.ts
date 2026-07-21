@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { mergeLeads } from "@/lib/leads/merge-leads";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { mergeLeadsSchema } from "@/lib/validators/lead-cleanup";
 
@@ -8,6 +9,16 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-merge",
+    limit: 20,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

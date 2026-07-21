@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { getImportJobById, updateImportJob } from "@/lib/data/import-jobs";
 import { getAllImportRows, updateImportRow } from "@/lib/data/import-rows";
 import type { FieldMapping } from "@/lib/import/field-mapping";
@@ -13,7 +14,17 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_request: Request, props: RouteContext) {
+export async function POST(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-import-validate",
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { createSalesGoal, getSalesGoals } from "@/lib/data/sales-goals";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSalesGoalSchema } from "@/lib/validators/sales-analytics";
 
@@ -34,6 +35,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "sales-goal-create",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const user = await requireUser();
 
   if (!user) {

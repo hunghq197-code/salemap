@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { z } from "zod";
 import { submitBetaRound2Survey } from "@/lib/data/surveys";
 import {
@@ -28,6 +29,16 @@ function errorResponse(code: string, message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "beta-round-2-survey",
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const payload = await request.json().catch(() => null);
   const parsed = surveySchema.safeParse(payload);
 

@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
 import {
   FEATURE_FLAG_DISABLED_MESSAGE,
@@ -42,6 +43,16 @@ async function getSavedPlaces(userId: string, placeIds: string[]) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "discovery-near-me-search",
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { updateLeadStatusFromPipeline } from "@/lib/data/lead-pipeline";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updatePipelineStatusSchema } from "@/lib/validators/lead-views";
 
@@ -8,6 +9,16 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-pipeline-update-status",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

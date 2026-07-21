@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { pinSalesGoal, unpinSalesGoal } from "@/lib/data/sales-goals";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -7,6 +8,16 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(request: Request, props: { params: Promise<{ goalId: string }> }) {
+  const guardError = guardMutationRequest(request, {
+    key: "sales-goal-pin",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

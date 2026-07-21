@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { isExportFieldKey } from "@/lib/constants/export";
+import { guardMutationRequest } from "@/lib/security/request";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
 import {
   FEATURE_FLAG_DISABLED_MESSAGE,
@@ -50,6 +51,16 @@ async function consumeExportQuota() {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-export",
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

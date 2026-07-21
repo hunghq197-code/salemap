@@ -1,9 +1,20 @@
 ﻿import { NextResponse } from "next/server";
 import { getFilteredLeads } from "@/lib/data/lead-filtered-list";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { leadFiltersSchema } from "@/lib/validators/lead-views";
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-filter",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

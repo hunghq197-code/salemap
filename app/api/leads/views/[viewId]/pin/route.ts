@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { pinSavedView, unpinSavedView } from "@/lib/data/lead-saved-views";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,6 +14,16 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-saved-view-pin",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

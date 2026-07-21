@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import {
   archiveSalesGoal,
   getSalesGoalById,
@@ -38,6 +39,16 @@ export async function GET(_request: Request, props: { params: Promise<{ goalId: 
 }
 
 export async function PATCH(request: Request, props: { params: Promise<{ goalId: string }> }) {
+  const guardError = guardMutationRequest(request, {
+    key: "sales-goal-update",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const user = await requireUser();
 
@@ -60,7 +71,17 @@ export async function PATCH(request: Request, props: { params: Promise<{ goalId:
   }
 }
 
-export async function DELETE(_request: Request, props: { params: Promise<{ goalId: string }> }) {
+export async function DELETE(request: Request, props: { params: Promise<{ goalId: string }> }) {
+  const guardError = guardMutationRequest(request, {
+    key: "sales-goal-delete",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const user = await requireUser();
 

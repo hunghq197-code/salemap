@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import {
   deleteSavedView,
   getSavedViewById,
@@ -44,6 +45,16 @@ export async function GET(_request: Request, props: RouteContext) {
 }
 
 export async function PATCH(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-saved-view-update",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const user = await requireUser();
 
@@ -67,7 +78,17 @@ export async function PATCH(request: Request, props: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, props: RouteContext) {
+export async function DELETE(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-saved-view-delete",
+    limit: 60,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const user = await requireUser();
 

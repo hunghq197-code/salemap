@@ -138,3 +138,13 @@ export function rateLimit(request: Request, options: RateLimitOptions) {
     },
   );
 }
+
+export function guardMutationRequest(request: Request, options: RateLimitOptions) {
+  const originError = enforceSameOrigin(request);
+
+  if (originError) {
+    return originError;
+  }
+
+  return rateLimit(request, options);
+}

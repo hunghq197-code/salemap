@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardMutationRequest } from "@/lib/security/request";
 import { incrementSavedViewUsage } from "@/lib/data/lead-saved-views";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -8,7 +9,17 @@ type RouteContext = {
   }>;
 };
 
-export async function POST(_request: Request, props: RouteContext) {
+export async function POST(request: Request, props: RouteContext) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-saved-view-usage",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const params = await props.params;
   const supabase = await createSupabaseServerClient();
   const {

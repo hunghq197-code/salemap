@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { isBetaChecklistKey } from "@/lib/constants/beta-checklist";
+import { guardMutationRequest } from "@/lib/security/request";
 import { markChecklistItemCompleted } from "@/lib/data/beta-checklist";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -14,6 +15,16 @@ function errorResponse(code: string, message: string, status = 400) {
 }
 
 export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "beta-checklist-complete",
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

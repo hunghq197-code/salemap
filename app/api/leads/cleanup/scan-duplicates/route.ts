@@ -1,12 +1,23 @@
 ﻿import { NextResponse } from "next/server";
 import { createDuplicateSuggestionsForUser } from "@/lib/leads/duplicate-detection";
+import { guardMutationRequest } from "@/lib/security/request";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message, success: false }, { status });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const guardError = guardMutationRequest(request, {
+    key: "lead-duplicate-scan",
+    limit: 6,
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (guardError) {
+    return guardError;
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
