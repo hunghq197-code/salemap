@@ -142,33 +142,37 @@ export function useLocalFormDraft({
   const [offlineBlocked, setOfflineBlocked] = useState(false);
 
   useEffect(() => {
-    if (!formRef.current) {
-      return;
-    }
-
-    if (toastCode && clearOnToastCodes.includes(toastCode)) {
-      clearStoredDraft(userId, draftKey);
-      setDraftSavedAt(null);
-      setHasDraft(false);
-      return;
-    }
-
-    const draft = getDraft<DraftRecord>(userId, draftKey);
-
-    if (draft?.data?.values) {
-      restoreValues(formRef.current, draft.data.values);
-      setDraftSavedAt(draft.data.savedAt || draft.savedAt);
-      setHasDraft(true);
-
-      if (!restoredDraft.current) {
-        restoredDraft.current = true;
-        trackOfflineDraftRestored({
-          formName,
-          route: window.location.pathname,
-          status: "restored",
-        });
+    const timer = window.setTimeout(() => {
+      if (!formRef.current) {
+        return;
       }
-    }
+
+      if (toastCode && clearOnToastCodes.includes(toastCode)) {
+        clearStoredDraft(userId, draftKey);
+        setDraftSavedAt(null);
+        setHasDraft(false);
+        return;
+      }
+
+      const draft = getDraft<DraftRecord>(userId, draftKey);
+
+      if (draft?.data?.values) {
+        restoreValues(formRef.current, draft.data.values);
+        setDraftSavedAt(draft.data.savedAt || draft.savedAt);
+        setHasDraft(true);
+
+        if (!restoredDraft.current) {
+          restoredDraft.current = true;
+          trackOfflineDraftRestored({
+            formName,
+            route: window.location.pathname,
+            status: "restored",
+          });
+        }
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [clearOnToastCodes, draftKey, formName, toastCode, userId]);
 
   function saveDraft() {

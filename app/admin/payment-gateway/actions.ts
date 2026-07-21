@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { syncAdminPaymentGatewayTransaction } from "@/lib/admin/data/payment-gateway";
 
-export async function syncPaymentGatewayAction(id: string, _formData: FormData) {
+export async function syncPaymentGatewayAction(id: string) {
   try {
     await syncAdminPaymentGatewayTransaction(id);
     revalidatePath("/admin/payment-gateway");

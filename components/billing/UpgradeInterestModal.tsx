@@ -2,7 +2,7 @@
 
 import { Loader2, X } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   trackUpgradeInterestFailed,
   trackUpgradeInterestSubmitted,
@@ -49,20 +49,16 @@ function getErrorMessage(payload: UpgradeInterestResponse) {
   );
 }
 
-export function UpgradeInterestModal({ onClose, plan }: UpgradeInterestModalProps) {
+function UpgradeInterestModalContent({
+  onClose,
+  plan,
+}: {
+  onClose: () => void;
+  plan: PricingPlan;
+}) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    setError("");
-    setIsSubmitting(false);
-    setSubmitted(false);
-  }, [plan?.key]);
-
-  if (!plan) {
-    return null;
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -225,4 +221,12 @@ export function UpgradeInterestModal({ onClose, plan }: UpgradeInterestModalProp
       </section>
     </div>
   );
+}
+
+export function UpgradeInterestModal({ onClose, plan }: UpgradeInterestModalProps) {
+  if (!plan) {
+    return null;
+  }
+
+  return <UpgradeInterestModalContent key={plan.key} onClose={onClose} plan={plan} />;
 }

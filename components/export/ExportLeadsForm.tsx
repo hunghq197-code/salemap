@@ -48,18 +48,29 @@ export function ExportLeadsForm({
   tags,
 }: ExportLeadsFormProps) {
   const [error, setError] = useState("");
-  const [quota, setQuota] = useState<DailyUsage | null>(exportQuota ?? null);
+  const [localExportCount, setLocalExportCount] = useState(0);
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
   const [selectedFields, setSelectedFields] =
     useState<ExportFieldKey[]>(DEFAULT_EXPORT_FIELDS);
   const [submitting, setSubmitting] = useState(false);
+  const quota: DailyUsage | null = quotaExhausted
+    ? {
+        actionType: "export_leads",
+        limit: DAILY_QUOTAS.export_leads,
+        remaining: 0,
+        used: DAILY_QUOTAS.export_leads,
+      }
+    : exportQuota
+      ? {
+          ...exportQuota,
+          remaining: Math.max(0, exportQuota.remaining - localExportCount),
+          used: Math.min(exportQuota.limit, exportQuota.used + localExportCount),
+        }
+      : null;
 
   useEffect(() => {
     trackExportPageViewed();
   }, []);
-
-  useEffect(() => {
-    setQuota(exportQuota ?? null);
-  }, [exportQuota]);
 
   function toggleField(field: ExportFieldKey) {
     setSelectedFields((current) =>
@@ -102,12 +113,7 @@ export function ExportLeadsForm({
           | null;
 
         if (result?.error?.code === "QUOTA_EXCEEDED") {
-          setQuota({
-            actionType: "export_leads",
-            limit: DAILY_QUOTAS.export_leads,
-            remaining: 0,
-            used: DAILY_QUOTAS.export_leads,
-          });
+          setQuotaExhausted(true);
         }
 
         throw new Error(
@@ -131,15 +137,7 @@ export function ExportLeadsForm({
         sourceFilter: filters.source || undefined,
         statusFilter: filters.status || undefined,
       });
-      setQuota((current) =>
-        current
-          ? {
-              ...current,
-              remaining: Math.max(0, current.remaining - 1),
-              used: Math.min(current.limit, current.used + 1),
-            }
-          : current,
-      );
+      setLocalExportCount((current) => current + 1);
     } catch (exportError) {
       setError(
         exportError instanceof Error

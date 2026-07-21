@@ -28,22 +28,23 @@ function isLocale(value: string | null): value is Locale {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("vi");
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === "undefined") {
+      return "vi";
+    }
+
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return isLocale(stored) ? stored : "vi";
+  });
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-
-    if (isLocale(stored)) {
-      setLocaleState(stored);
-      document.documentElement.lang = stored;
-    }
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const value = useMemo<LanguageContextValue>(() => {
     function setLocale(nextLocale: Locale) {
       setLocaleState(nextLocale);
       window.localStorage.setItem(STORAGE_KEY, nextLocale);
-      document.documentElement.lang = nextLocale;
     }
 
     return {

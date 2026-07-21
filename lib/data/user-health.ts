@@ -5,6 +5,7 @@ import {
   toListResult,
   type AdminSearchParams,
 } from "@/lib/admin/data/utils";
+import type { QueryLike } from "@/lib/leads/lead-filters";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const HEALTH_LABEL_OPTIONS = [
@@ -88,13 +89,13 @@ function cap(value: number, max: number) {
 async function countRows(
   table: string,
   userId: string,
-  configure?: (query: any) => any,
+  configure?: (query: QueryLike) => QueryLike,
 ) {
   const supabase = createSupabaseAdminClient();
   let query = supabase
     .from(table)
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
+    .eq("user_id", userId) as unknown as QueryLike;
 
   if (configure) {
     query = configure(query);

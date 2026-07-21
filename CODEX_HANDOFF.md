@@ -213,8 +213,8 @@ git push origin main
 
 High-value next tasks, in order:
 
-1. Reduce lint warnings gradually, starting with unused imports and easy hook warnings.
-2. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
+1. If browser map rendering is part of the product goal, implement real map rendering using `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` and keep server key separate.
+2. Add targeted smoke tests for the high-value app flows once test accounts/env data are available.
 
 ## 2026-07-21 Update - Google Maps Hardening
 
@@ -339,6 +339,44 @@ Suggested commit:
 ```powershell
 git add next.config.mjs CODEX_HANDOFF.md
 git commit -m "fix: set turbopack project root"
+git push origin main
+```
+
+## 2026-07-21 Update - Lint Cleanup
+
+This phase cleaned all current ESLint warnings.
+
+Implemented changes:
+
+- Removed unused imports/variables in admin, analytics, import, reminder, and shell files.
+- Replaced explicit `any` in Supabase query helper code with a reusable `QueryLike` type in `lib/leads/lead-filters.ts`.
+- Cleaned React hook warnings by:
+  - Moving network status to `useSyncExternalStore`.
+  - Initializing offline/PWA state from browser snapshots instead of setting state synchronously in effects.
+  - Resetting the upgrade-interest modal through a keyed inner component.
+  - Deriving export quota display from props plus local export count.
+  - Deriving toast visibility from the active toast code and auto-dismiss state.
+  - Deferring local form draft restoration state updates until after mount.
+
+Validation run after the change:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with 0 warnings and 0 errors.
+- Build passed.
+
+Suggested commit:
+
+```powershell
+git add app/admin/payment-gateway/actions.ts app/admin/retention/page.tsx app/api/import/leads/[jobId]/execute/route.ts app/app/analytics/page.tsx app/app/leads/cleanup/page.tsx app/app/offline/page.tsx components/admin/AdminShell.tsx components/billing/UpgradeInterestModal.tsx components/export/ExportLeadsForm.tsx components/i18n/LanguageProvider.tsx components/pwa/OfflineUserProvider.tsx components/pwa/PWAProvider.tsx components/pwa/useLocalFormDraft.ts components/ui/Toast.tsx hooks/useNetworkStatus.ts lib/analytics/sales-analytics.ts lib/data/lead-filtered-list.ts lib/data/lead-pipeline.ts lib/data/reminder-delivery.ts lib/data/sales-activity.ts lib/data/sales-goals.ts lib/data/user-health.ts lib/import/execute-import.ts lib/leads/lead-filters.ts CODEX_HANDOFF.md
+git commit -m "chore: clean lint warnings"
 git push origin main
 ```
 

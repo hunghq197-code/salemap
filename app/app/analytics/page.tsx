@@ -21,7 +21,6 @@ import {
 } from "@/lib/analytics/sales-analytics";
 import {
   ANALYTICS_PERIODS,
-  getMetricLabel,
   type AnalyticsPeriodKey,
 } from "@/lib/constants/sales-analytics";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";

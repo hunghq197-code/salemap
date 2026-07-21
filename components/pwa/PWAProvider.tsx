@@ -50,21 +50,20 @@ function getOfflineQueueCount() {
 export function PWAProvider() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installDismissed, setInstallDismissed] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [queueCount, setQueueCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof window === "undefined" ? true : window.navigator.onLine,
+  );
+  const [queueCount, setQueueCount] = useState(getOfflineQueueCount);
   const [showBackOnline, setShowBackOnline] = useState(false);
   const wasOffline = useRef(false);
   const installTracked = useRef(false);
 
-  const standalone = useMemo(isStandaloneMode, []);
-  const isIOS = useMemo(isIOSDevice, []);
+  const standalone = useMemo(() => isStandaloneMode(), []);
+  const isIOS = useMemo(() => isIOSDevice(), []);
   const shouldShowInstallHint =
     !standalone && !installDismissed && (Boolean(deferredPrompt) || isIOS);
 
   useEffect(() => {
-    setIsOnline(window.navigator.onLine);
-    setQueueCount(getOfflineQueueCount());
-
     const onOnline = () => {
       setIsOnline(true);
       setQueueCount(getOfflineQueueCount());

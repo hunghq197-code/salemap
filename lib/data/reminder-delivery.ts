@@ -3,7 +3,6 @@ import { buildReminderDueEmail } from "@/lib/email/templates/reminder-due";
 import {
   ensureNotificationSettingsForUser,
   getDefaultNotificationSettings,
-  type NotificationSettings,
 } from "@/lib/data/notification-settings";
 import { createNotification } from "@/lib/data/notifications";
 import { getEmailProvider } from "@/lib/providers/email";

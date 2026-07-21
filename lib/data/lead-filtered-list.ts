@@ -5,6 +5,7 @@ import {
   buildLeadFilterQuery,
   normalizeLeadFilters,
   type LeadFilters,
+  type QueryLike,
 } from "@/lib/leads/lead-filters";
 import { SMART_VIEW_DEFINITIONS } from "@/lib/constants/lead-pipeline";
 
@@ -110,7 +111,11 @@ async function getLeadIdsForTags(filters: LeadFilters, userId: string) {
   return Array.from(new Set((leadTags ?? []).map((row) => String(row.lead_id))));
 }
 
-function applySort(query: any, sortBy?: string, sortDirection?: "asc" | "desc") {
+function applySort(
+  query: QueryLike<RawLead[]>,
+  sortBy?: string,
+  sortDirection?: "asc" | "desc",
+) {
   const direction = sortDirection || "desc";
   const safeSort = [
     "created_at",
@@ -134,10 +139,10 @@ async function buildFilteredQuery(selectFields: string, params: FilteredLeadList
   const filters = normalizeLeadFilters(params.filters ?? {});
   const leadIdsForTags = await getLeadIdsForTags(filters, userId);
   let query = buildLeadFilterQuery(
-    supabase.from("leads").select(selectFields, { count: "exact" }) as any,
+    supabase.from("leads").select(selectFields, { count: "exact" }) as unknown as QueryLike<RawLead[]>,
     filters,
     userId,
-  ) as any;
+  );
 
   if (leadIdsForTags) {
     if (leadIdsForTags.length === 0) {

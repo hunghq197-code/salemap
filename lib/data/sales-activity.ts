@@ -1,4 +1,5 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
+import type { QueryLike } from "@/lib/leads/lead-filters";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isMissingSupabaseSchema } from "@/lib/supabase/schema-error";
 
@@ -54,16 +55,16 @@ async function countRows(
   table: string,
   userId: string,
   date: string,
-  build?: (query: any) => any,
+  build?: (query: QueryLike) => QueryLike,
   dateColumn = "created_at",
 ) {
   const supabase = createSupabaseAdminClient();
-  let query: any = supabase
+  let query = supabase
     .from(table)
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .gte(dateColumn, `${date}T00:00:00.000Z`)
-    .lt(dateColumn, `${addDays(date, 1)}T00:00:00.000Z`);
+    .lt(dateColumn, `${addDays(date, 1)}T00:00:00.000Z`) as unknown as QueryLike;
 
   if (build) {
     query = build(query);
@@ -83,17 +84,17 @@ async function sumColumn(
   userId: string,
   date: string,
   column: string,
-  build?: (query: any) => any,
+  build?: (query: QueryLike<Record<string, unknown>[]>) => QueryLike<Record<string, unknown>[]>,
   dateColumn = "created_at",
 ) {
   const supabase = createSupabaseAdminClient();
-  let query: any = supabase
+  let query = supabase
     .from(table)
     .select(column)
     .eq("user_id", userId)
     .gte(dateColumn, `${date}T00:00:00.000Z`)
     .lt(dateColumn, `${addDays(date, 1)}T00:00:00.000Z`)
-    .limit(5000);
+    .limit(5000) as unknown as QueryLike<Record<string, unknown>[]>;
 
   if (build) {
     query = build(query);

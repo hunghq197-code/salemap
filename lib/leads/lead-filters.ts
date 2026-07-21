@@ -20,16 +20,27 @@ export type LeadFilters = {
   tagNames?: string[];
 };
 
-type QueryLike = {
-  eq: (column: string, value: unknown) => QueryLike;
-  gte: (column: string, value: unknown) => QueryLike;
-  ilike: (column: string, value: unknown) => QueryLike;
-  in: (column: string, values: unknown[]) => QueryLike;
-  is: (column: string, value: unknown) => QueryLike;
-  lt: (column: string, value: unknown) => QueryLike;
-  lte: (column: string, value: unknown) => QueryLike;
-  not: (column: string, operator: string, value: unknown) => QueryLike;
-  or: (filters: string) => QueryLike;
+export type QueryLike<TData = unknown[]> = PromiseLike<{
+  count: number | null;
+  data: TData | null;
+  error: { code?: string; message: string } | null;
+}> & {
+  eq: (column: string, value: unknown) => QueryLike<TData>;
+  gte: (column: string, value: unknown) => QueryLike<TData>;
+  ilike: (column: string, value: unknown) => QueryLike<TData>;
+  in: (column: string, values: unknown[]) => QueryLike<TData>;
+  is: (column: string, value: unknown) => QueryLike<TData>;
+  limit: (count: number) => QueryLike<TData>;
+  lt: (column: string, value: unknown) => QueryLike<TData>;
+  lte: (column: string, value: unknown) => QueryLike<TData>;
+  neq: (column: string, value: unknown) => QueryLike<TData>;
+  not: (column: string, operator: string, value: unknown) => QueryLike<TData>;
+  or: (filters: string) => QueryLike<TData>;
+  order: (
+    column: string,
+    options?: { ascending?: boolean; nullsFirst?: boolean },
+  ) => QueryLike<TData>;
+  range: (from: number, to: number) => QueryLike<TData>;
 };
 
 function cleanString(value?: unknown) {

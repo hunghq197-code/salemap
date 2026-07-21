@@ -6,6 +6,7 @@ import {
   type AnalyticsPeriodKey,
   type SalesMetricKey,
 } from "@/lib/constants/sales-analytics";
+import type { QueryLike } from "@/lib/leads/lead-filters";
 import { isMissingSupabaseSchema } from "@/lib/supabase/schema-error";
 
 export type AnalyticsPeriodSelection = {
@@ -235,18 +236,18 @@ async function countRows(
   table: string,
   userId: string,
   range: DateRange,
-  build?: (query: any) => any,
+  build?: (query: QueryLike) => QueryLike,
   dateColumn = "created_at",
 ) {
   const supabase = createSupabaseAdminClient();
   const startValue = dateColumn === "activity_date" ? toDateOnly(range.start) : range.startIso;
   const endValue = dateColumn === "activity_date" ? toDateOnly(range.end) : range.endIso;
-  let query: any = supabase
+  let query = supabase
     .from(table)
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .gte(dateColumn, startValue)
-    .lt(dateColumn, endValue);
+    .lt(dateColumn, endValue) as unknown as QueryLike;
 
   if (build) {
     query = build(query);
@@ -270,19 +271,19 @@ async function sumColumn(
   userId: string,
   range: DateRange,
   column: string,
-  build?: (query: any) => any,
+  build?: (query: QueryLike<Record<string, unknown>[]>) => QueryLike<Record<string, unknown>[]>,
   dateColumn = "created_at",
 ) {
   const supabase = createSupabaseAdminClient();
   const startValue = dateColumn === "activity_date" ? toDateOnly(range.start) : range.startIso;
   const endValue = dateColumn === "activity_date" ? toDateOnly(range.end) : range.endIso;
-  let query: any = supabase
+  let query = supabase
     .from(table)
     .select(column)
     .eq("user_id", userId)
     .gte(dateColumn, startValue)
     .lt(dateColumn, endValue)
-    .limit(5000);
+    .limit(5000) as unknown as QueryLike<Record<string, unknown>[]>;
 
   if (build) {
     query = build(query);

@@ -69,7 +69,7 @@ export async function POST(request: Request, props: RouteContext) {
       data: summary,
       success: true,
     });
-  } catch (error) {
+  } catch {
     await updateImportJob(job.id, {
       failed_at: new Date().toISOString(),
       status: "failed",

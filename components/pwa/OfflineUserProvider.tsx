@@ -35,7 +35,7 @@ export function OfflineUserProvider({
   const router = useRouter();
   const { isOnline } = useNetworkStatus();
   const [isSyncing, setIsSyncing] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(() => readQueue(userId).length);
   const isSyncingRef = useRef(false);
 
   const refreshQueue = useCallback(() => {
@@ -62,13 +62,14 @@ export function OfflineUserProvider({
   }, [refreshQueue, router, userId]);
 
   useEffect(() => {
-    refreshQueue();
     const onQueueUpdated = () => refreshQueue();
+    const timer = window.setTimeout(onQueueUpdated, 0);
 
     window.addEventListener("salemap:offline-queue-updated", onQueueUpdated);
     window.addEventListener("salemap-offline-queue-updated", onQueueUpdated);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("salemap:offline-queue-updated", onQueueUpdated);
       window.removeEventListener("salemap-offline-queue-updated", onQueueUpdated);
     };

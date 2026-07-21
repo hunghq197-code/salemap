@@ -36,7 +36,7 @@ function getStatusLabel(action: OfflineAction) {
 export default function OfflinePage() {
   const { isOnline } = useNetworkStatus();
   const { isSyncing, refreshQueue, syncNow, userId } = useOfflineUser();
-  const [items, setItems] = useState<OfflineAction[]>([]);
+  const [items, setItems] = useState<OfflineAction[]>(() => readQueue(userId));
 
   const refreshItems = useCallback(() => {
     setItems(readQueue(userId));
@@ -44,12 +44,13 @@ export default function OfflinePage() {
   }, [refreshQueue, userId]);
 
   useEffect(() => {
-    refreshItems();
     const onQueueUpdated = () => refreshItems();
+    const timer = window.setTimeout(onQueueUpdated, 0);
 
     window.addEventListener("salemap:offline-queue-updated", onQueueUpdated);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("salemap:offline-queue-updated", onQueueUpdated);
     };
   }, [refreshItems]);

@@ -17,7 +17,6 @@ import {
   MousePointerClick,
   Settings,
   Ticket,
-  UserRound,
   UsersRound,
   HeartPulse,
   RefreshCw,

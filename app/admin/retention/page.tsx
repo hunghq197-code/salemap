@@ -1,4 +1,4 @@
-import { HeartPulse, MessageSquareText, Search, TrendingDown, TrendingUp, UserCheck, UsersRound } from "lucide-react";
+import { HeartPulse, MessageSquareText, TrendingDown, TrendingUp, UserCheck, UsersRound } from "lucide-react";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminFilterBar } from "@/components/admin/AdminFilterBar";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";

@@ -11,8 +11,9 @@ type ToastProps = {
 
 export function Toast({ code }: ToastProps) {
   const validCode = isToastCode(code) ? code : null;
-  const [visible, setVisible] = useState(Boolean(validCode));
+  const [dismissedCode, setDismissedCode] = useState<string | null>(null);
   const message = validCode ? TOAST_MESSAGES[validCode] : null;
+  const visible = Boolean(validCode && dismissedCode !== validCode);
   const isError =
     validCode === "error" ||
     validCode === "lead_invalid" ||
@@ -21,11 +22,8 @@ export function Toast({ code }: ToastProps) {
 
   useEffect(() => {
     if (!validCode) {
-      setVisible(false);
       return;
     }
-
-    setVisible(true);
 
     const eventValue = TOAST_EVENT_MAP[validCode];
     const events = Array.isArray(eventValue)
@@ -43,7 +41,7 @@ export function Toast({ code }: ToastProps) {
       trackEvent(event.eventName, event.properties);
     });
 
-    const timer = window.setTimeout(() => setVisible(false), 4200);
+    const timer = window.setTimeout(() => setDismissedCode(validCode), 4200);
     return () => window.clearTimeout(timer);
   }, [validCode]);
 

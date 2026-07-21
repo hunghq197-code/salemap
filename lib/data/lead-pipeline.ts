@@ -1,7 +1,12 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
 import { PIPELINE_COLUMNS } from "@/lib/constants/lead-pipeline";
-import { buildLeadFilterQuery, normalizeLeadFilters, type LeadFilters } from "@/lib/leads/lead-filters";
+import {
+  buildLeadFilterQuery,
+  normalizeLeadFilters,
+  type LeadFilters,
+  type QueryLike,
+} from "@/lib/leads/lead-filters";
 import type { UpdatePipelineStatusInput } from "@/lib/validators/lead-views";
 
 export type PipelineLeadCard = {
@@ -62,10 +67,12 @@ async function buildBasePipelineQuery(selectFields: string, filters?: LeadFilter
 
   return {
     query: buildLeadFilterQuery(
-      supabase.from("leads").select(selectFields, { count: "exact" }) as any,
+      supabase
+        .from("leads")
+        .select(selectFields, { count: "exact" }) as unknown as QueryLike<PipelineLeadCard[]>,
       normalized,
       userId,
-    ) as any,
+    ),
     supabase,
     userId,
   };

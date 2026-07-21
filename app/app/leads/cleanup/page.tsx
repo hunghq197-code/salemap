@@ -10,6 +10,7 @@ import Link from "next/link";
 import { CleanupPageTracker } from "@/components/cleanup/CleanupPageTracker";
 import { CleanupScanButtons } from "@/components/cleanup/CleanupScanButtons";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
+import type { QueryLike } from "@/lib/leads/lead-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,12 @@ async function getCleanupOverview() {
 
   async function countQuery(
     table: string,
-    apply?: (query: any) => any,
+    apply?: (query: QueryLike) => QueryLike,
   ) {
-    let query = supabase.from(table).select("id", { count: "exact", head: true }).eq("user_id", userId);
+    let query = supabase
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId) as unknown as QueryLike;
 
     if (apply) {
       query = apply(query);

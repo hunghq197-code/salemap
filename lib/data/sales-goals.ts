@@ -11,6 +11,7 @@ import {
   type GoalTemplateKey,
   type SalesGoalStatus,
 } from "@/lib/constants/sales-analytics";
+import type { QueryLike } from "@/lib/leads/lead-filters";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isMissingSupabaseSchema } from "@/lib/supabase/schema-error";
 import type {
@@ -180,12 +181,12 @@ export async function getSalesGoals(params: {
 } = {}) {
   const { userId } = await createAuthedSupabaseServerClient();
   const supabase = createSupabaseAdminClient();
-  let query: any = supabase
+  let query = supabase
     .from("sales_goals")
     .select("*")
     .eq("user_id", userId)
     .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false }) as unknown as QueryLike<SalesGoalRecord[]>;
 
   if (params.pinnedOnly) {
     query = query.eq("is_pinned", true);

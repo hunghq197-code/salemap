@@ -2,7 +2,6 @@ import type { DuplicateStrategy } from "@/lib/constants/import";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import type { ImportJobRecord } from "@/lib/data/import-jobs";
 import { updateImportJob } from "@/lib/data/import-jobs";
-import type { ImportRowRecord } from "@/lib/data/import-rows";
 import { getAllImportRows, updateImportRow } from "@/lib/data/import-rows";
 import type { NormalizedImportLead } from "@/lib/import/normalize-import-row";
 
@@ -251,7 +250,7 @@ export async function executeImportJob(
         status: "imported",
       });
       summary.importedRows += 1;
-    } catch (error) {
+    } catch {
       await updateImportRow(row.id, {
         status: "failed",
         validation_errors: [
