@@ -97,7 +97,7 @@ export async function createLeadNoteAction(formData: FormData) {
 
     revalidatePath(`/app/leads/${parsed.data.leadId}`);
     revalidatePath("/app/leads");
-    revalidatePath("/app/reminders");
+    revalidatePath("/app/tasks");
     revalidatePath("/app/dashboard");
   } catch {
     redirect(`/app/leads/${parsed.data.leadId}?toast=error`);
@@ -122,7 +122,7 @@ export async function createLeadReminderAction(formData: FormData) {
     await createReminder(parsed.data);
     await safeMarkChecklistItemCompleted("create_first_reminder");
     revalidatePath(`/app/leads/${leadId}`);
-    revalidatePath("/app/reminders");
+    revalidatePath("/app/tasks");
     revalidatePath("/app/dashboard");
   } catch {
     redirect(`/app/leads/${leadId}?toast=error`);

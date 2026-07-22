@@ -16,11 +16,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardTracker } from "@/components/app/DashboardTracker";
+import { TodayTasksWidget } from "@/components/dashboard/TodayTasksWidget";
 import { FirstRunGuideCard } from "@/components/app/FirstRunGuideCard";
 import { BetaChecklistCard } from "@/components/beta/BetaChecklistCard";
 import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
-import { ReminderCard } from "@/components/reminders/ReminderCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
 import { Toast } from "@/components/ui/Toast";
 import { DASHBOARD_QUOTA_ACTIONS } from "@/lib/constants/quota";
@@ -33,6 +33,7 @@ import { getSavedViewsWithCounts } from "@/lib/data/lead-saved-views";
 import { getPinnedSalesGoals } from "@/lib/data/sales-goals";
 import { getCurrentSubscription } from "@/lib/data/subscriptions";
 import { getBetaRound2SurveyState } from "@/lib/data/surveys";
+import { getTaskCounts, getTodayTasks } from "@/lib/data/tasks";
 import { getDailyUsageSnapshot } from "@/lib/data/usage";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,8 @@ export default async function DashboardPage(props: DashboardPageProps) {
   const { userId } = await createAuthedSupabaseServerClient();
   const [
     data,
+    taskCounts,
+    todayTasks,
     betaChecklist,
     quota,
     surveyState,
@@ -82,6 +85,8 @@ export default async function DashboardPage(props: DashboardPageProps) {
     pinnedGoals,
   ] = await Promise.all([
     getDashboardData(),
+    getTaskCounts(),
+    getTodayTasks(),
     getBetaChecklistProgress(),
     getDailyUsageSnapshot(DASHBOARD_QUOTA_ACTIONS),
     getBetaRound2SurveyState(),
@@ -193,8 +198,8 @@ export default async function DashboardPage(props: DashboardPageProps) {
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={UsersRound} label="Tổng lead" value={data.totalLeads} />
-          <StatCard icon={Bell} label="Follow-up hôm nay" value={data.todayReminders} />
-          <StatCard icon={Clock3} label="Quá hạn" value={data.overdueReminders} />
+          <StatCard icon={Bell} label="Follow-up hôm nay" value={taskCounts.today} />
+          <StatCard icon={Clock3} label="Quá hạn" value={taskCounts.overdue} />
           <StatCard icon={CalendarPlus} label="Lead mới tuần này" value={data.newLeadsThisWeek} />
         </section>
 
@@ -219,7 +224,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
           ) : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard icon={UsersRound} label="Lead mới hôm nay" value={todaySales.metrics.leads_created} />
-            <StatCard icon={Bell} label="Follow-up cần làm" value={data.todayReminders} />
+            <StatCard icon={Bell} label="Follow-up cần làm" value={taskCounts.today} />
             <StatCard icon={CheckCircle2} label="Follow-up hoàn thành" value={todaySales.metrics.followups_completed} />
             <StatCard icon={BarChart3} label="Lead đã chốt" value={todaySales.metrics.leads_won} />
           </div>
@@ -373,27 +378,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-2">
-          <article>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-xl font-bold text-ink">Việc cần làm hôm nay</h2>
-              <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/reminders">
-                Xem tất cả
-              </Link>
-            </div>
-            {data.todayReminderItems.length > 0 ? (
-              <div className="space-y-3">
-                {data.todayReminderItems.map((reminder) => (
-                  <ReminderCard key={reminder.id} reminder={reminder} tab="today" />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-600 shadow-sm">
-                Hôm nay bạn chưa có việc follow-up nào.
-              </div>
-            )}
-          </article>
+        <TodayTasksWidget counts={taskCounts} tasks={todayTasks.items} />
 
+        <section className="mt-8">
           <article>
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-ink">Lead mới lưu gần đây</h2>

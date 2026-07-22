@@ -24,7 +24,7 @@ function formatDateTime(value: string) {
 }
 
 function getReminderStatusLabel(status?: string | null) {
-  return status === "done" ? "Đã xong" : "Đang chờ";
+  return status === "done" || status === "completed" ? "Đã xong" : "Đang chờ";
 }
 
 function getDeliveryLabels(reminder: ReminderRecord) {
@@ -38,7 +38,11 @@ function getDeliveryLabels(reminder: ReminderRecord) {
     labels.push({ icon: MailCheck, label: "Đã gửi email" });
   }
 
-  if (labels.length === 0 && reminder.status !== "done") {
+  if (
+    labels.length === 0 &&
+    reminder.status !== "done" &&
+    reminder.status !== "completed"
+  ) {
     labels.push({ icon: BellRing, label: "Chưa gửi nhắc" });
   }
 
@@ -49,7 +53,7 @@ export function ReminderCard({ reminder, tab }: ReminderCardProps) {
   const completeAction = completeReminderAction.bind(null, reminder.id, tab);
   const snoozeAction = snoozeReminderAction.bind(null, reminder.id, tab);
   const lead = Array.isArray(reminder.leads) ? reminder.leads[0] : reminder.leads;
-  const isDone = reminder.status === "done";
+  const isDone = reminder.status === "done" || reminder.status === "completed";
   const deliveryLabels = getDeliveryLabels(reminder);
 
   return (

@@ -1,6 +1,6 @@
 # Codex Handoff - SaleMap
 
-Last updated: 2026-07-21, Asia/Saigon.
+Last updated: 2026-07-22, Asia/Saigon.
 
 This file is a handoff note for continuing SaleMap work across the company PC and the home PC. Read this before starting a new Codex session on another machine so work does not get repeated.
 
@@ -712,6 +712,77 @@ Suggested commit:
 ```powershell
 git add app/api/discovery/route/route.ts components/discovery/DiscoverTabs.tsx components/discovery/RouteSearchForm.tsx components/discovery/RouteSummaryCard.tsx components/discovery/SearchResultsList.tsx lib/providers/maps/google-maps.ts lib/providers/maps/types.ts lib/validators/discovery.ts CODEX_HANDOFF.md
 git commit -m "feat: scan routes by street name"
+git push origin main
+```
+
+## 2026-07-22 Update - Follow-Up Task Center MVP
+
+This phase implemented the MVP requested for a practical follow-up/task workflow after the Google Map Discovery work.
+
+Implemented changes:
+
+- New SQL migration:
+  - `supabase/follow-up-task-center-schema.sql`
+  - Extends `reminders` into task records with `task_type`, `priority`, `completed_note_id`, snooze/cancel fields.
+  - Creates `task_events` with RLS for task timeline/admin counts.
+- Task domain/data layer:
+  - `lib/constants/tasks.ts`
+  - `lib/validators/tasks.ts`
+  - `lib/data/tasks.ts`
+  - Supports tabs: today, overdue, upcoming, no_schedule, completed.
+  - Supports create, complete with note/status/outcome, snooze, cancel, reopen, counts, lead task panel, and lead timeline.
+- API routes:
+  - `/api/tasks`
+  - `/api/tasks/counts`
+  - `/api/tasks/leads-without-tasks`
+  - `/api/tasks/[taskId]`
+  - `/api/tasks/[taskId]/complete`
+  - `/api/tasks/[taskId]/snooze`
+  - `/api/tasks/[taskId]/cancel`
+  - `/api/leads/[leadId]/tasks`
+  - All mutating task routes use same-origin + rate-limit guards.
+- App UI:
+  - Added `/app/tasks` as the new task center.
+  - Redirects old `/app/reminders` to `/app/tasks`.
+  - Added task navigation in app shell and i18n labels.
+  - Added dashboard task widget.
+  - Added lead detail task panel and timeline.
+  - Added first follow-up suggestion after saving a Google Maps place as a new lead.
+- Compatibility:
+  - Reminder/analytics/health queries now understand both `completed` and legacy `done`.
+  - Due reminder cron/daily digest now includes `snoozed` tasks as still-open work.
+  - PWA shortcuts, checklist links, email links, staging smoke routes, and revalidation paths now point to `/app/tasks`.
+- Admin:
+  - `/admin/usage` now includes task created/completed/snoozed/cancelled counts without recording note content or sensitive lead details.
+- Smoke tests:
+  - `scripts/smoke.mjs` now checks Task Center mutation endpoints reject bad cross-origin requests.
+
+Validation run after the change:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run build
+npm run smoke
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+- Smoke passed 23/23 checks.
+
+Important deployment note:
+
+- Run `supabase/follow-up-task-center-schema.sql` in Supabase before using `/app/tasks` on another environment.
+- If `/app/tasks` reports missing task columns or missing `task_events`, run item 21 from `SUPABASE_SQL_SETUP.md`.
+
+Suggested commit:
+
+```powershell
+git add CODEX_HANDOFF.md SUPABASE_SQL_SETUP.md app/admin/usage/page.tsx app/api/leads/[leadId]/tasks app/api/tasks app/app/dashboard/page.tsx app/app/leads/[leadId]/page.tsx app/app/leads/actions.ts app/app/reminders/actions.ts app/app/reminders/page.tsx app/app/settings/actions.ts app/app/tasks app/manifest.ts components/app/AppShell.tsx components/dashboard components/discovery/DiscoverTabs.tsx components/leads/LeadTaskPanel.tsx components/leads/LeadTimeline.tsx components/reminders/ReminderCard.tsx components/tasks lib/admin/data/usage.ts lib/analytics/events.ts lib/analytics/sales-analytics.ts lib/constants/beta-checklist.ts lib/constants/tasks.ts lib/data/dashboard.ts lib/data/reminder-delivery.ts lib/data/reminders.ts lib/data/tasks.ts lib/data/user-health.ts lib/email/templates/daily-digest.ts lib/email/templates/reminder-due.ts lib/i18n/dictionary.ts lib/validators/tasks.ts scripts/smoke-staging.mjs scripts/smoke.mjs supabase/follow-up-task-center-schema.sql
+git commit -m "feat: add follow-up task center"
 git push origin main
 ```
 

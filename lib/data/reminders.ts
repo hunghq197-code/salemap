@@ -1,6 +1,7 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
 import { createNotification } from "@/lib/data/notifications";
+import { ACTIVE_TASK_STATUSES, COMPLETED_TASK_STATUSES } from "@/lib/constants/tasks";
 import type { ReminderFormInput, ReminderTab } from "@/lib/validators/reminder";
 
 export type ReminderRecord = {
@@ -51,7 +52,7 @@ async function assertOwnReminder(reminderId: string) {
   const { supabase, userId } = await createAuthedSupabaseServerClient();
   const { data, error } = await supabase
     .from("reminders")
-    .select("id,lead_id,status")
+    .select("id,lead_id,status,remind_at")
     .eq("id", reminderId)
     .eq("user_id", userId)
     .is("deleted_at", null)
@@ -66,7 +67,12 @@ async function assertOwnReminder(reminderId: string) {
   }
 
   return {
-    reminder: data as { id: string; lead_id: string | null; status: string | null },
+    reminder: data as {
+      id: string;
+      lead_id: string | null;
+      remind_at: string | null;
+      status: string | null;
+    },
     supabase,
     userId,
   };
@@ -106,7 +112,7 @@ async function syncLeadNextFollowUp(leadId?: string | null) {
     .select("remind_at")
     .eq("lead_id", leadId)
     .eq("user_id", userId)
-    .eq("status", "pending")
+    .in("status", [...ACTIVE_TASK_STATUSES])
     .is("deleted_at", null)
     .order("remind_at", { ascending: true })
     .limit(1);
@@ -150,9 +156,9 @@ export async function getReminders(params?: ReminderTab | ReminderListParams) {
     .is("deleted_at", null);
 
   if (tab === "done") {
-    query = query.eq("status", "done").order("completed_at", { ascending: false });
+    query = query.in("status", [...COMPLETED_TASK_STATUSES]).order("completed_at", { ascending: false });
   } else {
-    query = query.eq("status", "pending");
+    query = query.in("status", [...ACTIVE_TASK_STATUSES]);
 
     if (tab === "overdue") {
       query = query.lt("remind_at", todayStart).order("remind_at", { ascending: true });
@@ -185,8 +191,10 @@ export async function createReminder(input: ReminderFormInput) {
     .insert({
       description: input.description,
       lead_id: input.leadId,
+      priority: "medium",
       remind_at: remindAt,
       status: "pending",
+      task_type: "follow_up",
       title: input.title,
       user_id: userId,
     })
@@ -201,7 +209,7 @@ export async function createReminder(input: ReminderFormInput) {
   const lead = Array.isArray(data.leads) ? data.leads[0] : data.leads;
 
   await createNotification({
-    actionUrl: data.lead_id ? `/app/leads/${data.lead_id}` : "/app/reminders",
+    actionUrl: data.lead_id ? `/app/leads/${data.lead_id}` : "/app/tasks",
     content: lead?.name
       ? `Đã tạo lịch follow-up cho ${lead.name}.`
       : "Đã tạo lịch follow-up mới.",
@@ -223,7 +231,7 @@ export async function completeReminder(reminderId: string) {
     .from("reminders")
     .update({
       completed_at: now,
-      status: "done",
+      status: "completed",
       updated_at: now,
     })
     .eq("id", reminderId)
@@ -254,7 +262,9 @@ export async function snoozeReminder(reminderId: string, newRemindAt?: string) {
     .from("reminders")
     .update({
       remind_at: next.toISOString(),
-      status: "pending",
+      snoozed_from: reminder.remind_at,
+      snooze_count: 1,
+      status: "snoozed",
       updated_at: new Date().toISOString(),
     })
     .eq("id", reminderId)

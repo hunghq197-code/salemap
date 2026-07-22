@@ -31,7 +31,7 @@ function formatTime(value: string) {
 
 export function buildDailyDigestEmail(input: DailyDigestEmailInput) {
   const siteUrl = getSiteUrl();
-  const appUrl = `${siteUrl}/app/reminders`;
+  const appUrl = `${siteUrl}/app/tasks`;
   const subject = "Việc follow-up hôm nay của bạn trên SaleMap";
   const displayName = input.fullName || "bạn";
   const itemsHtml = input.items

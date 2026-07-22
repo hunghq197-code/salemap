@@ -10,19 +10,23 @@ function cleanTab(tab: string) {
   return parsed.success ? parsed.data : "today";
 }
 
+function toTaskTab(tab: string) {
+  return tab === "done" ? "completed" : tab;
+}
+
 export async function completeReminderAction(reminderId: string, tab: string) {
   const currentTab = cleanTab(tab);
 
   try {
     await completeReminder(reminderId);
-    revalidatePath("/app/reminders");
+    revalidatePath("/app/tasks");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/leads");
   } catch {
-    redirect(`/app/reminders?tab=${currentTab}&toast=error`);
+    redirect(`/app/tasks?tab=${toTaskTab(currentTab)}&toast=error`);
   }
 
-  redirect(`/app/reminders?tab=${currentTab}&toast=reminder_completed`);
+  redirect(`/app/tasks?tab=${toTaskTab(currentTab)}&toast=reminder_completed`);
 }
 
 export async function snoozeReminderAction(reminderId: string, tab: string) {
@@ -30,12 +34,12 @@ export async function snoozeReminderAction(reminderId: string, tab: string) {
 
   try {
     await snoozeReminder(reminderId);
-    revalidatePath("/app/reminders");
+    revalidatePath("/app/tasks");
     revalidatePath("/app/dashboard");
     revalidatePath("/app/leads");
   } catch {
-    redirect(`/app/reminders?tab=${currentTab}&toast=error`);
+    redirect(`/app/tasks?tab=${toTaskTab(currentTab)}&toast=error`);
   }
 
-  redirect(`/app/reminders?tab=upcoming&toast=reminder_snoozed`);
+  redirect("/app/tasks?tab=upcoming&toast=reminder_snoozed");
 }

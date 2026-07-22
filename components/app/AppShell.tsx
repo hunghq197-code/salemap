@@ -2,15 +2,15 @@
 
 import {
   BarChart3,
-  Bell,
-  BookOpenText,
   Bot,
+  BookOpenText,
   CircleHelp,
   CreditCard,
   Download,
   FileSpreadsheet,
   HardDriveDownload,
   LayoutDashboard,
+  ListTodo,
   MapPinned,
   MessageSquareHeart,
   Search,
@@ -35,7 +35,7 @@ const mobileNavConfig = [
   { href: "/app/pipeline", icon: LayoutDashboard },
   { href: "/app/discover", icon: Search },
   { href: "/app/leads", icon: UsersRound },
-  { href: "/app/reminders", icon: Bell },
+  { href: "/app/tasks", icon: ListTodo },
   { href: "/app/templates", icon: BookOpenText },
 ] as const;
 
@@ -48,7 +48,7 @@ const desktopNavConfig = [
   { href: "/app/analytics/goals", icon: Target },
   { href: "/app/leads/views", icon: Sparkles },
   { href: "/app/leads/cleanup", icon: Sparkles },
-  { href: "/app/reminders", icon: Bell },
+  { href: "/app/tasks", icon: ListTodo },
   { href: "/app/templates", icon: BookOpenText },
   { href: "/app/ai-assistant", icon: Bot },
   { href: "/app/import", icon: FileSpreadsheet },

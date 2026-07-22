@@ -6,6 +6,10 @@ import {
   type AnalyticsPeriodKey,
   type SalesMetricKey,
 } from "@/lib/constants/sales-analytics";
+import {
+  ACTIVE_TASK_STATUSES,
+  COMPLETED_TASK_STATUSES,
+} from "@/lib/constants/tasks";
 import type { QueryLike } from "@/lib/leads/lead-filters";
 import { isMissingSupabaseSchema } from "@/lib/supabase/schema-error";
 
@@ -409,7 +413,7 @@ export async function calculateSalesMetricsForUser(
       "reminders",
       userId,
       range,
-      (query) => query.eq("status", "done").is("deleted_at", null),
+      (query) => query.in("status", [...COMPLETED_TASK_STATUSES]).is("deleted_at", null),
       "completed_at",
     ),
     countRows("lead_pipeline_events", userId, range),
@@ -439,7 +443,7 @@ export async function calculateSalesMetricsForUser(
         start: new Date("2000-01-01T00:00:00.000Z"),
         startIso: "2000-01-01T00:00:00.000Z",
       },
-      (query) => query.eq("status", "pending").is("deleted_at", null),
+      (query) => query.in("status", [...ACTIVE_TASK_STATUSES]).is("deleted_at", null),
       "remind_at",
     ),
     countActivityDays(userId, 7),
@@ -745,7 +749,7 @@ export async function calculateDailyTrendForUser(
       .from("reminders")
       .select("completed_at")
       .eq("user_id", userId)
-      .eq("status", "done")
+      .in("status", [...COMPLETED_TASK_STATUSES])
       .is("deleted_at", null)
       .gte("completed_at", range.startIso)
       .lt("completed_at", range.endIso)

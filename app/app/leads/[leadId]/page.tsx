@@ -28,11 +28,13 @@ import { LeadDetailTracker } from "@/components/leads/LeadDetailTracker";
 import { LeadForm } from "@/components/leads/LeadForm";
 import { LeadPriorityBadge } from "@/components/leads/LeadPriorityBadge";
 import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
+import { LeadTaskPanel } from "@/components/leads/LeadTaskPanel";
+import { LeadTimeline } from "@/components/leads/LeadTimeline";
 import { Toast } from "@/components/ui/Toast";
-import { getInteractionTypeLabel } from "@/lib/constants/interaction-types";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { getLeadById } from "@/lib/data/leads";
 import { getLeadNotes } from "@/lib/data/lead-notes";
+import { getLeadTasks, getLeadTaskTimeline } from "@/lib/data/tasks";
 import { getTags } from "@/lib/data/tags";
 import { getLeadMergeMetadata } from "@/lib/leads/merge-leads";
 import { getGoogleMapsDirectionsUrl } from "@/lib/maps-url";
@@ -105,9 +107,11 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
     );
   }
 
-  const [notes, mergeMetadata] = await Promise.all([
+  const [notes, mergeMetadata, leadTasks, taskTimeline] = await Promise.all([
     getLeadNotes(lead.id),
     getLeadMergeMetadata(lead.id),
+    getLeadTasks(lead.id),
+    getLeadTaskTimeline(lead.id),
   ]);
   const showEditForm = getString(searchParams?.edit) === "1";
   const toastCode = getString(searchParams?.toast);
@@ -259,7 +263,7 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
             </a>
             <a
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink hover:border-ocean hover:text-ocean"
-              href="#create-follow-up"
+              href="#lead-tasks"
             >
               <CalendarClock aria-hidden="true" className="h-5 w-5" />
               Tạo follow-up
@@ -380,6 +384,10 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
         </aside>
       </div>
 
+      <section className="mt-5">
+        <LeadTaskPanel lead={lead} tasks={leadTasks} />
+      </section>
+
       {showEditForm ? (
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -417,40 +425,11 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
           <h2 className="mb-3 text-xl font-bold text-ink">Thêm ghi chú</h2>
           <AddNoteForm action={createLeadNoteAction} lead={lead} toastCode={toastCode} />
         </div>
-        <div>
-          <h2 className="mb-3 text-xl font-bold text-ink">Lịch sử ghi chú</h2>
-          {notes.length > 0 ? (
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <article
-                  className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-                  key={note.id}
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-bold text-ocean">
-                      {getInteractionTypeLabel(note.interaction_type)}
-                    </p>
-                    <p className="text-sm font-semibold text-slate-500">
-                      {formatDateTime(note.contacted_at)}
-                    </p>
-                  </div>
-                  <p className="mt-3 whitespace-pre-line text-base leading-8 text-slate-700">
-                    {note.content}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500">
-                    <span>Kết quả: {note.outcome || "Chưa phân loại"}</span>
-                    <span>Trạng thái sau:</span>
-                    <LeadStatusBadge status={note.status_after} />
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-600 shadow-sm">
-              Chưa có ghi chú nào cho lead này.
-            </div>
-          )}
-        </div>
+        <LeadTimeline
+          events={taskTimeline.events}
+          leadCreatedAt={lead.created_at}
+          notes={notes}
+        />
       </section>
 
       <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-40 grid grid-cols-4 gap-2 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur lg:hidden">
@@ -493,7 +472,7 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
         </a>
         <a
           className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-cloud px-1 text-[11px] font-bold text-ink"
-          href="#create-follow-up"
+          href="#lead-tasks"
         >
           <CalendarClock aria-hidden="true" className="h-5 w-5" />
           Nhắc

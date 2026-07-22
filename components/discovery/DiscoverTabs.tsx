@@ -13,9 +13,14 @@ import {
 import { RouteSummaryCard } from "@/components/discovery/RouteSummaryCard";
 import { SearchResultsList } from "@/components/discovery/SearchResultsList";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
+import {
+  CreateTaskModal,
+  type CreateTaskPayload,
+} from "@/components/tasks/CreateTaskModal";
 import { useDeviceLocation } from "@/hooks/useDeviceLocation";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
+  trackEvent,
   trackBetaChecklistItemCompleted,
   trackMapEvent,
 } from "@/lib/analytics/client";
@@ -26,6 +31,7 @@ import type {
   DiscoveryRouteResult,
   DiscoverySource,
 } from "@/lib/providers/maps/types";
+import type { TaskLeadSummary, TaskRecord } from "@/lib/data/tasks";
 
 type ActiveTab = "area" | "near-me" | "route";
 type MobileView = "list" | "map";
@@ -197,6 +203,9 @@ export function DiscoverTabs({
   );
   const [areaMapMoved, setAreaMapMoved] = useState(false);
   const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
+  const [followUpLead, setFollowUpLead] = useState<TaskLeadSummary | null>(null);
+  const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
+  const [followUpSubmitting, setFollowUpSubmitting] = useState(false);
   const [lastAreaSearch, setLastAreaSearch] = useState<AreaSearchMemory | null>(
     null,
   );
@@ -265,6 +274,8 @@ export function DiscoverTabs({
 
   function resetTransientState() {
     setError(null);
+    setFollowUpLead(null);
+    setFollowUpModalOpen(false);
     setNotice(null);
     setQuotaReached(null);
     setSuccessMessage(null);
@@ -588,6 +599,7 @@ export function DiscoverTabs({
 
       const isRouteSearch = searchState?.source === "route_search";
       if (result.data.alreadySaved) {
+        setFollowUpLead(null);
         setSuccessMessage("Địa điểm này đã có trong danh sách lead của bạn.");
         trackMapEvent(
           isRouteSearch
@@ -601,7 +613,19 @@ export function DiscoverTabs({
           },
         );
       } else {
-        setSuccessMessage("Đã lưu vào lead cá nhân.");
+        setSuccessMessage("Đã lưu lead.");
+        setFollowUpModalOpen(false);
+        setFollowUpLead({
+          category: place.category,
+          id: result.data.leadId,
+          name: place.name,
+          phone: placeToSave.phone,
+          source: searchState?.source,
+          status: "new",
+        });
+        trackEvent(ANALYTICS_EVENTS.LEAD_FIRST_FOLLOWUP_SUGGESTED, {
+          source: searchState?.source,
+        });
         trackMapEvent(
           isRouteSearch
             ? ANALYTICS_EVENTS.ROUTE_PLACE_SAVED_AS_LEAD
@@ -623,6 +647,45 @@ export function DiscoverTabs({
       );
     } finally {
       setSavingPlaceId(null);
+    }
+  }
+
+  async function handleCreateFirstFollowUp(payload: CreateTaskPayload) {
+    setFollowUpSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/tasks", {
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        data?: TaskRecord;
+        error?: string;
+        success?: boolean;
+      };
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(result.error || "Không thể tạo follow-up lúc này.");
+      }
+
+      trackEvent(ANALYTICS_EVENTS.LEAD_FIRST_FOLLOWUP_CREATED, {
+        priority: payload.priority,
+        source: searchState?.source,
+        taskType: payload.taskType,
+      });
+      setFollowUpLead(null);
+      setFollowUpModalOpen(false);
+      setSuccessMessage("Đã tạo follow-up đầu tiên cho lead.");
+    } catch (followUpError) {
+      setError(
+        followUpError instanceof Error
+          ? followUpError.message
+          : "Không thể tạo follow-up lúc này.",
+      );
+    } finally {
+      setFollowUpSubmitting(false);
     }
   }
 
@@ -747,7 +810,28 @@ export function DiscoverTabs({
 
           {successMessage ? (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
-              {successMessage}
+              <p>{successMessage}</p>
+              {followUpLead ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+                    onClick={() => setFollowUpModalOpen(true)}
+                    type="button"
+                  >
+                    Tạo follow-up
+                  </button>
+                  <button
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700"
+                    onClick={() => {
+                      setFollowUpLead(null);
+                      setFollowUpModalOpen(false);
+                    }}
+                    type="button"
+                  >
+                    Để sau
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -791,6 +875,15 @@ export function DiscoverTabs({
           {map}
         </section>
       </div>
+
+      <CreateTaskModal
+        defaultLeadId={followUpLead?.id}
+        leadOptions={followUpLead ? [followUpLead] : []}
+        onClose={() => setFollowUpModalOpen(false)}
+        onSubmit={handleCreateFirstFollowUp}
+        open={Boolean(followUpLead && followUpModalOpen)}
+        submitting={followUpSubmitting}
+      />
     </div>
   );
 }

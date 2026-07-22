@@ -13,7 +13,7 @@ export const BETA_CHECKLIST_ITEMS = [
   },
   {
     description: "Đặt lịch nhắc gọi lại hoặc chăm sóc khách.",
-    href: "/app/reminders",
+    href: "/app/tasks",
     key: "create_first_reminder",
     title: "Tạo lịch follow-up",
   },

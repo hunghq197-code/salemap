@@ -24,7 +24,7 @@ const optionalPublicRoutes = ["/pricing", "/privacy", "/terms", "/beta-status"];
 const protectedRoutes = [
   "/app/dashboard",
   "/app/leads",
-  "/app/reminders",
+  "/app/tasks",
   "/app/templates",
   "/app/discover",
   "/app/import",

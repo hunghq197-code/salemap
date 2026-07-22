@@ -28,7 +28,7 @@ function formatDateTime(value: string) {
 
 export function buildReminderDueEmail(input: ReminderDueEmailInput) {
   const siteUrl = getSiteUrl();
-  const actionUrl = input.actionUrl || `${siteUrl}/app/reminders`;
+  const actionUrl = input.actionUrl || `${siteUrl}/app/tasks`;
   const leadName = input.leadName || "Lead chưa có tên";
   const description = input.description ? input.description.slice(0, 320) : "";
   const subject = "Bạn có follow-up cần xử lý hôm nay";

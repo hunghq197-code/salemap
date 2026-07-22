@@ -18,7 +18,7 @@ export async function createSampleDataAction() {
     toast = result.status === "skipped" ? "sample_data_skipped" : "sample_data_created";
     revalidatePath("/app/dashboard");
     revalidatePath("/app/leads");
-    revalidatePath("/app/reminders");
+    revalidatePath("/app/tasks");
     revalidatePath("/app/settings");
   } catch {
     redirect("/app/settings?toast=sample_data_failed");

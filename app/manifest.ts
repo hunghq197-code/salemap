@@ -64,9 +64,9 @@ export default function manifest(): MetadataRoute.Manifest {
       },
       {
         description: "Xem follow-up cần làm",
-        name: "Nhắc việc",
-        short_name: "Nhắc",
-        url: "/app/reminders",
+        name: "Việc cần làm",
+        short_name: "Việc",
+        url: "/app/tasks",
       },
     ],
     start_url: "/app/dashboard",

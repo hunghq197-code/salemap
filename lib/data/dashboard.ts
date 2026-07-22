@@ -1,5 +1,6 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import { ACTIVE_TASK_STATUSES } from "@/lib/constants/tasks";
 import type { ReminderRecord } from "@/lib/data/reminders";
 
 type DashboardRecentLead = {
@@ -64,7 +65,7 @@ export async function getDashboardData() {
       .from("reminders")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("status", "pending")
+      .in("status", [...ACTIVE_TASK_STATUSES])
       .gte("remind_at", todayStart)
       .lt("remind_at", tomorrowStart)
       .is("deleted_at", null),
@@ -72,7 +73,7 @@ export async function getDashboardData() {
       .from("reminders")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("status", "pending")
+      .in("status", [...ACTIVE_TASK_STATUSES])
       .lt("remind_at", todayStart)
       .is("deleted_at", null),
     supabase
@@ -94,7 +95,7 @@ export async function getDashboardData() {
       .from("reminders")
       .select("id,lead_id,title,description,remind_at,status,completed_at,created_at,leads(id,name,phone,status)")
       .eq("user_id", userId)
-      .eq("status", "pending")
+      .in("status", [...ACTIVE_TASK_STATUSES])
       .gte("remind_at", todayStart)
       .lt("remind_at", tomorrowStart)
       .is("deleted_at", null)

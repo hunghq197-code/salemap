@@ -4,6 +4,7 @@ import {
   ensureNotificationSettingsForUser,
   getDefaultNotificationSettings,
 } from "@/lib/data/notification-settings";
+import { ACTIVE_TASK_STATUSES } from "@/lib/constants/tasks";
 import { createNotification } from "@/lib/data/notifications";
 import { getEmailProvider } from "@/lib/providers/email";
 import { getSiteUrl } from "@/lib/site-url";
@@ -57,7 +58,7 @@ function getReminderActionUrl(reminder: DeliveryReminder) {
     return `${siteUrl}/app/leads/${lead?.id || reminder.lead_id}`;
   }
 
-  return `${siteUrl}/app/reminders`;
+  return `${siteUrl}/app/tasks`;
 }
 
 function getInAppActionUrl(reminder: DeliveryReminder) {
@@ -67,7 +68,7 @@ function getInAppActionUrl(reminder: DeliveryReminder) {
     return `/app/leads/${lead?.id || reminder.lead_id}`;
   }
 
-  return "/app/reminders";
+  return "/app/tasks";
 }
 
 function getVietnamDayBounds(date = new Date()) {
@@ -135,7 +136,7 @@ export async function findDueRemindersForNotification() {
     .select(
       "id,user_id,lead_id,title,description,remind_at,status,notification_sent_at,email_sent_at,last_notified_at,leads(id,name,phone)",
     )
-    .eq("status", "pending")
+    .in("status", [...ACTIVE_TASK_STATUSES])
     .is("deleted_at", null)
     .is("last_notified_at", null)
     .lte("remind_at", maxLeadTime)
@@ -276,7 +277,7 @@ export async function sendDailyDigestNotifications() {
     .select(
       "id,user_id,lead_id,title,description,remind_at,status,notification_sent_at,email_sent_at,last_notified_at,leads(id,name,phone)",
     )
-    .eq("status", "pending")
+    .in("status", [...ACTIVE_TASK_STATUSES])
     .is("deleted_at", null)
     .gte("remind_at", start)
     .lt("remind_at", end)
@@ -379,7 +380,7 @@ export async function sendDailyDigestNotifications() {
 
     if (settings.in_app_notification_enabled) {
       const notificationId = await createNotification({
-        actionUrl: "/app/reminders",
+        actionUrl: "/app/tasks",
         content: `Hôm nay bạn có ${items.length} việc follow-up cần xử lý.`,
         deliveredEmail: emailStatus === "sent",
         emailSentAt,

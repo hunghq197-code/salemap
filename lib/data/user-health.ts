@@ -6,6 +6,7 @@ import {
   type AdminSearchParams,
 } from "@/lib/admin/data/utils";
 import type { QueryLike } from "@/lib/leads/lead-filters";
+import { COMPLETED_TASK_STATUSES } from "@/lib/constants/tasks";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export const HEALTH_LABEL_OPTIONS = [
@@ -212,7 +213,7 @@ export async function calculateUserHealthScore(userId: string) {
     countRows("lead_notes", userId, (query) => query.is("deleted_at", null)),
     countRows("reminders", userId, (query) => query.is("deleted_at", null)),
     countRows("reminders", userId, (query) =>
-      query.eq("status", "done").is("deleted_at", null),
+      query.in("status", [...COMPLETED_TASK_STATUSES]).is("deleted_at", null),
     ),
     countRows("map_searches", userId, (query) => query.eq("search_type", "area_search")),
     countRows("map_searches", userId, (query) =>

@@ -23,6 +23,10 @@ const actionOptions = [
   "route_search",
   "export_leads",
   "save_map_lead",
+  "task_created",
+  "task_completed",
+  "task_snoozed",
+  "task_cancelled",
 ];
 
 export default async function AdminUsagePage(props: AdminUsagePageProps) {
@@ -43,6 +47,10 @@ export default async function AdminUsagePage(props: AdminUsagePageProps) {
         <AdminKpiCard label="Route search" value={kpis.routeSearch} />
         <AdminKpiCard label="Export hôm nay" value={kpis.exportLeads} />
         <AdminKpiCard label="User chạm quota" value={kpis.quotaReachedUsers} />
+        <AdminKpiCard label="Task created" value={kpis.taskCreated} />
+        <AdminKpiCard label="Task completed" value={kpis.taskCompleted} />
+        <AdminKpiCard label="Task snoozed" value={kpis.taskSnoozed} />
+        <AdminKpiCard label="Task cancelled" value={kpis.taskCancelled} />
       </div>
 
       <div className="mt-6">
@@ -100,6 +108,10 @@ export default async function AdminUsagePage(props: AdminUsagePageProps) {
           "Route used",
           "Export used",
           "Save map lead used",
+          "Task created",
+          "Task completed",
+          "Task snoozed",
+          "Task cancelled",
           "Quota",
         ]}
       >
@@ -123,6 +135,18 @@ export default async function AdminUsagePage(props: AdminUsagePageProps) {
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-slate-700">
               {row.save_map_lead}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+              {row.task_created}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+              {row.task_completed}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+              {row.task_snoozed}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+              {row.task_cancelled}
             </td>
             <td className="whitespace-nowrap px-4 py-3">
               <AdminStatusBadge

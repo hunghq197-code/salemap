@@ -251,6 +251,38 @@ const tests = [
     () => expectCrossOriginBlocked({ pathname: "/api/reminders" }),
   ],
   [
+    "tasks API blocks cross-origin",
+    () => expectCrossOriginBlocked({ pathname: "/api/tasks" }),
+  ],
+  [
+    "lead task API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/leads/00000000-0000-0000-0000-000000000000/tasks",
+      }),
+  ],
+  [
+    "task complete API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/tasks/00000000-0000-0000-0000-000000000000/complete",
+      }),
+  ],
+  [
+    "task snooze API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/tasks/00000000-0000-0000-0000-000000000000/snooze",
+      }),
+  ],
+  [
+    "task cancel API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/tasks/00000000-0000-0000-0000-000000000000/cancel",
+      }),
+  ],
+  [
     "payment request API blocks cross-origin",
     () => expectCrossOriginBlocked({ pathname: "/api/payment-requests" }),
   ],
