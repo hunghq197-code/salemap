@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { AreaSearchForm } from "@/components/discovery/AreaSearchForm";
 import { LocationPermissionNotice } from "@/components/discovery/LocationPermissionNotice";
-import { MapPreview } from "@/components/discovery/MapPreview";
 import { NearMeSearchForm } from "@/components/discovery/NearMeSearchForm";
 import { QuotaBar } from "@/components/discovery/QuotaBar";
 import {
@@ -13,10 +13,8 @@ import {
 import { RouteSummaryCard } from "@/components/discovery/RouteSummaryCard";
 import { SearchResultsList } from "@/components/discovery/SearchResultsList";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
-import {
-  CreateTaskModal,
-  type CreateTaskPayload,
-} from "@/components/tasks/CreateTaskModal";
+import { MapSkeleton } from "@/components/skeletons/DiscoverSkeleton";
+import type { CreateTaskPayload } from "@/components/tasks/CreateTaskModal";
 import { useDeviceLocation } from "@/hooks/useDeviceLocation";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
@@ -32,6 +30,23 @@ import type {
   DiscoverySource,
 } from "@/lib/providers/maps/types";
 import type { TaskLeadSummary, TaskRecord } from "@/lib/data/tasks";
+import {
+  getIsMobileViewport,
+  trackPerformanceEvent,
+} from "@/lib/performance/web-vitals";
+
+const MapPreview = dynamic(
+  () => import("@/components/discovery/MapPreview").then((module) => module.MapPreview),
+  {
+    loading: () => <MapSkeleton />,
+    ssr: false,
+  },
+);
+
+const CreateTaskModal = dynamic(
+  () => import("@/components/tasks/CreateTaskModal").then((module) => module.CreateTaskModal),
+  { ssr: false },
+);
 
 type ActiveTab = "area" | "near-me" | "route";
 type MobileView = "list" | "map";
@@ -318,6 +333,7 @@ export function DiscoverTabs({
 
     const events = getSearchEvents(source);
     trackMapEvent(events.started, getSafeSearchProperties(payload, source));
+    const searchStartedAt = performance.now();
 
     try {
       const response = await fetch(endpoint, {
@@ -353,6 +369,14 @@ export function DiscoverTabs({
 
       setSearchState(nextState);
       setMobileView("map");
+      trackPerformanceEvent("discovery_search_duration", {
+        apiName: endpoint,
+        durationMs: Math.round(performance.now() - searchStartedAt),
+        isMobile: getIsMobileViewport(),
+        resultCount: result.data.results.length,
+        route: "/app/discover",
+        routeGroup: "discover",
+      });
 
       trackMapEvent(events.completed, {
         ...getSafeSearchProperties(payload, source),
@@ -561,7 +585,6 @@ export function DiscoverTabs({
           phone: placeToSave.phone,
           placeId: placeToSave.placeId,
           rating: placeToSave.rating,
-          rawPlaceData: placeToSave.raw,
           routeId: searchState?.route?.id,
           routeStopId: place.routeStopId,
           source: searchState?.source || "map_area",
@@ -706,24 +729,27 @@ export function DiscoverTabs({
       <RouteSearchForm loading={loading} onSubmit={handleRouteSearch} />
     );
 
-  const map = (
-    <MapPreview
-      center={mapCenter}
-      hoveredPlaceId={hoveredPlaceId}
-      mode={isRouteResult ? "route" : "places"}
-      onMarkerClick={(placeId) => handleSelectPlace(placeId, "marker")}
-      onSearchThisArea={handleSearchThisArea}
-      onViewportCenterChange={handleViewportCenterChange}
-      results={searchState?.results ?? []}
-      routeDestination={searchState?.route?.destination}
-      routeOrigin={searchState?.route?.origin}
-      routePolyline={searchState?.route?.polyline}
-      searchThisAreaLoading={loading}
-      searchThisAreaVisible={showSearchThisArea}
-      selectedPlaceId={selectedPlaceId}
-      showCenterMarker={searchState?.source === "map_near_me" || (!searchState && hasLocation)}
-    />
-  );
+  const map =
+    searchState || hasLocation ? (
+      <MapPreview
+        center={mapCenter}
+        hoveredPlaceId={hoveredPlaceId}
+        mode={isRouteResult ? "route" : "places"}
+        onMarkerClick={(placeId) => handleSelectPlace(placeId, "marker")}
+        onSearchThisArea={handleSearchThisArea}
+        onViewportCenterChange={handleViewportCenterChange}
+        results={searchState?.results ?? []}
+        routeDestination={searchState?.route?.destination}
+        routeOrigin={searchState?.route?.origin}
+        routePolyline={searchState?.route?.polyline}
+        searchThisAreaLoading={loading}
+        searchThisAreaVisible={showSearchThisArea}
+        selectedPlaceId={selectedPlaceId}
+        showCenterMarker={searchState?.source === "map_near_me" || (!searchState && hasLocation)}
+      />
+    ) : (
+      <MapSkeleton />
+    );
 
   return (
     <div className="mt-6">
@@ -876,14 +902,16 @@ export function DiscoverTabs({
         </section>
       </div>
 
-      <CreateTaskModal
-        defaultLeadId={followUpLead?.id}
-        leadOptions={followUpLead ? [followUpLead] : []}
-        onClose={() => setFollowUpModalOpen(false)}
-        onSubmit={handleCreateFirstFollowUp}
-        open={Boolean(followUpLead && followUpModalOpen)}
-        submitting={followUpSubmitting}
-      />
+      {followUpLead && followUpModalOpen ? (
+        <CreateTaskModal
+          defaultLeadId={followUpLead.id}
+          leadOptions={[followUpLead]}
+          onClose={() => setFollowUpModalOpen(false)}
+          onSubmit={handleCreateFirstFollowUp}
+          open
+          submitting={followUpSubmitting}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { PageLoadingSkeleton } from "@/components/ui/PageLoadingSkeleton";
+import { LeadListSkeleton } from "@/components/skeletons/LeadListSkeleton";
 
 export default function LeadsLoading() {
-  return <PageLoadingSkeleton cards={4} />;
+  return <LeadListSkeleton />;
 }

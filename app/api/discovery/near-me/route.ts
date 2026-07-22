@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/feature-flags";
 import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
 import { searchNearbyPlaces } from "@/lib/providers/maps/google-maps";
+import { toPublicDiscoveryPlaceResults } from "@/lib/providers/maps/public-results";
 import { nearMeSearchSchema } from "@/lib/validators/discovery";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 import { getMapProviderApiError } from "../map-provider-errors";
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
           longitude: parsed.data.longitude,
         },
         quota: usage,
-        results: decoratedResults,
+        results: toPublicDiscoveryPlaceResults(decoratedResults),
       },
       success: true,
     });

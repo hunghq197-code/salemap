@@ -1,5 +1,5 @@
-import { PageLoadingSkeleton } from "@/components/ui/PageLoadingSkeleton";
+import { ImportSkeleton } from "@/components/skeletons/ImportSkeleton";
 
 export default function ImportJobLoading() {
-  return <PageLoadingSkeleton cards={4} />;
+  return <ImportSkeleton />;
 }

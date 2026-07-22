@@ -309,7 +309,7 @@ async function createTaskForUser(
 export async function getTasksForUser(params: Partial<GetTasksQueryInput> = {}) {
   const { supabase, userId } = await createAuthedSupabaseServerClient();
   const page = Math.max(1, Number(params.page) || 1);
-  const limit = Math.min(50, Math.max(1, Number(params.limit) || 30));
+  const limit = Math.min(50, Math.max(1, Number(params.limit) || 20));
   const from = (page - 1) * limit;
   const todayStart = startOfToday().toISOString();
   const tomorrowStart = startOfTomorrow().toISOString();

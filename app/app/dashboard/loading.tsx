@@ -1,5 +1,5 @@
-import { PageLoadingSkeleton } from "@/components/ui/PageLoadingSkeleton";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 export default function DashboardLoading() {
-  return <PageLoadingSkeleton cards={4} />;
+  return <DashboardSkeleton />;
 }

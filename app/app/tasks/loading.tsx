@@ -1,5 +1,5 @@
-import { PageLoadingSkeleton } from "@/components/ui/PageLoadingSkeleton";
+import { TaskListSkeleton } from "@/components/skeletons/TaskListSkeleton";
 
 export default function TasksLoading() {
-  return <PageLoadingSkeleton cards={4} />;
+  return <TaskListSkeleton />;
 }

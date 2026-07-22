@@ -60,6 +60,15 @@ const desktopNavConfig = [
   { href: "/app/feedback", icon: MessageSquareHeart },
 ] as const;
 
+const heavyPrefetchRoutePrefixes = [
+  "/admin",
+  "/app/ai-assistant",
+  "/app/analytics",
+  "/app/discover",
+  "/app/export",
+  "/app/import",
+] as const;
+
 type AppShellProps = {
   children: ReactNode;
   fullName: string;
@@ -69,6 +78,14 @@ type AppShellProps = {
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getPrefetchForRoute(href: string) {
+  return heavyPrefetchRoutePrefixes.some(
+    (prefix) => href === prefix || href.startsWith(`${prefix}/`),
+  )
+    ? false
+    : undefined;
 }
 
 export function AppShell({
@@ -153,6 +170,7 @@ export function AppShell({
                     ].join(" ")}
                     href={item.href}
                     key={item.href}
+                    prefetch={getPrefetchForRoute(item.href)}
                   >
                     <Icon aria-hidden="true" className="h-5 w-5" />
                     {item.label}
@@ -188,6 +206,7 @@ export function AppShell({
                   ].join(" ")}
                   href={item.href}
                   key={item.href}
+                  prefetch={getPrefetchForRoute(item.href)}
                 >
                   <Icon aria-hidden="true" className="h-5 w-5" />
                   <span>{item.label}</span>

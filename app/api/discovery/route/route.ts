@@ -12,6 +12,7 @@ import {
   searchPlacesAlongRoute,
   searchPlacesAlongStreet,
 } from "@/lib/providers/maps/google-maps";
+import { toPublicDiscoveryPlaceResults } from "@/lib/providers/maps/public-results";
 import { routeSearchSchema } from "@/lib/validators/discovery";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 import { getMapProviderApiError } from "../map-provider-errors";
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       data: {
         quota: usage,
-        results: decoratedResults,
+        results: toPublicDiscoveryPlaceResults(decoratedResults),
         route: {
           destination: route.destination,
           destinationText: responseDestinationText,

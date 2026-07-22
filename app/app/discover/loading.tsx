@@ -1,5 +1,5 @@
-import { PageLoadingSkeleton } from "@/components/ui/PageLoadingSkeleton";
+import { DiscoverSkeleton } from "@/components/skeletons/DiscoverSkeleton";
 
 export default function DiscoverLoading() {
-  return <PageLoadingSkeleton cards={3} />;
+  return <DiscoverSkeleton />;
 }

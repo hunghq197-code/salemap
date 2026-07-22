@@ -89,7 +89,7 @@ export const cancelTaskSchema = z.object({
 });
 
 export const getTasksQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(50).default(30),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
   page: z.coerce.number().int().min(1).default(1),
   priority: taskPrioritySchema.optional(),
   status: z.string().trim().max(40).optional(),

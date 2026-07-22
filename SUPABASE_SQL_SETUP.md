@@ -26,12 +26,14 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 19. `supabase/lead-pipeline-saved-views-schema.sql`
 20. `supabase/personal-sales-analytics-goals-schema.sql`
 21. `supabase/follow-up-task-center-schema.sql`
+22. `supabase/performance-indexes.sql`
 
 ## Khi Nào Cần Chạy Lại
 
 - Nếu dashboard báo thiếu `lead_saved_views`, chạy file số 19.
 - Nếu dashboard báo thiếu `sales_goals` hoặc `sales_activity_daily`, chạy file số 20.
 - Nếu trang `/app/tasks` báo thiếu cột task hoặc bảng `task_events`, chạy file số 21.
+- Nếu app bắt đầu có nhiều lead/task/import và chuyển trang chậm, chạy file số 22 để bổ sung index hiệu năng.
 - Nếu thư viện mẫu trống do thiếu bảng, chạy file số 6 rồi file số 7.
 - Nếu quota/gói sử dụng không lưu được, chạy file số 13 và 14.
 - Nếu admin dashboard thiếu dữ liệu beta/public beta, chạy file số 8 đến 12.

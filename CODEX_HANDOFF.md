@@ -793,3 +793,23 @@ git push origin main
 - Do not repeat the full initial audit unless code has changed significantly.
 - Do not commit local env files or API keys.
 - The user speaks Vietnamese and prefers direct practical guidance.
+
+## 2026-07-22 Update - Performance Optimization MVP
+
+This phase focused on reducing route lag and heavy client work without adding new product features.
+
+Implemented changes:
+
+- Added route-specific lightweight skeletons for dashboard, discover, leads, lead detail, tasks, pipeline, import, analytics, and settings.
+- Lazy-loaded the Google Maps preview with `ssr: false` and a map skeleton fallback.
+- Delayed Google Maps script initialization in Discover until the user has a device location or search results to show.
+- Lazy-loaded the first follow-up task modal in Discover so it only mounts when the modal is opened.
+- Removed `rawPlaceData` from Discover save requests and stripped `raw` from `/api/discovery/*` search responses before they reach React state.
+- Disabled Next prefetch for heavy app routes in the app shell: Discover, Analytics, AI Assistant, Import, Export, and Admin prefixes.
+- Reduced the default task list limit from 30 to 20; the no-schedule lead preview is capped lower as well.
+- Added safe client performance logging helpers for route transitions, slow routes, map load, and discovery search durations without PII.
+- Added `supabase/performance-indexes.sql` with indexes for hot lead, reminder, route, import, pipeline, and analytics queries.
+
+Deployment note:
+
+- Run `supabase/performance-indexes.sql` in Supabase after the existing schema files when the environment has enough data for query speed to matter.

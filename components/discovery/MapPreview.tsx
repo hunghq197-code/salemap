@@ -8,6 +8,10 @@ import {
   loadGoogleMaps,
   setGoogleMapsAuthFailureHandler,
 } from "@/lib/google-maps/load-google-maps";
+import {
+  getIsMobileViewport,
+  trackPerformanceEvent,
+} from "@/lib/performance/web-vitals";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 
 type MapPoint = {
@@ -150,6 +154,7 @@ export function MapPreview({
   useEffect(() => {
     let active = true;
     const markerStore = markersRef.current;
+    const mapLoadStartedAt = performance.now();
     let clearAuthFailureHandler = () => {};
 
     async function initializeMap() {
@@ -201,6 +206,12 @@ export function MapPreview({
           onViewportCenterChangeRef.current?.(nextCenter);
         });
         setMapReady(true);
+        trackPerformanceEvent("map_loaded", {
+          durationMs: Math.round(performance.now() - mapLoadStartedAt),
+          isMobile: getIsMobileViewport(),
+          route: "/app/discover",
+          routeGroup: "discover",
+        });
       } catch (mapError) {
         if (active) {
           setError(

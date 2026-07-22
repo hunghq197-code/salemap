@@ -24,10 +24,10 @@ export default async function TasksPage(props: TasksPageProps) {
   const [counts, leadOptions, leadsWithoutTasks, taskResult] = await Promise.all([
     getTaskCounts(),
     listTaskLeadOptions(),
-    activeTab === "no_schedule" ? getLeadsWithoutTasks(50) : Promise.resolve([]),
+    activeTab === "no_schedule" ? getLeadsWithoutTasks(30) : Promise.resolve([]),
     activeTab === "no_schedule"
-      ? Promise.resolve({ items: [], limit: 30, page: 1, total: 0 })
-      : getTasksForUser({ limit: 30, tab: activeTab }),
+      ? Promise.resolve({ items: [], limit: 20, page: 1, total: 0 })
+      : getTasksForUser({ limit: 20, tab: activeTab }),
   ]);
 
   return (

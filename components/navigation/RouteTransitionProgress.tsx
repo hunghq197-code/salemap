@@ -2,6 +2,12 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import {
+  getIsMobileViewport,
+  trackPerformanceEvent,
+} from "@/lib/performance/web-vitals";
+
+const SLOW_ROUTE_THRESHOLD_MS = 2_000;
 
 function isPlainLeftClick(event: MouseEvent) {
   return (
@@ -47,10 +53,21 @@ function getNavigationTargetKey(anchor: HTMLAnchorElement) {
   return `${targetUrl.pathname}?${targetUrl.searchParams.toString()}`;
 }
 
+function getRouteFromKey(routeKey: string) {
+  return routeKey.split("?")[0] || "/";
+}
+
+function getRouteGroup(route: string) {
+  if (route.startsWith("/admin")) return "admin";
+  if (route.startsWith("/app/")) return route.split("/").slice(1, 3).join("/");
+  return route === "/" ? "marketing" : route.split("/")[1] || "root";
+}
+
 export function RouteTransitionProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [pendingRouteKey, setPendingRouteKey] = useState<string | null>(null);
+  const navigationStartedAtRef = useRef<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const routeKey = `${pathname}?${searchParams.toString()}`;
   const isNavigating = pendingRouteKey !== null && pendingRouteKey !== routeKey;
@@ -70,6 +87,14 @@ export function RouteTransitionProgress() {
       }
 
       setPendingRouteKey(targetRouteKey);
+      navigationStartedAtRef.current = performance.now();
+
+      const route = getRouteFromKey(targetRouteKey);
+      trackPerformanceEvent("route_change_start", {
+        isMobile: getIsMobileViewport(),
+        route,
+        routeGroup: getRouteGroup(route),
+      });
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -77,6 +102,7 @@ export function RouteTransitionProgress() {
 
       timeoutRef.current = setTimeout(() => {
         setPendingRouteKey(null);
+        navigationStartedAtRef.current = null;
         timeoutRef.current = null;
       }, 8000);
     }
@@ -97,9 +123,29 @@ export function RouteTransitionProgress() {
       return;
     }
 
+    const startedAt = navigationStartedAtRef.current;
+    const durationMs = startedAt ? performance.now() - startedAt : undefined;
+    const route = pathname;
+
+    if (durationMs != null) {
+      const properties = {
+        durationMs,
+        isMobile: getIsMobileViewport(),
+        route,
+        routeGroup: getRouteGroup(route),
+      };
+
+      trackPerformanceEvent("route_change_complete", properties);
+
+      if (durationMs > SLOW_ROUTE_THRESHOLD_MS) {
+        trackPerformanceEvent("slow_route_detected", properties);
+      }
+    }
+
     clearTimeout(timeoutRef.current);
+    navigationStartedAtRef.current = null;
     timeoutRef.current = null;
-  }, [pendingRouteKey, routeKey]);
+  }, [pathname, pendingRouteKey, routeKey]);
 
   return (
     <div
