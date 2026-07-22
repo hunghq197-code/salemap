@@ -628,6 +628,42 @@ git commit -m "feat: upgrade google discovery ux"
 git push origin main
 ```
 
+## 2026-07-22 Update - Route Endpoint Suggestions
+
+This phase improves the route discovery input flow so users can pick specific streets, intersections, landmarks, or addresses instead of typing broad districts.
+
+Implemented changes:
+
+- `lib/google-maps/load-google-maps.ts`
+  - Added `loadGooglePlacesAutocomplete()` for the Maps JavaScript Places library.
+  - Google Maps auth failure handling now supports multiple subscribers.
+- `components/discovery/RouteEndpointAutocompleteInput.tsx`
+  - New reusable autocomplete input for route origin/destination fields.
+  - Uses `AutocompleteSuggestion.fetchAutocompleteSuggestions` with `includedRegionCodes: ["vn"]`, Vietnamese language, debounce, minimum 3 characters, and max 5 suggestions.
+  - Gracefully falls back to manual typing when browser key or Places permissions are not ready.
+- `components/discovery/RouteSearchForm.tsx`
+  - Origin and destination now use autocomplete suggestions.
+  - Route buffer still defaults to 500m for tighter field-sales routes.
+
+Validation run after the change:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+
+Manual testing:
+
+- Browser key must allow the current domain and have Maps JavaScript API + Places API enabled.
+- Type at least 3 characters in route origin/destination and select a suggested address/landmark.
+
 ## Notes For Future Codex Sessions
 
 - Prefer reading this file first, then run `git status --short --branch`.

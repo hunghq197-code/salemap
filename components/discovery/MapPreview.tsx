@@ -150,6 +150,7 @@ export function MapPreview({
   useEffect(() => {
     let active = true;
     const markerStore = markersRef.current;
+    let clearAuthFailureHandler = () => {};
 
     async function initializeMap() {
       if (!containerRef.current) {
@@ -157,7 +158,7 @@ export function MapPreview({
       }
 
       try {
-        setGoogleMapsAuthFailureHandler(() => {
+        clearAuthFailureHandler = setGoogleMapsAuthFailureHandler(() => {
           if (!active) return;
 
           setMapReady(false);
@@ -217,6 +218,7 @@ export function MapPreview({
 
     return () => {
       active = false;
+      clearAuthFailureHandler();
       markerStore.forEach((marker) => marker.setMap(null));
       markerStore.clear();
       centerMarkerRef.current?.setMap(null);

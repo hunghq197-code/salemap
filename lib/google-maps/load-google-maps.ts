@@ -2,6 +2,7 @@
 
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
+const authFailureHandlers = new Set<() => void>();
 let loaderConfigured = false;
 
 export const GOOGLE_MAPS_AUTH_ERROR_MESSAGE =
@@ -29,10 +30,17 @@ declare global {
 
 export function setGoogleMapsAuthFailureHandler(onAuthFailure: () => void) {
   if (typeof window === "undefined") {
-    return;
+    return () => {};
   }
 
-  window.gm_authFailure = onAuthFailure;
+  authFailureHandlers.add(onAuthFailure);
+  window.gm_authFailure = () => {
+    authFailureHandlers.forEach((handler) => handler());
+  };
+
+  return () => {
+    authFailureHandlers.delete(onAuthFailure);
+  };
 }
 
 function configureLoader(apiKey: string) {
@@ -60,4 +68,16 @@ export async function loadGoogleMaps() {
   configureLoader(apiKey);
 
   await Promise.all([importLibrary("maps"), importLibrary("geometry")]);
+}
+
+export async function loadGooglePlacesAutocomplete() {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY?.trim();
+
+  if (!apiKey) {
+    throw new MissingGoogleMapsBrowserKeyError();
+  }
+
+  configureLoader(apiKey);
+
+  return importLibrary("places") as Promise<google.maps.PlacesLibrary>;
 }

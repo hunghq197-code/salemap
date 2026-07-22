@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { MapPinned, Route, Search } from "lucide-react";
+import { RouteEndpointAutocompleteInput } from "@/components/discovery/RouteEndpointAutocompleteInput";
 
 const routeBufferOptions = [
   { label: "500m", value: 500 },
@@ -58,31 +59,19 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
       </div>
 
       <div className="mt-5 grid gap-4">
-        <label className="block text-sm font-bold text-ink">
-          Điểm bắt đầu cụ thể
-          <input
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-            maxLength={200}
-            minLength={2}
-            onChange={(event) => setOriginText(event.target.value)}
-            placeholder="Ví dụ: 25 Nguyễn Huệ, P. Bến Nghé hoặc Ngã tư Hàng Xanh"
-            required
-            value={originText}
-          />
-        </label>
+        <RouteEndpointAutocompleteInput
+          label="Điểm bắt đầu cụ thể"
+          onChange={setOriginText}
+          placeholder="Ví dụ: 25 Nguyễn Huệ, P. Bến Nghé hoặc Ngã tư Hàng Xanh"
+          value={originText}
+        />
 
-        <label className="block text-sm font-bold text-ink">
-          Điểm kết thúc cụ thể
-          <input
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-            maxLength={200}
-            minLength={2}
-            onChange={(event) => setDestinationText(event.target.value)}
-            placeholder="Ví dụ: Cầu Sài Gòn, Xa lộ Hà Nội hoặc 120 Điện Biên Phủ"
-            required
-            value={destinationText}
-          />
-        </label>
+        <RouteEndpointAutocompleteInput
+          label="Điểm kết thúc cụ thể"
+          onChange={setDestinationText}
+          placeholder="Ví dụ: Cầu Sài Gòn, Xa lộ Hà Nội hoặc 120 Điện Biên Phủ"
+          value={destinationText}
+        />
 
         <label className="block text-sm font-bold text-ink">
           Ngành khách cần tìm dọc đoạn này
