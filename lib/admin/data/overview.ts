@@ -1,4 +1,5 @@
-import { requireAdmin } from "@/lib/admin/auth";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
   countRowsByUser,
@@ -68,7 +69,7 @@ function startOfToday() {
 }
 
 export async function getAdminOverviewData() {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_ADMIN_DASHBOARD);
 
   const supabase = createSupabaseAdminClient();
   const [users, profiles] = await Promise.all([listAuthUsers(), listProfiles()]);

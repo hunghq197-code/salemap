@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { z } from "zod";
-import { AdminAuthError, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { AdminAuthError, requirePermission } from "@/lib/admin/auth";
 import {
   FEEDBACK_PRIORITY_OPTIONS,
   FEEDBACK_STATUS_OPTIONS,
@@ -35,7 +37,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
   const params = await props.params;
   try {
-    await requireAdminForApi();
+    const admin = await requirePermission(ADMIN_PERMISSIONS.VIEW_FEEDBACK);
 
     const payload = updateSchema.safeParse(await request.json());
 
@@ -56,6 +58,19 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (error) {
       return jsonError(500, "Không thể cập nhật feedback.");
     }
+
+    await writeAdminAuditLog({
+      action: "feedback_updated",
+      actorRole: admin.role,
+      actorUserId: admin.userId,
+      metadata: {
+        priority: payload.data.priority,
+        status: payload.data.status,
+      },
+      request,
+      targetId: params.id,
+      targetType: "beta_feedback",
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

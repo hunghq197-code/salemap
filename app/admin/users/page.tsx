@@ -170,7 +170,7 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
             <td className="whitespace-nowrap px-4 py-3">
               <Link
                 className="font-bold text-ocean hover:text-ink"
-                href={`/admin/users?selectedUser=${user.userId}`}
+                href={`/admin/users/${user.userId}`}
               >
                 Xem
               </Link>

@@ -1,0 +1,49 @@
+export const ADMIN_PERMISSIONS = {
+  MANAGE_ADMIN_USERS: "MANAGE_ADMIN_USERS",
+  MANAGE_SYSTEM_SETTINGS: "MANAGE_SYSTEM_SETTINGS",
+  UPDATE_PAYMENT_STATUS: "UPDATE_PAYMENT_STATUS",
+  UPDATE_QUOTA: "UPDATE_QUOTA",
+  UPDATE_SUBSCRIPTION: "UPDATE_SUBSCRIPTION",
+  UPDATE_USER_STATUS: "UPDATE_USER_STATUS",
+  VIEW_ADMIN_DASHBOARD: "VIEW_ADMIN_DASHBOARD",
+  VIEW_AUDIT_LOGS: "VIEW_AUDIT_LOGS",
+  VIEW_FEEDBACK: "VIEW_FEEDBACK",
+  VIEW_PAYMENTS: "VIEW_PAYMENTS",
+  VIEW_SUBSCRIPTIONS: "VIEW_SUBSCRIPTIONS",
+  VIEW_SYSTEM_HEALTH: "VIEW_SYSTEM_HEALTH",
+  VIEW_USAGE: "VIEW_USAGE",
+  VIEW_USERS: "VIEW_USERS",
+  VIEW_USER_DETAIL: "VIEW_USER_DETAIL",
+} as const;
+
+export type AdminPermission = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];
+export type AdminRole = "admin" | "super_admin" | "support";
+
+const ALL_PERMISSIONS = Object.values(ADMIN_PERMISSIONS);
+
+const ADMIN_ROLE_PERMISSIONS: Record<AdminRole, ReadonlySet<AdminPermission>> = {
+  admin: new Set(
+    ALL_PERMISSIONS.filter(
+      (permission) =>
+        permission !== ADMIN_PERMISSIONS.MANAGE_ADMIN_USERS &&
+        permission !== ADMIN_PERMISSIONS.MANAGE_SYSTEM_SETTINGS,
+    ),
+  ),
+  super_admin: new Set(ALL_PERMISSIONS),
+  support: new Set([
+    ADMIN_PERMISSIONS.VIEW_ADMIN_DASHBOARD,
+    ADMIN_PERMISSIONS.VIEW_FEEDBACK,
+    ADMIN_PERMISSIONS.VIEW_PAYMENTS,
+    ADMIN_PERMISSIONS.VIEW_USAGE,
+    ADMIN_PERMISSIONS.VIEW_USERS,
+    ADMIN_PERMISSIONS.VIEW_USER_DETAIL,
+  ]),
+};
+
+export function hasPermission(role: AdminRole, permission: AdminPermission) {
+  return ADMIN_ROLE_PERMISSIONS[role]?.has(permission) ?? false;
+}
+
+export function getPermissionsForRole(role: AdminRole) {
+  return Array.from(ADMIN_ROLE_PERMISSIONS[role] ?? []);
+}

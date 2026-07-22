@@ -1,4 +1,6 @@
-import { requireAdmin, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import {
   getUserLabel,
   listAuthUsers,
@@ -44,7 +46,7 @@ function canReview(status: PaymentRequestStatus) {
 export async function getAdminPaymentRequests(
   params?: AdminPaymentRequestParams,
 ): Promise<AdminPaymentRequestListResult> {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
 
   const supabase = createSupabaseAdminClient();
   let query = supabase
@@ -106,7 +108,7 @@ export async function getAdminPaymentRequests(
 }
 
 export async function approvePaymentRequest(id: string, adminNote?: string) {
-  const admin = await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_PAYMENT_STATUS);
   const supabase = createSupabaseAdminClient();
   const { data: paymentRequest, error: fetchError } = await supabase
     .from("payment_requests")
@@ -174,11 +176,27 @@ export async function approvePaymentRequest(id: string, adminNote?: string) {
     userId: request.user_id,
   });
 
+  await writeAdminAuditLog({
+    action: "payment_status_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      amountVnd: request.amount_vnd,
+      months: request.months ?? 1,
+      planKey: request.plan_key,
+      requestType: request.request_type || "new_subscription",
+      status: "paid",
+    },
+    severity: "warning",
+    targetId: request.id,
+    targetType: "payment_request",
+  });
+
   return subscription;
 }
 
 export async function rejectPaymentRequest(id: string, adminNote?: string) {
-  const admin = await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_PAYMENT_STATUS);
   const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
   const { data, error } = await supabase
@@ -209,5 +227,18 @@ export async function rejectPaymentRequest(id: string, adminNote?: string) {
     title: "Yêu cầu thanh toán bị từ chối",
     type: "payment_request_rejected",
     userId: String(data.user_id),
+  });
+
+  await writeAdminAuditLog({
+    action: "payment_status_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      planKey: String(data.plan_key || ""),
+      status: "rejected",
+    },
+    severity: "warning",
+    targetId: id,
+    targetType: "payment_request",
   });
 }

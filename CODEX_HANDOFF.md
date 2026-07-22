@@ -878,3 +878,24 @@ Deployment note:
 - Run `supabase/cadences.sql`, then `supabase/seed-cadence-templates.sql` in Supabase SQL Editor.
 - `SUPABASE_SQL_SETUP.md` now lists these as steps 23 and 24.
 - If a template has already been applied to a lead, edit is blocked to preserve task/progress history; use "Nhân bản" and edit the copy.
+
+## 2026-07-22 Update - Admin Control Center MVP And Security Foundation
+
+Implemented changes:
+
+- Added `supabase/admin-security.sql` for `admin_users`, `admin_audit_logs`, `security_events`, `user_quota_overrides`, `user_feature_overrides`, `support_access_logs`, RLS policies, and `account_status`.
+- Admin access now uses server-side role checks from `admin_users` with roles `super_admin`, `admin`, `support`.
+- Added admin permissions, audit log helper, support access log helper, safe error helper, and rate limit abstraction.
+- Added MVP routes: `/admin/payments`, `/admin/quotas`, `/admin/system`, `/admin/audit-logs`, `/admin/settings`, and `/admin/users/[userId]`.
+- Added admin API guard and JSON routes for dashboard, users, user status, quota/features, usage, payments, subscriptions, system health, audit logs, and security events.
+- Integrated `user_quota_overrides` into `getDailyQuotaLimitForUser`.
+- Integrated `user_feature_overrides` into `isFeatureEnabled`.
+- payOS webhook now has rate limiting and writes `invalid_payment_webhook` security events on bad signatures.
+- Payment gateway admin page no longer renders raw provider/webhook payload.
+- Added `scripts/bootstrap-admin.mjs`, `ADMIN_BOOTSTRAP.md`, `scripts/security-scan.mjs`, and `SECURITY_CHECKLIST.md`.
+
+Deployment note:
+
+- Run `supabase/admin-security.sql` after the existing schema files.
+- Bootstrap the first admin with `BOOTSTRAP_ADMIN_EMAIL` and `npm run admin:bootstrap`.
+- Run `npm run security:scan` before pushing/deploying.

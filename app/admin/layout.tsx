@@ -15,6 +15,7 @@ export default async function AdminLayout({
     <AdminShell
       email={admin.email}
       fullName={admin.profile.full_name}
+      role={admin.role}
     >
       {children}
     </AdminShell>

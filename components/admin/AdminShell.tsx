@@ -10,12 +10,16 @@ import {
   ClipboardCheck,
   FileSpreadsheet,
   Flag,
+  GaugeCircle,
   Home,
   LayoutDashboard,
+  LockKeyhole,
   LogOut,
   MessageSquareText,
   MousePointerClick,
+  ServerCog,
   Settings,
+  ShieldCheck,
   Ticket,
   UsersRound,
   HeartPulse,
@@ -25,25 +29,35 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { AdminRoleBadge } from "@/components/admin/AdminRoleBadge";
+import type { AdminRole } from "@/lib/admin/admin-permissions";
 import { clearUserOfflineData } from "@/lib/offline/clear-user-offline-data";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const adminNavItems = [
+const primaryAdminNavItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Tổng quan" },
   { href: "/admin/users", icon: UsersRound, label: "Người dùng" },
-  { href: "/admin/beta-signups", icon: MousePointerClick, label: "Đăng ký" },
-  { href: "/admin/feedback", icon: MessageSquareText, label: "Feedback" },
+  { href: "/admin/subscriptions", icon: RefreshCw, label: "Gói dịch vụ" },
+  { href: "/admin/payments", icon: CreditCard, label: "Thanh toán" },
+  { href: "/admin/usage", icon: BarChart3, label: "Quota & Usage" },
+  { href: "/admin/quotas", icon: GaugeCircle, label: "Quota overrides" },
+  { href: "/admin/feedback", icon: MessageSquareText, label: "Beta Feedback" },
+  { href: "/admin/system", icon: ServerCog, label: "Hệ thống" },
+  { href: "/admin/audit-logs", icon: ShieldCheck, label: "Nhật ký quản trị" },
+  { href: "/admin/settings", icon: LockKeyhole, label: "Cài đặt" },
+] as const;
+
+const secondaryAdminNavItems = [
+  { href: "/admin/beta-signups", icon: MousePointerClick, label: "Đăng ký beta" },
   { href: "/admin/upgrade-interests", icon: Settings, label: "Quan tâm nâng cấp" },
-  { href: "/admin/payment-requests", icon: CreditCard, label: "Thanh toán" },
+  { href: "/admin/payment-requests", icon: CreditCard, label: "Yêu cầu thanh toán" },
   { href: "/admin/payment-gateway", icon: CircleDollarSign, label: "Cổng thanh toán" },
-  { href: "/admin/ai-usage", icon: Bot, label: "AI Usage" },
+  { href: "/admin/ai-usage", icon: Bot, label: "AI usage" },
   { href: "/admin/imports", icon: FileSpreadsheet, label: "Imports" },
-  { href: "/admin/data-quality", icon: DatabaseZap, label: "Data Quality" },
-  { href: "/admin/lead-views", icon: DatabaseZap, label: "Lead Views" },
-  { href: "/admin/sales-analytics", icon: BarChart3, label: "Sales Analytics" },
+  { href: "/admin/data-quality", icon: DatabaseZap, label: "Data quality" },
+  { href: "/admin/lead-views", icon: DatabaseZap, label: "Lead views" },
+  { href: "/admin/sales-analytics", icon: BarChart3, label: "Sales analytics" },
   { href: "/admin/revenue", icon: CircleDollarSign, label: "Doanh thu" },
-  { href: "/admin/subscriptions", icon: RefreshCw, label: "Subscriptions" },
-  { href: "/admin/usage", icon: BarChart3, label: "Usage" },
   { href: "/admin/retention", icon: HeartPulse, label: "Retention" },
   { href: "/admin/beta-cohorts", icon: UsersRound, label: "Cohorts" },
   { href: "/admin/invite-codes", icon: Ticket, label: "Invite Codes" },
@@ -56,16 +70,58 @@ type AdminShellProps = {
   children: ReactNode;
   email: string | null;
   fullName: string | null;
+  role: AdminRole;
 };
 
 function isActivePath(pathname: string, href: string) {
   return pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`));
 }
 
-export function AdminShell({ children, email, fullName }: AdminShellProps) {
+function getEnvironmentLabel() {
+  const env = process.env.NEXT_PUBLIC_VERCEL_ENV || process.env.NODE_ENV || "local";
+
+  if (env === "production") {
+    return "Production";
+  }
+
+  if (env === "preview") {
+    return "Staging";
+  }
+
+  return "Local";
+}
+
+function AdminNavLinks({ items, pathname }: {
+  items: typeof primaryAdminNavItems | typeof secondaryAdminNavItems;
+  pathname: string;
+}) {
+  return items.map((item) => {
+    const Icon = item.icon;
+    const active = isActivePath(pathname, item.href);
+
+    return (
+      <Link
+        className={[
+          "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition",
+          active
+            ? "bg-mint/15 text-ocean"
+            : "text-slate-600 hover:bg-slate-50 hover:text-ink",
+        ].join(" ")}
+        href={item.href}
+        key={item.href}
+      >
+        <Icon aria-hidden="true" className="h-5 w-5" />
+        {item.label}
+      </Link>
+    );
+  });
+}
+
+export function AdminShell({ children, email, fullName, role }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const environmentLabel = getEnvironmentLabel();
 
   async function handleLogout() {
     if (isSigningOut) {
@@ -128,29 +184,24 @@ export function AdminShell({ children, email, fullName }: AdminShellProps) {
             <p className="mt-1 truncate text-sm font-bold text-ink">
               {fullName || email || "SaleMap admin"}
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <AdminRoleBadge role={role} />
+              <span className="inline-flex min-h-7 items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
+                {environmentLabel}
+              </span>
+            </div>
           </div>
 
           <nav aria-label="Admin navigation" className="mt-8 space-y-2">
-            {adminNavItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActivePath(pathname, item.href);
-
-              return (
-                <Link
-                  className={[
-                    "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition",
-                    active
-                      ? "bg-mint/15 text-ocean"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-ink",
-                  ].join(" ")}
-                  href={item.href}
-                  key={item.href}
-                >
-                  <Icon aria-hidden="true" className="h-5 w-5" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            <AdminNavLinks items={primaryAdminNavItems} pathname={pathname} />
+            <div className="pt-4">
+              <p className="px-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                Vận hành phụ
+              </p>
+              <div className="mt-2 space-y-2">
+                <AdminNavLinks items={secondaryAdminNavItems} pathname={pathname} />
+              </div>
+            </div>
           </nav>
 
           <div className="mt-8 space-y-3 border-t border-slate-200 pt-5">
@@ -183,7 +234,7 @@ export function AdminShell({ children, email, fullName }: AdminShellProps) {
         className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur lg:hidden"
       >
         <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
-          {adminNavItems.slice(0, 4).map((item) => {
+          {primaryAdminNavItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             const active = isActivePath(pathname, item.href);
 

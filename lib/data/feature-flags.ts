@@ -94,6 +94,12 @@ export const FEATURE_FLAG_DEFINITIONS = [
   },
   {
     defaultEnabled: true,
+    description: "Quy trình chăm sóc lead bằng cadence template.",
+    key: "cadences",
+    name: "Cadences",
+  },
+  {
+    defaultEnabled: true,
     description: "Analytics và sales goals.",
     key: "analytics",
     name: "Analytics",
@@ -147,6 +153,15 @@ function getFallbackFlag(flagKey: string): FeatureFlag | null {
     rollout_percentage: 100,
   };
 }
+
+const FEATURE_OVERRIDE_COLUMN_BY_FLAG: Partial<Record<FeatureFlagKey, string>> = {
+  ai_assistant: "enable_ai_assistant",
+  cadences: "enable_cadences",
+  export_csv: "enable_export",
+  import_leads: "enable_import",
+  map_discovery: "enable_map_discovery",
+  route_search: "enable_route_search",
+};
 
 function getFallbackFlags() {
   return FEATURE_FLAG_DEFINITIONS.map((definition) => ({
@@ -249,6 +264,23 @@ export async function isFeatureEnabled(flagKey: string, userId?: string) {
   const supabase = createSupabaseAdminClient();
 
   if (safeUserId) {
+    const overrideColumn = FEATURE_OVERRIDE_COLUMN_BY_FLAG[flagKey as FeatureFlagKey];
+
+    if (overrideColumn) {
+      const { data: featureOverride } = await supabase
+        .from("user_feature_overrides")
+        .select(overrideColumn)
+        .eq("user_id", safeUserId)
+        .maybeSingle();
+      const overrideValue = (featureOverride as Record<string, unknown> | null)?.[
+        overrideColumn
+      ];
+
+      if (typeof overrideValue === "boolean") {
+        return overrideValue;
+      }
+    }
+
     const { data: userFlag } = await supabase
       .from("user_feature_flags")
       .select("is_enabled")

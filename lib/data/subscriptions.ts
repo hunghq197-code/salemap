@@ -16,6 +16,16 @@ import {
   createSupabaseServerClient,
 } from "@/lib/supabase/server";
 
+const QUOTA_OVERRIDE_COLUMN_BY_ACTION: Record<DailyQuotaAction, string> = {
+  ai_request: "ai_daily_limit",
+  area_search: "map_search_daily_limit",
+  export_leads: "export_daily_limit",
+  import_rows: "import_monthly_limit",
+  near_me_search: "map_search_daily_limit",
+  route_search: "route_search_daily_limit",
+  save_map_lead: "lead_limit",
+};
+
 export type SubscriptionStatus =
   | "active"
   | "cancelled"
@@ -629,15 +639,32 @@ export async function getDailyQuotaLimitForUser(
   }
 
   const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .select("plan_key,status,current_period_end")
-    .eq("user_id", safeUserId)
-    .maybeSingle();
+  const [subscriptionResult, overrideResult] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select("plan_key,status,current_period_end")
+      .eq("user_id", safeUserId)
+      .maybeSingle(),
+    supabase
+      .from("user_quota_overrides")
+      .select(QUOTA_OVERRIDE_COLUMN_BY_ACTION[actionType])
+      .eq("user_id", safeUserId)
+      .maybeSingle(),
+  ]);
+  const planKey =
+    subscriptionResult.error ||
+    !isActiveSubscription(subscriptionResult.data as Partial<SubscriptionRecord> | null)
+      ? "free_beta"
+      : String(subscriptionResult.data?.plan_key || "free_beta");
+  const planLimit = getPlanQuotaLimit(planKey, actionType);
+  const overrideColumn = QUOTA_OVERRIDE_COLUMN_BY_ACTION[actionType];
+  const overrideValue = (overrideResult.data as Record<string, unknown> | null)?.[
+    overrideColumn
+  ];
 
-  if (error || !isActiveSubscription(data as Partial<SubscriptionRecord> | null)) {
-    return getPlanQuotaLimit("free_beta", actionType);
+  if (typeof overrideValue === "number" && Number.isFinite(overrideValue)) {
+    return Math.max(0, Math.round(overrideValue));
   }
 
-  return getPlanQuotaLimit(String(data?.plan_key || "free_beta"), actionType);
+  return planLimit;
 }

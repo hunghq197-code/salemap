@@ -7,8 +7,10 @@
     "build": "next build",
     "lint": "eslint .",
     "seed:staging": "node scripts/seed-staging.mjs",
+    "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:staging": "node scripts/smoke-staging.mjs",
+    "security:scan": "node scripts/security-scan.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

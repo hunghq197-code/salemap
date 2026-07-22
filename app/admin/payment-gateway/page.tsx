@@ -28,18 +28,6 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("vi-VN").format(value) + "đ";
 }
 
-function formatJson(value: unknown) {
-  if (!value) {
-    return "Chưa có dữ liệu";
-  }
-
-  try {
-    return JSON.stringify(value, null, 2).slice(0, 5000);
-  } catch {
-    return "Không đọc được dữ liệu raw";
-  }
-}
-
 export default async function AdminPaymentGatewayPage(props: AdminPaymentGatewayPageProps) {
   const searchParams = await props.searchParams;
   const params = {
@@ -193,17 +181,15 @@ export default async function AdminPaymentGatewayPage(props: AdminPaymentGateway
                       </a>
                     ) : null}
                     <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <summary className="cursor-pointer text-xs font-bold text-ink">View detail</summary>
+                      <summary className="cursor-pointer text-xs font-bold text-ink">View safe detail</summary>
                       <div className="mt-3 space-y-3 text-xs text-slate-600">
                         <p>Subscription id: {item.subscription_id || "Chưa có"}</p>
                         <p>Provider reference: {item.provider_reference || "Chưa có"}</p>
-                        <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-white p-3">
-                          {formatJson({
-                            raw_create_response: item.raw_create_response,
-                            raw_status_response: item.raw_status_response,
-                            raw_webhook_payload: item.raw_webhook_payload,
-                          })}
-                        </pre>
+                        <p>Provider status: {item.provider_status || "Chưa có"}</p>
+                        <p>Payment link id: {item.payment_link_id || "Chưa có"}</p>
+                        <p className="font-semibold text-amber-700">
+                          Raw provider/webhook payload không hiển thị trong admin MVP.
+                        </p>
                       </div>
                     </details>
                   </div>

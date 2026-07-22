@@ -3,7 +3,9 @@ import {
   handlePayOSWebhook,
   InvalidPayOSWebhookSignatureError,
 } from "@/lib/data/payment-gateway-transactions";
+import { writeSecurityEvent } from "@/lib/admin/audit-log";
 import { PayOSConfigError, type PayOSWebhookPayload } from "@/lib/providers/payments";
+import { rateLimitByIp, rateLimitResponse } from "@/lib/security/rate-limit";
 
 function errorResponse(code: string, message: string, status = 400) {
   return NextResponse.json(
@@ -33,6 +35,25 @@ function isPayOSWebhookPayload(value: unknown): value is PayOSWebhookPayload {
 }
 
 export async function POST(request: Request) {
+  const limit = rateLimitByIp({
+    category: "payment_webhook",
+    request,
+  });
+
+  if (!limit.allowed) {
+    await writeSecurityEvent({
+      eventType: "rate_limit_exceeded",
+      message: "payOS webhook rate limit exceeded.",
+      metadata: {
+        provider: "payos",
+      },
+      request,
+      severity: "warning",
+    });
+
+    return rateLimitResponse(limit.retryAfterSeconds);
+  }
+
   const payload = await request.json().catch(() => null);
 
   if (!isPayOSWebhookPayload(payload)) {
@@ -48,6 +69,16 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof InvalidPayOSWebhookSignatureError) {
+      await writeSecurityEvent({
+        eventType: "invalid_payment_webhook",
+        message: "payOS webhook signature invalid.",
+        metadata: {
+          provider: "payos",
+        },
+        request,
+        severity: "warning",
+      });
+
       return errorResponse(
         "INVALID_PAYOS_WEBHOOK_SIGNATURE",
         "Webhook signature không hợp lệ.",

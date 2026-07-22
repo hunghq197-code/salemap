@@ -1,4 +1,6 @@
-import { requireAdmin, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import {
   getUserLabel,
   listAuthUsers,
@@ -39,7 +41,7 @@ function normalizeSearch(value?: string) {
 export async function getAdminPaymentGatewayTransactions(
   params?: AdminPaymentGatewayParams,
 ): Promise<AdminPaymentGatewayListResult> {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
 
   const supabase = createSupabaseAdminClient();
   let query = supabase
@@ -130,7 +132,21 @@ export async function getAdminPaymentGatewayTransactions(
 }
 
 export async function syncAdminPaymentGatewayTransaction(id: string) {
-  await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_PAYMENT_STATUS);
+  const transaction = await syncPayOSGatewayTransaction({ transactionId: id });
 
-  return syncPayOSGatewayTransaction({ transactionId: id });
+  await writeAdminAuditLog({
+    action: "payment_status_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      provider: transaction.provider,
+      status: transaction.status,
+    },
+    severity: "warning",
+    targetId: id,
+    targetType: "payment_gateway_transaction",
+  });
+
+  return transaction;
 }

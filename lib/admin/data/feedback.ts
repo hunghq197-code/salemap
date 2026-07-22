@@ -1,4 +1,5 @@
-import { requireAdmin } from "@/lib/admin/auth";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
   getUserLabel,
@@ -48,7 +49,7 @@ export type AdminFeedbackRow = {
 };
 
 export async function getAdminFeedback(params?: AdminSearchParams) {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_FEEDBACK);
 
   const supabase = createSupabaseAdminClient();
   const { from, limit, page, to } = getPaging(params);

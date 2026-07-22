@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { z } from "zod";
-import { AdminAuthError, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { AdminAuthError, requirePermission } from "@/lib/admin/auth";
 import { UPGRADE_INTEREST_STATUS_OPTIONS } from "@/lib/admin/data/upgrade-interests";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
@@ -31,7 +33,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
   const params = await props.params;
   try {
-    await requireAdminForApi();
+    const admin = await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
 
     const payload = updateSchema.safeParse(await request.json());
 
@@ -51,6 +53,18 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (error) {
       return jsonError(500, "Không thể cập nhật upgrade interest.");
     }
+
+    await writeAdminAuditLog({
+      action: "upgrade_interest_updated",
+      actorRole: admin.role,
+      actorUserId: admin.userId,
+      metadata: {
+        status: payload.data.status,
+      },
+      request,
+      targetId: params.id,
+      targetType: "upgrade_interest",
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

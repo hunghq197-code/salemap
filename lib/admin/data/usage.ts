@@ -1,4 +1,5 @@
-import { requireAdmin } from "@/lib/admin/auth";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
   getUserLabel,
@@ -40,7 +41,7 @@ const usageActions = [
 ] as const;
 
 export async function getAdminUsage(params?: AdminSearchParams) {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_USAGE);
 
   const supabase = createSupabaseAdminClient();
   const { limit, page } = getPaging(params);

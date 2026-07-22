@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { z } from "zod";
-import { AdminAuthError, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { AdminAuthError, requirePermission } from "@/lib/admin/auth";
 import { BETA_CONTACT_STATUS_OPTIONS } from "@/lib/admin/data/beta-signups";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
@@ -31,7 +33,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
   const params = await props.params;
   try {
-    await requireAdminForApi();
+    const admin = await requirePermission(ADMIN_PERMISSIONS.VIEW_USERS);
 
     const payload = updateSchema.safeParse(await request.json());
 
@@ -52,6 +54,18 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (error) {
       return jsonError(500, "Không thể cập nhật đăng ký.");
     }
+
+    await writeAdminAuditLog({
+      action: "beta_signup_updated",
+      actorRole: admin.role,
+      actorUserId: admin.userId,
+      metadata: {
+        contactStatus: payload.data.contactStatus,
+      },
+      request,
+      targetId: params.id,
+      targetType: "beta_signup",
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

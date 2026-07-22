@@ -40,7 +40,7 @@ export default async function AdminOverviewPage() {
       <AdminPageTracker page="dashboard" />
       <AdminPageHeader
         description="Theo dõi user, feedback, usage và tín hiệu nâng cấp của SaleMap."
-        title="Admin Dashboard"
+        title="Tổng quan hệ thống"
       />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

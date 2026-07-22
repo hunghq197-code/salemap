@@ -1,4 +1,6 @@
-import { requireAdmin, requireAdminForApi } from "@/lib/admin/auth";
+import { writeAdminAuditLog } from "@/lib/admin/audit-log";
+import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
+import { requirePermission } from "@/lib/admin/auth";
 import {
   getUserLabel,
   listAuthUsers,
@@ -9,8 +11,13 @@ import {
 import type { AdminSearchParams } from "@/lib/admin/data/utils";
 import { getParam } from "@/lib/admin/data/utils";
 import type { SubscriptionRecord } from "@/lib/data/subscriptions";
-import { getSubscriptionPlan } from "@/lib/constants/subscription-plans";
 import {
+  getSubscriptionPlan,
+  isPaidSubscriptionPlanKey,
+  isSubscriptionPlanKey,
+} from "@/lib/constants/subscription-plans";
+import {
+  activateSubscriptionForUser,
   downgradeUserToFree,
   renewSubscriptionForUser,
 } from "@/lib/data/subscriptions";
@@ -42,7 +49,7 @@ function daysRemaining(value?: string | null) {
 export async function getAdminSubscriptions(
   params?: AdminSearchParams,
 ): Promise<AdminSubscriptionsResult> {
-  await requireAdmin();
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_SUBSCRIPTIONS);
 
   const supabase = createSupabaseAdminClient();
   const planKey = getParam(params, "planKey") || "";
@@ -113,7 +120,7 @@ export async function getAdminSubscriptions(
 }
 
 export async function extendSubscriptionOneMonth(subscriptionId: string, note?: string) {
-  const admin = await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("subscriptions")
@@ -131,17 +138,33 @@ export async function extendSubscriptionOneMonth(subscriptionId: string, note?: 
     throw new Error("SUBSCRIPTION_NOT_PAID");
   }
 
-  return renewSubscriptionForUser({
+  const renewed = await renewSubscriptionForUser({
     adminUserId: admin.userId,
     months: 1,
     note: note || "Admin extend 1 month",
     planKey: subscription.plan_key,
     userId: subscription.user_id,
   });
+
+  await writeAdminAuditLog({
+    action: "subscription_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      months: 1,
+      planKey: subscription.plan_key,
+      status: "extended",
+    },
+    severity: "warning",
+    targetId: subscriptionId,
+    targetType: "subscription",
+  });
+
+  return renewed;
 }
 
 export async function downgradeSubscriptionToFree(subscriptionId: string, reason?: string) {
-  const admin = await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("subscriptions")
@@ -153,15 +176,29 @@ export async function downgradeSubscriptionToFree(subscriptionId: string, reason
     throw new Error(error?.message || "SUBSCRIPTION_NOT_FOUND");
   }
 
-  return downgradeUserToFree({
+  const downgraded = await downgradeUserToFree({
     adminUserId: admin.userId,
     reason,
     userId: String(data.user_id),
   });
+
+  await writeAdminAuditLog({
+    action: "subscription_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      status: "downgraded_to_free",
+    },
+    severity: "warning",
+    targetId: subscriptionId,
+    targetType: "subscription",
+  });
+
+  return downgraded;
 }
 
 export async function markSubscriptionCancelled(subscriptionId: string, note?: string) {
-  const admin = await requireAdminForApi();
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
   const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
   const { data, error } = await supabase
@@ -190,6 +227,80 @@ export async function markSubscriptionCancelled(subscriptionId: string, note?: s
     subscriptionId: subscription.id ?? null,
     toPlanKey: subscription.plan_key,
     userId: subscription.user_id,
+  });
+
+  await writeAdminAuditLog({
+    action: "subscription_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      planKey: subscription.plan_key,
+      status: "cancelled",
+    },
+    severity: "warning",
+    targetId: subscriptionId,
+    targetType: "subscription",
+  });
+
+  return subscription;
+}
+
+export async function changeSubscriptionPlan(
+  subscriptionId: string,
+  planKey: string,
+  input?: {
+    months?: number;
+    note?: string;
+  },
+) {
+  const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
+
+  if (!isSubscriptionPlanKey(planKey)) {
+    throw new Error("INVALID_PLAN");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("user_id,plan_key")
+    .eq("id", subscriptionId)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(error?.message || "SUBSCRIPTION_NOT_FOUND");
+  }
+
+  const previousPlanKey = String(data.plan_key || "free_beta");
+  const userId = String(data.user_id);
+  const subscription =
+    planKey === "free_beta"
+      ? await downgradeUserToFree({
+          adminUserId: admin.userId,
+          reason: input?.note || "Admin changed plan to free",
+          userId,
+        })
+      : await activateSubscriptionForUser({
+          adminUserId: admin.userId,
+          months: Math.max(1, Math.min(12, Number(input?.months ?? 1) || 1)),
+          note: input?.note || "Admin changed plan",
+          paymentMethod: "admin_manual",
+          planKey,
+          userId,
+        });
+
+  await writeAdminAuditLog({
+    action: "subscription_updated",
+    actorRole: admin.role,
+    actorUserId: admin.userId,
+    metadata: {
+      fromPlanKey: previousPlanKey,
+      isPaidPlan: isPaidSubscriptionPlanKey(planKey),
+      status: "plan_changed",
+      toPlanKey: planKey,
+    },
+    severity: "warning",
+    targetId: subscriptionId,
+    targetType: "subscription",
   });
 
   return subscription;

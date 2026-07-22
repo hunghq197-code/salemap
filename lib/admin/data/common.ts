@@ -7,6 +7,7 @@ export type AdminAuthUser = {
 };
 
 export type AdminUserProfile = {
+  account_status?: string | null;
   full_name?: string | null;
   goals?: string[] | null;
   id?: string;
@@ -16,6 +17,12 @@ export type AdminUserProfile = {
   primary_city?: string | null;
   primary_district?: string | null;
   role_type?: string | null;
+  user_id: string;
+};
+
+export type AdminUserRoleRow = {
+  is_active?: boolean | null;
+  role?: string | null;
   user_id: string;
 };
 
@@ -42,7 +49,7 @@ export async function listProfiles() {
   const { data, error } = await supabase
     .from("user_profiles")
     .select(
-      "id,user_id,full_name,role_type,industry,primary_city,primary_district,goals,onboarding_completed,is_admin",
+      "id,user_id,full_name,role_type,industry,primary_city,primary_district,goals,onboarding_completed,is_admin,account_status",
     );
 
   if (error) {
@@ -50,6 +57,19 @@ export async function listProfiles() {
   }
 
   return (data ?? []) as AdminUserProfile[];
+}
+
+export async function listAdminRoleRows() {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("user_id,role,is_active");
+
+  if (error) {
+    return [] as AdminUserRoleRow[];
+  }
+
+  return (data ?? []) as AdminUserRoleRow[];
 }
 
 export async function listUserIdRows(table: string, select = "user_id") {
