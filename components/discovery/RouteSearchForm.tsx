@@ -21,7 +21,7 @@ type RouteSearchFormProps = {
 };
 
 export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
-  const [bufferMeters, setBufferMeters] = useState(1000);
+  const [bufferMeters, setBufferMeters] = useState(500);
   const [destinationText, setDestinationText] = useState("");
   const [keyword, setKeyword] = useState("");
   const [originText, setOriginText] = useState("");
@@ -46,42 +46,46 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           Dọc tuyến
         </p>
         <h2 className="mt-2 text-xl font-bold text-ink">
-          Tìm khách dọc tuyến đường
+          Tìm khách theo đoạn đường sale sẽ đi
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Nhập điểm đầu, điểm cuối và ngành khách cần tìm. SaleMap sẽ hiển thị các địa điểm phù hợp dọc tuyến.
+          Nhập hai mốc cụ thể trên tuyến di chuyển, như số nhà, giao lộ, cửa hàng, bến xe hoặc địa danh. Tránh nhập quận/huyện quá rộng nếu bạn chỉ đi một đoạn đường.
         </p>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">
+        Ví dụ tốt: Ngã tư Hàng Xanh đến Cầu Sài Gòn. Ví dụ chưa tốt: Quận 1 đến Biên Hòa nếu sale chỉ chạy một tuyến cụ thể.
       </div>
 
       <div className="mt-5 grid gap-4">
         <label className="block text-sm font-bold text-ink">
-          Điểm đầu
+          Điểm bắt đầu cụ thể
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={200}
             minLength={2}
             onChange={(event) => setOriginText(event.target.value)}
-            placeholder="Điểm đầu, ví dụ: Quận 1, TP.HCM"
+            placeholder="Ví dụ: 25 Nguyễn Huệ, P. Bến Nghé hoặc Ngã tư Hàng Xanh"
             required
             value={originText}
           />
         </label>
 
         <label className="block text-sm font-bold text-ink">
-          Điểm cuối
+          Điểm kết thúc cụ thể
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={200}
             minLength={2}
             onChange={(event) => setDestinationText(event.target.value)}
-            placeholder="Điểm cuối, ví dụ: Biên Hòa, Đồng Nai"
+            placeholder="Ví dụ: Cầu Sài Gòn, Xa lộ Hà Nội hoặc 120 Điện Biên Phủ"
             required
             value={destinationText}
           />
         </label>
 
         <label className="block text-sm font-bold text-ink">
-          Keyword cần tìm
+          Ngành khách cần tìm dọc đoạn này
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={100}
@@ -95,7 +99,7 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
       </div>
 
       <fieldset className="mt-4">
-        <legend className="text-sm font-bold text-ink">Khoảng cách lệch tuyến</legend>
+        <legend className="text-sm font-bold text-ink">Độ lệch khỏi tuyến</legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
           {routeBufferOptions.map((option) => (
             <label
@@ -119,6 +123,9 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
             </label>
           ))}
         </div>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Mặc định 500m để kết quả bám sát tuyến đường sale thực sự đi qua. Tăng lên 1-3km khi muốn mở rộng khu vực hai bên tuyến.
+        </p>
       </fieldset>
 
       <button
@@ -129,12 +136,12 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
         {loading ? (
           <>
             <Route aria-hidden="true" className="h-5 w-5 animate-pulse" />
-            Đang tìm dọc tuyến...
+            Đang tìm dọc đoạn đường...
           </>
         ) : (
           <>
             <Search aria-hidden="true" className="h-5 w-5" />
-            Tìm dọc tuyến
+            Tìm dọc đoạn đường
           </>
         )}
       </button>
@@ -144,7 +151,7 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           aria-hidden="true"
           className="mt-0.5 h-4 w-4 flex-none text-ocean"
         />
-        Nên nhập địa chỉ hoặc quận/huyện cụ thể để kết quả tuyến chính xác hơn.
+        Nếu sale đi theo một con đường cụ thể, hãy dùng hai giao lộ hoặc hai địa chỉ nằm trên con đường đó làm điểm đầu và điểm cuối.
       </p>
     </form>
   );
