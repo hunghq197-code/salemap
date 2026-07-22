@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ExternalLink,
+  ListChecks,
   RotateCcw,
   XCircle,
 } from "lucide-react";
@@ -63,6 +64,12 @@ export function TaskCard({
             <span className="inline-flex min-h-7 items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
               {getTaskStatusLabel(task.status)}
             </span>
+            {task.cadence ? (
+              <span className="inline-flex min-h-7 items-center gap-1 rounded-full border border-ocean/20 bg-ocean/10 px-3 py-1 text-xs font-bold text-ocean">
+                <ListChecks aria-hidden="true" className="h-3.5 w-3.5" />
+                Từ quy trình
+              </span>
+            ) : null}
           </div>
 
           <h2 className="mt-3 text-lg font-bold leading-7 text-ink">
@@ -91,6 +98,13 @@ export function TaskCard({
           {task.description ? (
             <p className="mt-3 text-sm leading-7 text-slate-600">
               {task.description}
+            </p>
+          ) : null}
+
+          {task.cadence ? (
+            <p className="mt-3 rounded-lg border border-ocean/15 bg-ocean/5 px-3 py-2 text-sm font-semibold leading-6 text-ocean">
+              {task.cadence.templateName} · Bước {task.cadence.stepOrder}/
+              {task.cadence.totalSteps || "?"}
             </p>
           ) : null}
 

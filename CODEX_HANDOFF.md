@@ -818,3 +818,63 @@ Deployment note:
 
 - Reused the Google Maps autocomplete input from Route Search for the Discover "Theo khu vực" area field.
 - Area Search now suggests specific addresses, roads, wards, and districts while still submitting the same `areaText` payload to the existing API.
+
+## 2026-07-22 Update - Sales Cadence Template MVP
+
+This phase added the "Quy trình chăm sóc" MVP: cadence templates create reminder tasks for leads, track progress, and surface suggested copy/notes without automating Zalo/email/calls.
+
+Implemented changes:
+
+- New SQL files:
+  - `supabase/cadences.sql`
+  - `supabase/seed-cadence-templates.sql`
+  - Adds `cadence_templates`, `cadence_steps`, `lead_cadences`, and `cadence_task_links` with RLS.
+  - Seeds 4 system templates: Chăm sóc lead mới, Follow-up sau báo giá, Chăm sóc khách cũ, Lead không phản hồi.
+- New app routes:
+  - `/app/cadences`
+  - `/app/cadences/new`
+  - `/app/cadences/[cadenceId]`
+  - `/app/cadences/[cadenceId]/edit`
+- New API routes:
+  - `/api/cadences/templates`
+  - `/api/cadences/templates/[cadenceId]`
+  - `/api/cadences/templates/[cadenceId]/duplicate`
+  - `/api/cadences/apply`
+  - `/api/cadences/bulk-apply`
+  - `/api/lead-cadences/[leadCadenceId]/pause`
+  - `/api/lead-cadences/[leadCadenceId]/resume`
+  - `/api/lead-cadences/[leadCadenceId]/cancel`
+  - `/api/lead-cadences/[leadCadenceId]/complete`
+- New domain/UI files:
+  - `lib/constants/cadences.ts`
+  - `lib/types/cadences.ts`
+  - `lib/validators/cadences.ts`
+  - `lib/data/cadences.ts`
+  - `components/cadences/*`
+- Integrations:
+  - Lead detail now shows active/paused cadence and actions to apply, pause, resume, cancel, or complete.
+  - Saving a Google Maps place as a new lead now offers "Áp dụng quy trình" alongside manual follow-up.
+  - Task cards show a cadence badge and step position.
+  - Completing a cadence task syncs cadence progress and shows suggested message/note in the complete modal.
+  - Dashboard now includes a cadence summary widget.
+  - Desktop navigation now includes "Quy trình chăm sóc".
+
+Validation:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+
+Deployment note:
+
+- Run `supabase/cadences.sql`, then `supabase/seed-cadence-templates.sql` in Supabase SQL Editor.
+- `SUPABASE_SQL_SETUP.md` now lists these as steps 23 and 24.
+- If a template has already been applied to a lead, edit is blocked to preserve task/progress history; use "Nhân bản" and edit the copy.

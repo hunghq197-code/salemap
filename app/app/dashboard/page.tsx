@@ -5,8 +5,10 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock3,
+  ListChecks,
   MapPinned,
   MessageSquareHeart,
+  PauseCircle,
   Plus,
   Route,
   Search,
@@ -23,10 +25,12 @@ import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
 import { Toast } from "@/components/ui/Toast";
+import { getCadenceStatusLabel } from "@/lib/constants/cadences";
 import { DASHBOARD_QUOTA_ACTIONS } from "@/lib/constants/quota";
 import { calculateSalesMetricsForUser } from "@/lib/analytics/sales-analytics";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { getBetaChecklistProgress } from "@/lib/data/beta-checklist";
+import { getCadenceDashboardSummary } from "@/lib/data/cadences";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { getSavedViewsWithCounts } from "@/lib/data/lead-saved-views";
@@ -74,6 +78,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
   const [
     data,
     taskCounts,
+    cadenceSummary,
     todayTasks,
     betaChecklist,
     quota,
@@ -86,6 +91,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
   ] = await Promise.all([
     getDashboardData(),
     getTaskCounts(),
+    getCadenceDashboardSummary(),
     getTodayTasks(),
     getBetaChecklistProgress(),
     getDailyUsageSnapshot(DASHBOARD_QUOTA_ACTIONS),
@@ -201,6 +207,64 @@ export default async function DashboardPage(props: DashboardPageProps) {
           <StatCard icon={Bell} label="Follow-up hôm nay" value={taskCounts.today} />
           <StatCard icon={Clock3} label="Quá hạn" value={taskCounts.overdue} />
           <StatCard icon={CalendarPlus} label="Lead mới tuần này" value={data.newLeadsThisWeek} />
+        </section>
+
+        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
+                <ListChecks aria-hidden="true" className="h-6 w-6" />
+              </span>
+              <div>
+                <h2 className="text-xl font-bold text-ink">Quy trình chăm sóc</h2>
+                <p className="mt-2 text-base leading-7 text-slate-600">
+                  Theo dõi các nhịp chăm sóc lead đang chạy và việc đã hoàn thành.
+                </p>
+              </div>
+            </div>
+            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/cadences">
+              Mở quy trình
+            </Link>
+          </div>
+          {!cadenceSummary.schemaReady ? (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
+              Chưa thấy bảng cadence. Chạy `supabase/cadences.sql` và seed template để bật widget này.
+            </div>
+          ) : null}
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <StatCard icon={ListChecks} label="Đang chạy" value={cadenceSummary.activeCount} />
+            <StatCard icon={PauseCircle} label="Tạm dừng" value={cadenceSummary.pausedCount} />
+            <StatCard icon={CheckCircle2} label="Hoàn thành tháng này" value={cadenceSummary.completedThisMonth} />
+          </div>
+          {cadenceSummary.recent.length > 0 ? (
+            <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              {cadenceSummary.recent.map((item) => (
+                <Link
+                  className="rounded-lg border border-slate-200 bg-cloud/60 p-4 hover:border-ocean hover:bg-white"
+                  href="/app/cadences"
+                  key={item.id}
+                >
+                  <p className="truncate text-sm font-bold text-ink">{item.templateName}</p>
+                  <p className="mt-2 text-xs font-semibold text-slate-500">
+                    {item.completedSteps}/{item.totalSteps} bước ·{" "}
+                    {getCadenceStatusLabel(item.status)}
+                  </p>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-mint"
+                      style={{
+                        width: `${
+                          item.totalSteps
+                            ? Math.round((item.completedSteps / item.totalSteps) * 100)
+                            : 0
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

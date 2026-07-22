@@ -22,6 +22,7 @@ import {
   updateLeadAction,
 } from "@/app/app/leads/actions";
 import { AIAssistantPanel } from "@/components/ai/AIAssistantPanel";
+import { LeadCadencePanel } from "@/components/cadences/LeadCadencePanel";
 import { AddNoteForm } from "@/components/leads/AddNoteForm";
 import { FollowUpForm } from "@/components/leads/FollowUpForm";
 import { LeadDetailTracker } from "@/components/leads/LeadDetailTracker";
@@ -32,6 +33,7 @@ import { LeadTaskPanel } from "@/components/leads/LeadTaskPanel";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
 import { Toast } from "@/components/ui/Toast";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
+import { getLeadActiveCadence } from "@/lib/data/cadences";
 import { getLeadById } from "@/lib/data/leads";
 import { getLeadNotes } from "@/lib/data/lead-notes";
 import { getLeadTasks, getLeadTaskTimeline } from "@/lib/data/tasks";
@@ -107,11 +109,12 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
     );
   }
 
-  const [notes, mergeMetadata, leadTasks, taskTimeline] = await Promise.all([
+  const [notes, mergeMetadata, leadTasks, taskTimeline, activeCadence] = await Promise.all([
     getLeadNotes(lead.id),
     getLeadMergeMetadata(lead.id),
     getLeadTasks(lead.id),
     getLeadTaskTimeline(lead.id),
+    getLeadActiveCadence(lead.id),
   ]);
   const showEditForm = getString(searchParams?.edit) === "1";
   const toastCode = getString(searchParams?.toast);
@@ -383,6 +386,10 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
           </section>
         </aside>
       </div>
+
+      <section className="mt-5">
+        <LeadCadencePanel activeCadence={activeCadence} lead={lead} />
+      </section>
 
       <section className="mt-5">
         <LeadTaskPanel lead={lead} tasks={leadTasks} />

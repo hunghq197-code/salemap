@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, Clipboard, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { LEAD_STATUS_OPTIONS, type LeadStatus } from "@/lib/constants/lead-status";
 import {
@@ -90,7 +90,8 @@ function CompleteTaskModalForm({
   const lead = getLead(task?.leads);
   const [nextDueAt, setNextDueAt] = useState("");
   const [nextStatus, setNextStatus] = useState<LeadStatus | "">(
-    (TASK_OUTCOMES[0].suggestedStatus as LeadStatus) ||
+    (task.cadence?.suggestedLeadStatus as LeadStatus) ||
+      (TASK_OUTCOMES[0].suggestedStatus as LeadStatus) ||
       (lead?.status as LeadStatus) ||
       "",
   );
@@ -98,6 +99,8 @@ function CompleteTaskModalForm({
   const [nextTitle, setNextTitle] = useState("");
   const [note, setNote] = useState("");
   const [outcome, setOutcome] = useState<TaskOutcome>("call_success");
+  const suggestedMessage = task.cadence?.suggestedMessage?.trim();
+  const suggestedNote = task.cadence?.suggestedNote?.trim();
 
   function handleOutcomeChange(value: TaskOutcome) {
     setOutcome(value);
@@ -124,6 +127,10 @@ function CompleteTaskModalForm({
       note: note.trim() || undefined,
       outcome,
     });
+  }
+
+  async function copySuggestion(value: string) {
+    await navigator.clipboard?.writeText(value).catch(() => undefined);
   }
 
   return (
@@ -181,6 +188,49 @@ function CompleteTaskModalForm({
             </select>
           </label>
         </div>
+
+        {task.cadence && (suggestedMessage || suggestedNote) ? (
+          <div className="mt-4 rounded-lg border border-ocean/20 bg-ocean/5 p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-ocean">
+                  {task.cadence.templateName} · Bước {task.cadence.stepOrder}/
+                  {task.cadence.totalSteps || "?"}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Nội dung gợi ý cho lần chăm sóc này.
+                </p>
+              </div>
+              {suggestedMessage ? (
+                <button
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-ocean/20 bg-white px-3 py-2 text-sm font-bold text-ocean hover:border-ocean"
+                  onClick={() => copySuggestion(suggestedMessage)}
+                  type="button"
+                >
+                  <Clipboard aria-hidden="true" className="h-4 w-4" />
+                  Copy
+                </button>
+              ) : null}
+            </div>
+            {suggestedMessage ? (
+              <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm leading-7 text-ink">
+                {suggestedMessage}
+              </p>
+            ) : null}
+            {suggestedNote ? (
+              <div className="mt-3 flex flex-col gap-2 rounded-lg bg-white px-3 py-2 text-sm leading-7 text-slate-600">
+                <p>{suggestedNote}</p>
+                <button
+                  className="self-start text-sm font-bold text-ocean hover:text-ink"
+                  onClick={() => setNote(suggestedNote)}
+                  type="button"
+                >
+                  Dùng làm ghi chú
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <label className="mt-4 block text-sm font-bold text-ink">
           Ghi chú sau khi liên hệ

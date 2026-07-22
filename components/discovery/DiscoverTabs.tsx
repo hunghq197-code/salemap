@@ -48,6 +48,14 @@ const CreateTaskModal = dynamic(
   { ssr: false },
 );
 
+const ApplyCadenceModal = dynamic(
+  () =>
+    import("@/components/cadences/ApplyCadenceModal").then(
+      (module) => module.ApplyCadenceModal,
+    ),
+  { ssr: false },
+);
+
 type ActiveTab = "area" | "near-me" | "route";
 type MobileView = "list" | "map";
 
@@ -217,6 +225,7 @@ export function DiscoverTabs({
     initialTab === "route" && !routeSearchEnabled ? "near-me" : initialTab,
   );
   const [areaMapMoved, setAreaMapMoved] = useState(false);
+  const [cadenceModalOpen, setCadenceModalOpen] = useState(false);
   const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
   const [followUpLead, setFollowUpLead] = useState<TaskLeadSummary | null>(null);
   const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
@@ -289,6 +298,7 @@ export function DiscoverTabs({
 
   function resetTransientState() {
     setError(null);
+    setCadenceModalOpen(false);
     setFollowUpLead(null);
     setFollowUpModalOpen(false);
     setNotice(null);
@@ -637,6 +647,7 @@ export function DiscoverTabs({
         );
       } else {
         setSuccessMessage("Đã lưu lead.");
+        setCadenceModalOpen(false);
         setFollowUpModalOpen(false);
         setFollowUpLead({
           category: place.category,
@@ -841,6 +852,13 @@ export function DiscoverTabs({
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     className="inline-flex min-h-10 items-center justify-center rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+                    onClick={() => setCadenceModalOpen(true)}
+                    type="button"
+                  >
+                    Áp dụng quy trình
+                  </button>
+                  <button
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700"
                     onClick={() => setFollowUpModalOpen(true)}
                     type="button"
                   >
@@ -910,6 +928,22 @@ export function DiscoverTabs({
           onSubmit={handleCreateFirstFollowUp}
           open
           submitting={followUpSubmitting}
+        />
+      ) : null}
+      {followUpLead && cadenceModalOpen ? (
+        <ApplyCadenceModal
+          defaultLeadId={followUpLead.id}
+          leadOptions={[followUpLead]}
+          onApplied={(result) => {
+            setFollowUpLead(null);
+            setCadenceModalOpen(false);
+            setSuccessMessage(
+              `Đã áp dụng quy trình và tạo ${result.createdTasksCount} việc cần làm.`,
+            );
+          }}
+          onClose={() => setCadenceModalOpen(false)}
+          open
+          source={searchState?.source || "map_discovery"}
         />
       ) : null}
     </div>

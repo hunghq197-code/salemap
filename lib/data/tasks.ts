@@ -1,7 +1,12 @@
 import { ACTIVE_LEAD_STATUSES_FOR_TASKS, ACTIVE_TASK_STATUSES, COMPLETED_TASK_STATUSES, getTaskTypeOption } from "@/lib/constants/tasks";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import {
+  attachCadenceMetadataToTasks,
+  syncCadenceProgressForTask,
+} from "@/lib/data/cadences";
 import type { QueryLike } from "@/lib/leads/lead-filters";
+import type { TaskCadenceMetadata } from "@/lib/types/cadences";
 import type {
   CancelTaskInput,
   CompleteTaskInput,
@@ -22,6 +27,7 @@ export type TaskLeadSummary = {
 };
 
 export type TaskRecord = {
+  cadence?: TaskCadenceMetadata | null;
   cancelled_at?: string | null;
   completed_at?: string | null;
   completed_note_id?: string | null;
@@ -356,11 +362,12 @@ export async function getTasksForUser(params: Partial<GetTasksQueryInput> = {}) 
     throw new Error(error.message);
   }
 
-  const items = await enrichTasksWithLastNotes(
+  const withLastNotes = await enrichTasksWithLastNotes(
     supabase,
     userId,
     ((data ?? []) as unknown as TaskRecord[]).map(normalizeTask),
   );
+  const items = await attachCadenceMetadataToTasks(withLastNotes);
 
   return {
     items,
@@ -374,7 +381,8 @@ export async function getTaskById(taskId: string) {
   const { supabase, userId } = await createAuthedSupabaseServerClient();
   const task = await getOwnTask(supabase, userId, taskId);
   const [withNote] = await enrichTasksWithLastNotes(supabase, userId, [task]);
-  return withNote;
+  const [withCadence] = await attachCadenceMetadataToTasks([withNote]);
+  return withCadence;
 }
 
 export async function createTask(input: CreateTaskInput) {
@@ -492,6 +500,7 @@ export async function completeTask(input: CompleteTaskInput) {
     toStatus: "completed",
     userId,
   });
+  await syncCadenceProgressForTask(task.id).catch(() => null);
   await trackUserActivity("reminder_completed");
 
   return {
@@ -570,6 +579,7 @@ export async function cancelTask(input: CancelTaskInput) {
     toStatus: "cancelled",
     userId,
   });
+  await syncCadenceProgressForTask(task.id).catch(() => null);
 
   return normalizeTask(data as unknown as TaskRecord);
 }
@@ -604,6 +614,7 @@ export async function reopenTask(taskId: string) {
     toStatus: "pending",
     userId,
   });
+  await syncCadenceProgressForTask(task.id).catch(() => null);
 
   return normalizeTask(data as unknown as TaskRecord);
 }
@@ -733,7 +744,9 @@ export async function getLeadTasks(leadId: string) {
     throw new Error(error.message);
   }
 
-  return ((data ?? []) as unknown as TaskRecord[]).map(normalizeTask);
+  return attachCadenceMetadataToTasks(
+    ((data ?? []) as unknown as TaskRecord[]).map(normalizeTask),
+  );
 }
 
 export async function getLeadTaskTimeline(leadId: string) {

@@ -27,6 +27,8 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 20. `supabase/personal-sales-analytics-goals-schema.sql`
 21. `supabase/follow-up-task-center-schema.sql`
 22. `supabase/performance-indexes.sql`
+23. `supabase/cadences.sql`
+24. `supabase/seed-cadence-templates.sql`
 
 ## Khi Nào Cần Chạy Lại
 
@@ -34,6 +36,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 - Nếu dashboard báo thiếu `sales_goals` hoặc `sales_activity_daily`, chạy file số 20.
 - Nếu trang `/app/tasks` báo thiếu cột task hoặc bảng `task_events`, chạy file số 21.
 - Nếu app bắt đầu có nhiều lead/task/import và chuyển trang chậm, chạy file số 22 để bổ sung index hiệu năng.
+- Nếu trang `/app/cadences` trống hoặc dashboard báo thiếu bảng cadence, chạy file số 23 rồi file số 24.
 - Nếu thư viện mẫu trống do thiếu bảng, chạy file số 6 rồi file số 7.
 - Nếu quota/gói sử dụng không lưu được, chạy file số 13 và 14.
 - Nếu admin dashboard thiếu dữ liệu beta/public beta, chạy file số 8 đến 12.
