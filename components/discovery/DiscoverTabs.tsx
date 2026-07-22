@@ -6,7 +6,10 @@ import { LocationPermissionNotice } from "@/components/discovery/LocationPermiss
 import { MapPreview } from "@/components/discovery/MapPreview";
 import { NearMeSearchForm } from "@/components/discovery/NearMeSearchForm";
 import { QuotaBar } from "@/components/discovery/QuotaBar";
-import { RouteSearchForm } from "@/components/discovery/RouteSearchForm";
+import {
+  RouteSearchForm,
+  type RouteSearchFormInput,
+} from "@/components/discovery/RouteSearchForm";
 import { RouteSummaryCard } from "@/components/discovery/RouteSummaryCard";
 import { SearchResultsList } from "@/components/discovery/SearchResultsList";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
@@ -487,12 +490,7 @@ export function DiscoverTabs({
     });
   }
 
-  async function handleRouteSearch(input: {
-    bufferMeters: number;
-    destinationText: string;
-    keyword: string;
-    originText: string;
-  }) {
+  async function handleRouteSearch(input: RouteSearchFormInput) {
     if (!routeSearchEnabled) {
       setError("Tính năng tìm dọc tuyến hiện chưa được bật.");
       return;

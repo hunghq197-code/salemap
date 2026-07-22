@@ -8,7 +8,10 @@ import {
   isFeatureEnabled,
 } from "@/lib/data/feature-flags";
 import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
-import { searchPlacesAlongRoute } from "@/lib/providers/maps/google-maps";
+import {
+  searchPlacesAlongRoute,
+  searchPlacesAlongStreet,
+} from "@/lib/providers/maps/google-maps";
 import { routeSearchSchema } from "@/lib/validators/discovery";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 import { getMapProviderApiError } from "../map-provider-errors";
@@ -85,7 +88,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { results, route } = await searchPlacesAlongRoute(parsed.data);
+    const isStreetSearch = parsed.data.searchMode === "street";
+    const { results, route } = isStreetSearch
+      ? await searchPlacesAlongStreet({
+          bufferMeters: parsed.data.bufferMeters,
+          keyword: parsed.data.keyword,
+          streetText: parsed.data.streetText || "",
+        })
+      : await searchPlacesAlongRoute({
+          bufferMeters: parsed.data.bufferMeters,
+          destinationText: parsed.data.destinationText || "",
+          keyword: parsed.data.keyword,
+          originText: parsed.data.originText || "",
+        });
+    const responseOriginText = isStreetSearch
+      ? parsed.data.streetText || route.origin.text
+      : route.origin.text || parsed.data.originText || "";
+    const responseDestinationText = isStreetSearch
+      ? route.destination.text || "Cuối tuyến ước tính"
+      : route.destination.text || parsed.data.destinationText || "";
     const savedPlaces = await getSavedPlaces(
       user.id,
       results.map((result) => result.placeId),
@@ -97,12 +118,12 @@ export async function POST(request: Request) {
         buffer_meters: parsed.data.bufferMeters,
         destination_lat: route.destination.latitude ?? null,
         destination_lng: route.destination.longitude ?? null,
-        destination_text: route.destination.text || parsed.data.destinationText,
+        destination_text: responseDestinationText,
         distance_meters: route.distanceMeters ?? null,
         duration_seconds: route.durationSeconds ?? null,
         origin_lat: route.origin.latitude ?? null,
         origin_lng: route.origin.longitude ?? null,
-        origin_text: route.origin.text || parsed.data.originText,
+        origin_text: responseOriginText,
         route_polyline: route.polyline || null,
         search_keyword: parsed.data.keyword,
         user_id: user.id,
@@ -171,13 +192,16 @@ export async function POST(request: Request) {
         results: decoratedResults,
         route: {
           destination: route.destination,
-          destinationText: route.destination.text || parsed.data.destinationText,
+          destinationText: responseDestinationText,
           distanceMeters: route.distanceMeters,
           durationSeconds: route.durationSeconds,
           id: routeId,
+          isInferred: isStreetSearch,
+          mode: parsed.data.searchMode,
           origin: route.origin,
-          originText: route.origin.text || parsed.data.originText,
+          originText: responseOriginText,
           polyline: route.polyline,
+          streetText: isStreetSearch ? parsed.data.streetText : undefined,
         },
       },
       success: true,

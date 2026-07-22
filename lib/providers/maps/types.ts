@@ -68,6 +68,8 @@ export type DiscoveryRouteResult = {
   distanceMeters?: number;
   durationSeconds?: number;
   id?: string;
+  isInferred?: boolean;
+  mode?: "point_to_point" | "street";
   origin?: {
     latitude?: number;
     longitude?: number;
@@ -75,6 +77,7 @@ export type DiscoveryRouteResult = {
   };
   originText: string;
   polyline?: string;
+  streetText?: string;
 };
 
 export type DiscoveryQuota = {

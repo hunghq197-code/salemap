@@ -32,13 +32,18 @@ export function SearchResultsList({
   source,
 }: SearchResultsListProps) {
   if (results.length === 0) {
+    const hint =
+      source === "route_search"
+        ? "Hãy thử chọn một gợi ý tuyến đường khác, tăng độ lệch khỏi tuyến hoặc đổi keyword."
+        : "Hãy thử keyword khác, tăng bán kính hoặc đổi khu vực.";
+
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
         <h2 className="text-xl font-bold text-ink">
           Không tìm thấy địa điểm phù hợp.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-          Hãy thử keyword khác, tăng bán kính hoặc đổi khu vực.
+          {hint}
         </p>
       </section>
     );

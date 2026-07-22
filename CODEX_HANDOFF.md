@@ -54,6 +54,7 @@ npm ci --cache .npm-cache
 npm run lint
 npm run typecheck
 npm run build
+npm run smoke
 ```
 
 Results:
@@ -409,6 +410,7 @@ Results:
 - Lint passed with 0 warnings and 0 errors.
 - Typecheck passed.
 - Build passed.
+- Smoke passed 18/18 checks.
 
 Suggested commit:
 
@@ -663,6 +665,55 @@ Manual testing:
 
 - Browser key must allow the current domain and have Maps JavaScript API + Places API enabled.
 - Type at least 3 characters in route origin/destination and select a suggested address/landmark.
+
+## 2026-07-22 Update - Street-Based Route Discovery
+
+This phase changed the practical workflow for the `/app/discover` route tab. The default route search no longer requires sales users to know both the start and end point of a road segment.
+
+Implemented changes:
+
+- `components/discovery/RouteSearchForm.tsx`
+  - Added two route modes:
+    - `Theo tên đường` as the default.
+    - `Điểm đầu/cuối` as the advanced fallback.
+  - The street mode accepts one Google Maps autocomplete input such as `Đường Hiền Vương, Phú Thạnh`.
+  - Shared keyword and route buffer controls remain available.
+- `lib/validators/discovery.ts`
+  - Route search now validates either `searchMode: "street"` with `streetText`, or `searchMode: "point_to_point"` with `originText` and `destinationText`.
+- `lib/providers/maps/google-maps.ts`
+  - Added `searchPlacesAlongStreet()`.
+  - Street search geocodes the road/area, reads the Google viewport, infers practical route endpoints, calls Directions when possible, then samples points along the route and searches Places near those points.
+  - If Directions cannot resolve the inferred route, it falls back to a direct inferred route from the geocoded viewport so the map still has a route shape.
+- `app/api/discovery/route/route.ts`
+  - Handles both route search modes.
+  - Persists route/stops in the existing tables without requiring a new migration.
+  - Returns route metadata including `mode`, `streetText`, and `isInferred`.
+- `components/discovery/RouteSummaryCard.tsx`
+  - Displays `Tuyến đường: ...` and `Độ dài ước tính` for street-based scans.
+- `components/discovery/SearchResultsList.tsx`
+  - Empty route results now suggest choosing a more specific Google Maps route suggestion, increasing buffer, or changing keyword.
+
+Validation run after the change:
+
+```powershell
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Results:
+
+- Lint passed with 0 warnings and 0 errors.
+- Typecheck passed.
+- Build passed.
+
+Suggested commit:
+
+```powershell
+git add app/api/discovery/route/route.ts components/discovery/DiscoverTabs.tsx components/discovery/RouteSearchForm.tsx components/discovery/RouteSummaryCard.tsx components/discovery/SearchResultsList.tsx lib/providers/maps/google-maps.ts lib/providers/maps/types.ts lib/validators/discovery.ts CODEX_HANDOFF.md
+git commit -m "feat: scan routes by street name"
+git push origin main
+```
 
 ## Notes For Future Codex Sessions
 

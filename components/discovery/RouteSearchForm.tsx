@@ -11,14 +11,26 @@ const routeBufferOptions = [
   { label: "3km", value: 3000 },
 ] as const;
 
+type RouteSearchMode = "street" | "point_to_point";
+
+export type RouteSearchFormInput =
+  | {
+      bufferMeters: number;
+      keyword: string;
+      searchMode: "street";
+      streetText: string;
+    }
+  | {
+      bufferMeters: number;
+      destinationText: string;
+      keyword: string;
+      originText: string;
+      searchMode: "point_to_point";
+    };
+
 type RouteSearchFormProps = {
   loading: boolean;
-  onSubmit: (input: {
-    bufferMeters: number;
-    destinationText: string;
-    keyword: string;
-    originText: string;
-  }) => void;
+  onSubmit: (input: RouteSearchFormInput) => void;
 };
 
 export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
@@ -26,16 +38,37 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
   const [destinationText, setDestinationText] = useState("");
   const [keyword, setKeyword] = useState("");
   const [originText, setOriginText] = useState("");
+  const [searchMode, setSearchMode] = useState<RouteSearchMode>("street");
+  const [streetText, setStreetText] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (searchMode === "street") {
+      onSubmit({
+        bufferMeters,
+        keyword: keyword.trim(),
+        searchMode,
+        streetText: streetText.trim(),
+      });
+      return;
+    }
+
     onSubmit({
       bufferMeters,
       destinationText: destinationText.trim(),
       keyword: keyword.trim(),
       originText: originText.trim(),
+      searchMode,
     });
   }
+
+  const loadingText =
+    searchMode === "street"
+      ? "Đang quét tuyến đường..."
+      : "Đang tìm dọc đoạn đường...";
+  const submitText =
+    searchMode === "street" ? "Quét tuyến đường này" : "Tìm dọc đoạn đường";
 
   return (
     <form
@@ -47,40 +80,78 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           Dọc tuyến
         </p>
         <h2 className="mt-2 text-xl font-bold text-ink">
-          Tìm khách theo đoạn đường sale sẽ đi
+          Tìm khách theo tuyến sale sẽ đi
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Nhập hai mốc cụ thể trên tuyến di chuyển, như số nhà, giao lộ, cửa hàng, bến xe hoặc địa danh. Tránh nhập quận/huyện quá rộng nếu bạn chỉ đi một đoạn đường.
+          Nhập tên đường hoặc khu vực cụ thể. SaleMap sẽ dựng tuyến ước tính,
+          hiển thị độ dài trên bản đồ và quét khách hàng nằm gần tuyến đó.
         </p>
       </div>
 
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-cloud p-1">
+        {[
+          { label: "Theo tên đường", value: "street" },
+          { label: "Điểm đầu/cuối", value: "point_to_point" },
+        ].map((mode) => {
+          const isActive = searchMode === mode.value;
+
+          return (
+            <button
+              className={[
+                "min-h-10 rounded-lg px-3 py-2 text-sm font-bold transition",
+                isActive
+                  ? "bg-ink text-white"
+                  : "text-slate-600 hover:bg-white hover:text-ink",
+              ].join(" ")}
+              key={mode.value}
+              onClick={() => setSearchMode(mode.value as RouteSearchMode)}
+              type="button"
+            >
+              {mode.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">
-        Ví dụ tốt: Ngã tư Hàng Xanh đến Cầu Sài Gòn. Ví dụ chưa tốt: Quận 1 đến Biên Hòa nếu sale chỉ chạy một tuyến cụ thể.
+        Ví dụ tốt: Đường Hiền Vương, Phú Thạnh hoặc Nguyễn Trãi, Quận 5. Nếu
+        kết quả chưa đúng tuyến, hãy chọn một gợi ý Google Maps cụ thể hơn.
       </div>
 
       <div className="mt-5 grid gap-4">
-        <RouteEndpointAutocompleteInput
-          label="Điểm bắt đầu cụ thể"
-          onChange={setOriginText}
-          placeholder="Ví dụ: 25 Nguyễn Huệ, P. Bến Nghé hoặc Ngã tư Hàng Xanh"
-          value={originText}
-        />
+        {searchMode === "street" ? (
+          <RouteEndpointAutocompleteInput
+            label="Tên đường hoặc tuyến cần quét"
+            onChange={setStreetText}
+            placeholder="Ví dụ: Đường Hiền Vương, Phú Thạnh hoặc Nguyễn Trãi, Quận 5"
+            value={streetText}
+          />
+        ) : (
+          <>
+            <RouteEndpointAutocompleteInput
+              label="Điểm bắt đầu cụ thể"
+              onChange={setOriginText}
+              placeholder="Ví dụ: Ngã tư Hàng Xanh hoặc 25 Nguyễn Huệ"
+              value={originText}
+            />
 
-        <RouteEndpointAutocompleteInput
-          label="Điểm kết thúc cụ thể"
-          onChange={setDestinationText}
-          placeholder="Ví dụ: Cầu Sài Gòn, Xa lộ Hà Nội hoặc 120 Điện Biên Phủ"
-          value={destinationText}
-        />
+            <RouteEndpointAutocompleteInput
+              label="Điểm kết thúc cụ thể"
+              onChange={setDestinationText}
+              placeholder="Ví dụ: Cầu Sài Gòn hoặc 120 Điện Biên Phủ"
+              value={destinationText}
+            />
+          </>
+        )}
 
         <label className="block text-sm font-bold text-ink">
-          Ngành khách cần tìm dọc đoạn này
+          Ngành khách cần tìm dọc tuyến này
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={100}
             minLength={2}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Ví dụ: nhà thuốc, đại lý vật liệu xây dựng, quán ăn..."
+            placeholder="Ví dụ: nhà thuốc, dầu nhớt, đại lý vật liệu xây dựng..."
             required
             value={keyword}
           />
@@ -113,7 +184,8 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           ))}
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          Mặc định 500m để kết quả bám sát tuyến đường sale thực sự đi qua. Tăng lên 1-3km khi muốn mở rộng khu vực hai bên tuyến.
+          500m giúp kết quả bám sát mặt đường. Tăng lên 1-3km khi tuyến có hẻm,
+          đường song hành hoặc nhiều điểm bán nằm sâu hai bên đường.
         </p>
       </fieldset>
 
@@ -125,12 +197,12 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
         {loading ? (
           <>
             <Route aria-hidden="true" className="h-5 w-5 animate-pulse" />
-            Đang tìm dọc đoạn đường...
+            {loadingText}
           </>
         ) : (
           <>
             <Search aria-hidden="true" className="h-5 w-5" />
-            Tìm dọc đoạn đường
+            {submitText}
           </>
         )}
       </button>
@@ -140,7 +212,8 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           aria-hidden="true"
           className="mt-0.5 h-4 w-4 flex-none text-ocean"
         />
-        Nếu sale đi theo một con đường cụ thể, hãy dùng hai giao lộ hoặc hai địa chỉ nằm trên con đường đó làm điểm đầu và điểm cuối.
+        Khi không rõ điểm cuối, chỉ cần nhập tên đường rồi chọn gợi ý gần đúng
+        nhất. Chế độ điểm đầu/cuối dùng cho tuyến giao hàng đã biết chính xác.
       </p>
     </form>
   );

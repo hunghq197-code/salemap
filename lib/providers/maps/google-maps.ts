@@ -13,6 +13,8 @@ const MAX_RESULTS = 20;
 const MAX_ROUTE_RESULTS = 30;
 const MAX_ROUTE_SAMPLE_POINTS = 6;
 const GOOGLE_REQUEST_TIMEOUT_MS = 15_000;
+const MIN_INFERRED_STREET_SPAN_DEGREES = 0.008;
+const MAX_INFERRED_STREET_SPAN_DEGREES = 0.08;
 const PLACE_SEARCH_FIELD_MASK = [
   "places.id",
   "places.displayName",
@@ -35,6 +37,16 @@ const PLACE_DETAILS_FIELD_MASK = [
 type LatLng = {
   latitude: number;
   longitude: number;
+};
+
+type GeoViewport = {
+  northeast: LatLng;
+  southwest: LatLng;
+};
+
+type GeocodedArea = LatLng & {
+  formattedAddress?: string;
+  viewport?: GeoViewport;
 };
 
 type GoogleMapsStatus = {
@@ -432,6 +444,38 @@ function decodePolyline(polyline: string): LatLng[] {
   return points;
 }
 
+function encodePolyline(points: LatLng[]) {
+  let previousLatitude = 0;
+  let previousLongitude = 0;
+
+  return points
+    .map((point) => {
+      const latitude = Math.round(point.latitude * 1e5);
+      const longitude = Math.round(point.longitude * 1e5);
+      const encoded =
+        encodePolylineValue(latitude - previousLatitude) +
+        encodePolylineValue(longitude - previousLongitude);
+
+      previousLatitude = latitude;
+      previousLongitude = longitude;
+
+      return encoded;
+    })
+    .join("");
+}
+
+function encodePolylineValue(value: number) {
+  let coordinate = value < 0 ? ~(value << 1) : value << 1;
+  let output = "";
+
+  while (coordinate >= 0x20) {
+    output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
+    coordinate >>= 5;
+  }
+
+  return output + String.fromCharCode(coordinate + 63);
+}
+
 function sampleRoutePoints(points: LatLng[]) {
   if (points.length <= MAX_ROUTE_SAMPLE_POINTS) {
     return points;
@@ -456,7 +500,173 @@ function sampleRoutePoints(points: LatLng[]) {
   return Array.from(sampled.values());
 }
 
-export async function geocodeArea(areaText: string) {
+function clampStreetSpan(value: number) {
+  return Math.min(
+    MAX_INFERRED_STREET_SPAN_DEGREES,
+    Math.max(MIN_INFERRED_STREET_SPAN_DEGREES, value),
+  );
+}
+
+function formatLatLngText(point: LatLng) {
+  return `${point.latitude},${point.longitude}`;
+}
+
+function getEndpointPairFromViewport(center: LatLng, viewport?: GeoViewport) {
+  const latSpan = clampStreetSpan(
+    viewport
+      ? Math.abs(viewport.northeast.latitude - viewport.southwest.latitude)
+      : MIN_INFERRED_STREET_SPAN_DEGREES,
+  );
+  const lngSpan = clampStreetSpan(
+    viewport
+      ? Math.abs(viewport.northeast.longitude - viewport.southwest.longitude)
+      : MIN_INFERRED_STREET_SPAN_DEGREES,
+  );
+
+  if (lngSpan >= latSpan) {
+    return {
+      destination: {
+        latitude: center.latitude,
+        longitude: center.longitude + lngSpan / 2,
+      },
+      origin: {
+        latitude: center.latitude,
+        longitude: center.longitude - lngSpan / 2,
+      },
+    };
+  }
+
+  return {
+    destination: {
+      latitude: center.latitude + latSpan / 2,
+      longitude: center.longitude,
+    },
+    origin: {
+      latitude: center.latitude - latSpan / 2,
+      longitude: center.longitude,
+    },
+  };
+}
+
+function buildInferredStreetRoute(input: {
+  area: GeocodedArea;
+  destination: LatLng;
+  origin: LatLng;
+  streetText: string;
+}): MapRouteResult {
+  return {
+    destination: {
+      ...input.destination,
+      text: "Cuối tuyến ước tính",
+    },
+    distanceMeters: getDistanceMeters(input.origin, input.destination),
+    origin: {
+      ...input.origin,
+      text: input.area.formattedAddress || input.streetText,
+    },
+    polyline: encodePolyline([input.origin, input.destination]),
+    raw: {
+      formattedAddress: input.area.formattedAddress,
+      provider: "google_geocode_viewport",
+      streetText: input.streetText,
+    },
+  };
+}
+
+function getRouteCoordinatePoints(route: MapRouteResult) {
+  const decodedPoints = route.polyline ? decodePolyline(route.polyline) : [];
+
+  if (decodedPoints.length > 0) {
+    return decodedPoints;
+  }
+
+  return [route.origin, route.destination]
+    .map((point) =>
+      point.latitude != null && point.longitude != null
+        ? { latitude: point.latitude, longitude: point.longitude }
+        : null,
+    )
+    .filter((point): point is LatLng => Boolean(point));
+}
+
+async function searchPlacesNearRouteSamples(input: {
+  bufferMeters: number;
+  keyword: string;
+  route: MapRouteResult;
+}) {
+  const samplePoints = sampleRoutePoints(getRouteCoordinatePoints(input.route));
+
+  if (samplePoints.length === 0) {
+    throw new MapProviderError(
+      "Không tìm được tọa độ của tuyến đường này.",
+      "ROUTE_NOT_FOUND",
+    );
+  }
+
+  const routeOrigin =
+    input.route.origin.latitude != null && input.route.origin.longitude != null
+      ? {
+          latitude: input.route.origin.latitude,
+          longitude: input.route.origin.longitude,
+        }
+      : samplePoints[0];
+  const placesById = new Map<
+    string,
+    { orderIndex: number; place: MapPlaceResult }
+  >();
+
+  await Promise.all(
+    samplePoints.map(async (point, orderIndex) => {
+      const places = await searchNearbyPlaces({
+        keyword: input.keyword,
+        latitude: point.latitude,
+        longitude: point.longitude,
+        radiusMeters: input.bufferMeters,
+      });
+
+      places.forEach((place) => {
+        if (!placesById.has(place.placeId)) {
+          placesById.set(place.placeId, { orderIndex, place });
+        }
+      });
+    }),
+  );
+
+  const results: RoutePlaceResult[] = Array.from(placesById.values()).map(
+    ({ orderIndex, place }) => ({
+      ...place,
+      distanceFromOriginMeters: getDistanceMeters(routeOrigin, place),
+      distanceFromRouteMeters: getClosestRouteDistanceMeters(
+        samplePoints,
+        place,
+      ),
+      orderIndex,
+    }),
+  );
+
+  results.sort((a, b) => {
+    const routeDistanceDifference =
+      (a.distanceFromRouteMeters ?? Number.MAX_SAFE_INTEGER) -
+      (b.distanceFromRouteMeters ?? Number.MAX_SAFE_INTEGER);
+
+    if (routeDistanceDifference !== 0) {
+      return routeDistanceDifference;
+    }
+
+    if ((a.orderIndex ?? 0) !== (b.orderIndex ?? 0)) {
+      return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+    }
+
+    return (
+      (a.distanceFromOriginMeters ?? Number.MAX_SAFE_INTEGER) -
+      (b.distanceFromOriginMeters ?? Number.MAX_SAFE_INTEGER)
+    );
+  });
+
+  return results.slice(0, MAX_ROUTE_RESULTS);
+}
+
+async function geocodeAreaWithViewport(areaText: string): Promise<GeocodedArea> {
   const payload = await fetchLegacyGoogle<
     GoogleMapsStatus & {
       results?: Array<{
@@ -465,6 +675,16 @@ export async function geocodeArea(areaText: string) {
           location?: {
             lat?: number;
             lng?: number;
+          };
+          viewport?: {
+            northeast?: {
+              lat?: number;
+              lng?: number;
+            };
+            southwest?: {
+              lat?: number;
+              lng?: number;
+            };
           };
         };
       }>;
@@ -480,6 +700,7 @@ export async function geocodeArea(areaText: string) {
 
   const firstResult = payload.results?.[0];
   const location = firstResult?.geometry?.location;
+  const viewport = firstResult?.geometry?.viewport;
 
   if (!firstResult || location?.lat == null || location.lng == null) {
     throw new MapProviderError(
@@ -492,6 +713,32 @@ export async function geocodeArea(areaText: string) {
     formattedAddress: firstResult.formatted_address,
     latitude: location.lat,
     longitude: location.lng,
+    viewport:
+      viewport?.northeast?.lat != null &&
+      viewport.northeast.lng != null &&
+      viewport.southwest?.lat != null &&
+      viewport.southwest.lng != null
+        ? {
+            northeast: {
+              latitude: viewport.northeast.lat,
+              longitude: viewport.northeast.lng,
+            },
+            southwest: {
+              latitude: viewport.southwest.lat,
+              longitude: viewport.southwest.lng,
+            },
+          }
+        : undefined,
+  };
+}
+
+export async function geocodeArea(areaText: string) {
+  const area = await geocodeAreaWithViewport(areaText);
+
+  return {
+    formattedAddress: area.formattedAddress,
+    latitude: area.latitude,
+    longitude: area.longitude,
   };
 }
 
@@ -596,84 +843,57 @@ export async function searchPlacesAlongRoute(input: {
     destinationText: input.destinationText,
     originText: input.originText,
   });
-  const decodedPoints = route.polyline ? decodePolyline(route.polyline) : [];
-  const fallbackPoints = [route.origin, route.destination]
-    .map((point) =>
-      point.latitude != null && point.longitude != null
-        ? { latitude: point.latitude, longitude: point.longitude }
-        : null,
-    )
-    .filter((point): point is LatLng => Boolean(point));
-  const samplePoints = sampleRoutePoints(
-    decodedPoints.length > 0 ? decodedPoints : fallbackPoints,
-  );
-
-  if (samplePoints.length === 0) {
-    throw new MapProviderError(
-      "Không tìm được tọa độ của tuyến đường này.",
-      "ROUTE_NOT_FOUND",
-    );
-  }
-
-  const routeOrigin =
-    route.origin.latitude != null && route.origin.longitude != null
-      ? { latitude: route.origin.latitude, longitude: route.origin.longitude }
-      : samplePoints[0];
-  const placesById = new Map<
-    string,
-    { orderIndex: number; place: MapPlaceResult }
-  >();
-
-  await Promise.all(
-    samplePoints.map(async (point, orderIndex) => {
-      const places = await searchNearbyPlaces({
-        keyword: input.keyword,
-        latitude: point.latitude,
-        longitude: point.longitude,
-        radiusMeters: input.bufferMeters,
-      });
-
-      places.forEach((place) => {
-        if (!placesById.has(place.placeId)) {
-          placesById.set(place.placeId, { orderIndex, place });
-        }
-      });
-    }),
-  );
-
-  const results: RoutePlaceResult[] = Array.from(placesById.values()).map(
-    ({ orderIndex, place }) => ({
-      ...place,
-      distanceFromOriginMeters: getDistanceMeters(routeOrigin, place),
-      distanceFromRouteMeters: getClosestRouteDistanceMeters(
-        samplePoints,
-        place,
-      ),
-      orderIndex,
-    }),
-  );
-
-  results.sort((a, b) => {
-    const routeDistanceDifference =
-      (a.distanceFromRouteMeters ?? Number.MAX_SAFE_INTEGER) -
-      (b.distanceFromRouteMeters ?? Number.MAX_SAFE_INTEGER);
-
-    if (routeDistanceDifference !== 0) {
-      return routeDistanceDifference;
-    }
-
-    if ((a.orderIndex ?? 0) !== (b.orderIndex ?? 0)) {
-      return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
-    }
-
-    return (
-      (a.distanceFromOriginMeters ?? Number.MAX_SAFE_INTEGER) -
-      (b.distanceFromOriginMeters ?? Number.MAX_SAFE_INTEGER)
-    );
+  const results = await searchPlacesNearRouteSamples({
+    bufferMeters: input.bufferMeters,
+    keyword: input.keyword,
+    route,
   });
 
   return {
-    results: results.slice(0, MAX_ROUTE_RESULTS),
+    results,
+    route,
+  };
+}
+
+export async function searchPlacesAlongStreet(input: {
+  bufferMeters: number;
+  keyword: string;
+  streetText: string;
+}): Promise<{
+  results: RoutePlaceResult[];
+  route: MapRouteResult;
+}> {
+  const area = await geocodeAreaWithViewport(input.streetText);
+  const center = {
+    latitude: area.latitude,
+    longitude: area.longitude,
+  };
+  const endpoints = getEndpointPairFromViewport(center, area.viewport);
+  const fallbackRoute = buildInferredStreetRoute({
+    area,
+    destination: endpoints.destination,
+    origin: endpoints.origin,
+    streetText: input.streetText,
+  });
+  let route = fallbackRoute;
+
+  try {
+    route = await getRoute({
+      destinationText: formatLatLngText(endpoints.destination),
+      originText: formatLatLngText(endpoints.origin),
+    });
+  } catch {
+    route = fallbackRoute;
+  }
+
+  const results = await searchPlacesNearRouteSamples({
+    bufferMeters: input.bufferMeters,
+    keyword: input.keyword,
+    route,
+  });
+
+  return {
+    results,
     route,
   };
 }

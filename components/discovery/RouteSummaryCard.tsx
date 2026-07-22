@@ -30,6 +30,11 @@ function formatDuration(value?: number) {
 }
 
 export function RouteSummaryCard({ count, quota, route }: RouteSummaryCardProps) {
+  const isStreetRoute = route.mode === "street" && Boolean(route.streetText);
+  const routeTitle = isStreetRoute
+    ? `Tuyến đường: ${route.streetText}`
+    : `Tuyến: ${route.originText} → ${route.destinationText}`;
+
   return (
     <section className="rounded-lg border border-ocean/20 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -39,10 +44,12 @@ export function RouteSummaryCard({ count, quota, route }: RouteSummaryCardProps)
             Dọc tuyến
           </p>
           <h2 className="mt-3 text-xl font-bold leading-7 text-ink">
-            Tuyến: {route.originText} → {route.destinationText}
+            {routeTitle}
           </h2>
           <p className="mt-2 text-base leading-7 text-slate-600">
-            Tìm thấy {count} khách gần tuyến đường này.
+            {isStreetRoute
+              ? `Tìm thấy ${count} khách quanh tuyến đường/vùng quét này.`
+              : `Tìm thấy ${count} khách gần tuyến đường này.`}
           </p>
         </div>
 
@@ -58,7 +65,7 @@ export function RouteSummaryCard({ count, quota, route }: RouteSummaryCardProps)
           <MapPinned aria-hidden="true" className="h-5 w-5 text-ocean" />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-              Khoảng cách
+              {isStreetRoute ? "Độ dài ước tính" : "Khoảng cách"}
             </p>
             <p className="mt-1 text-base font-bold text-ink">
               {formatDistance(route.distanceMeters)}

@@ -52,20 +52,43 @@ export const areaSearchSchema = z
     },
   );
 
-export const routeSearchSchema = z.object({
-  bufferMeters: routeBufferSchema,
-  destinationText: z
-    .string()
-    .trim()
-    .min(2, "Vui lòng nhập điểm đến.")
-    .max(200),
-  keyword: keywordSchema,
-  originText: z
-    .string()
-    .trim()
-    .min(2, "Vui lòng nhập điểm đi.")
-    .max(200),
-});
+export const routeSearchSchema = z
+  .object({
+    bufferMeters: routeBufferSchema,
+    destinationText: optionalText(200),
+    keyword: keywordSchema,
+    originText: optionalText(200),
+    searchMode: z.enum(["street", "point_to_point"]).default("point_to_point"),
+    streetText: optionalText(200),
+  })
+  .superRefine((value, context) => {
+    if (value.searchMode === "street") {
+      if (!value.streetText || value.streetText.length < 2) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Vui lòng nhập tên đường hoặc tuyến cần quét.",
+          path: ["streetText"],
+        });
+      }
+      return;
+    }
+
+    if (!value.originText || value.originText.length < 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Vui lòng nhập điểm đi.",
+        path: ["originText"],
+      });
+    }
+
+    if (!value.destinationText || value.destinationText.length < 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Vui lòng nhập điểm đến.",
+        path: ["destinationText"],
+      });
+    }
+  });
 
 export const placeDetailsSchema = z.object({
   placeId: z.string().trim().min(2).max(300),
