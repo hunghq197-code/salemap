@@ -25,6 +25,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { clearUserOfflineData } from "@/lib/offline/clear-user-offline-data";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const adminNavItems = [
@@ -75,6 +76,14 @@ export function AdminShell({ children, email, fullName }: AdminShellProps) {
 
     try {
       const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user?.id) {
+        clearUserOfflineData(user.id);
+      }
+
       await supabase.auth.signOut();
       router.replace("/login");
       router.refresh();

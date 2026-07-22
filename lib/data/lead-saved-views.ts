@@ -229,7 +229,7 @@ export async function updateSavedView(viewId: string, input: UpdateSavedViewInpu
   const current = await getSavedViewById(viewId);
 
   if (!current) {
-    throw new Error("Khong tim thay goc nhin lead.");
+    throw new Error("Không tìm thấy góc nhìn lead.");
   }
 
   const payload: Record<string, unknown> = {
@@ -271,11 +271,11 @@ export async function deleteSavedView(viewId: string) {
   const current = await getSavedViewById(viewId);
 
   if (!current) {
-    throw new Error("Khong tim thay goc nhin lead.");
+    throw new Error("Không tìm thấy góc nhìn lead.");
   }
 
   if (current.is_system) {
-    throw new Error("Khong the xoa smart view mac dinh.");
+    throw new Error("Không thể xóa góc nhìn thông minh mặc định.");
   }
 
   const { error } = await supabase

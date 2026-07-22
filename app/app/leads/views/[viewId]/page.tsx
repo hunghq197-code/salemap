@@ -32,12 +32,12 @@ export default async function SavedViewDetailPage(props: SavedViewDetailPageProp
   if (!viewData) {
     return (
       <div className="mx-auto max-w-3xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-ink">Khong tim thay goc nhin lead</h1>
+        <h1 className="text-2xl font-bold text-ink">Không tìm thấy góc nhìn lead</h1>
         <Link
           className="mt-5 inline-flex min-h-12 items-center rounded-lg bg-mint px-5 py-3 text-sm font-bold text-ink"
           href="/app/leads/views"
         >
-          Quay lai goc nhin lead
+          Quay lại góc nhìn lead
         </Link>
       </div>
     );
@@ -53,7 +53,7 @@ export default async function SavedViewDetailPage(props: SavedViewDetailPageProp
         href="/app/leads/views"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Ve goc nhin lead
+        Về góc nhìn lead
       </Link>
 
       <section className="mt-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -66,7 +66,7 @@ export default async function SavedViewDetailPage(props: SavedViewDetailPageProp
               {view.name}
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-              {view.description || "Danh sach lead theo bo loc da luu."}
+              {view.description || "Danh sách lead theo bộ lọc đã lưu."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {filterSummary.map((item) => (
@@ -98,7 +98,7 @@ export default async function SavedViewDetailPage(props: SavedViewDetailPageProp
 
       <div className="mt-5 flex flex-col gap-2 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
         <p>
-          Hien thi {result.items.length} / {result.total} lead
+          Hiển thị {result.items.length} / {result.total} lead
         </p>
         <p>
           Trang {result.page} / {result.totalPages}
@@ -115,9 +115,9 @@ export default async function SavedViewDetailPage(props: SavedViewDetailPageProp
         </BulkActionsForm>
       ) : (
         <section className="mt-5 rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h2 className="text-xl font-bold text-ink">Chua co lead phu hop.</h2>
+          <h2 className="text-xl font-bold text-ink">Chưa có lead phù hợp.</h2>
           <p className="mt-3 text-base leading-8 text-slate-600">
-            Thu dieu chinh bo loc hoac them lead moi.
+            Thử điều chỉnh bộ lọc hoặc thêm lead mới.
           </p>
         </section>
       )}

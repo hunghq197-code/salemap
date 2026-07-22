@@ -208,7 +208,7 @@ async function fetchOpenMergeGroups(userId: string) {
 
   if (error) {
     if (isMissingCleanupSchema(error)) {
-      throw new Error("Chua chay SQL lead-cleanup-bulk-actions-schema.sql.");
+      throw new Error("Chưa chạy SQL lead-cleanup-bulk-actions-schema.sql.");
     }
 
     throw new Error(error.message);
@@ -232,7 +232,7 @@ export async function detectDuplicateLeadsForUser(
 
   if (error) {
     if (isMissingCleanupSchema(error)) {
-      throw new Error("Chua chay SQL lead-cleanup-bulk-actions-schema.sql.");
+      throw new Error("Chưa chạy SQL lead-cleanup-bulk-actions-schema.sql.");
     }
 
     throw new Error(error.message);

@@ -21,7 +21,7 @@ type MergeLeadsFormProps = {
 
 function displayValue(value: unknown) {
   if (value === null || value === undefined || String(value).trim() === "") {
-    return "Chua co";
+    return "Chưa có";
   }
 
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
@@ -86,7 +86,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
 
   async function submitMerge() {
     if (!primaryLeadId || mergedLeadIds.length === 0 || !confirmSafeMerge) {
-      setMessage("Hay chon lead chinh va xac nhan truoc khi gop.");
+      setMessage("Hãy chọn lead chính và xác nhận trước khi gộp.");
       return;
     }
 
@@ -108,7 +108,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the gop lead.");
+        throw new Error(body?.error || "Không thể gộp lead.");
       }
 
       trackLeadMergeCompleted({ leadCount: group.leads.length, successCount: mergedLeadIds.length });
@@ -116,7 +116,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
       router.refresh();
     } catch (error) {
       trackLeadMergeFailed({ leadCount: group.leads.length, failedCount: mergedLeadIds.length });
-      setMessage(error instanceof Error ? error.message : "Khong the gop lead.");
+      setMessage(error instanceof Error ? error.message : "Không thể gộp lead.");
     } finally {
       setPending(false);
     }
@@ -125,7 +125,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
   if (group.leads.length < 2) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
-        Nhom nay khong con du lead de gop.
+        Nhóm này không còn đủ lead để gộp.
       </div>
     );
   }
@@ -133,9 +133,9 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
   return (
     <div className="space-y-5">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Chon lead chinh</h2>
+        <h2 className="text-xl font-bold text-ink">Chọn lead chính</h2>
         <p className="mt-2 text-base leading-7 text-slate-600">
-          Hay chon lead chinh de giu lai. Cac ghi chu, lich nhac va tag se duoc chuyen sang lead nay.
+          Hãy chọn lead chính để giữ lại. Các ghi chú, lịch nhắc và tag sẽ được chuyển sang lead này.
         </p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {group.leads.map((lead) => (
@@ -159,7 +159,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
                 <span>
                   <span className="block text-base font-bold text-ink">{lead.name}</span>
                   <span className="mt-1 block text-sm leading-6 text-slate-600">
-                    {lead.phone || lead.email || lead.website || "Chua co thong tin lien he"}
+                    {lead.phone || lead.email || lead.website || "Chưa có thông tin liên hệ"}
                   </span>
                 </span>
               </span>
@@ -169,9 +169,9 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Chon thong tin se giu</h2>
+        <h2 className="text-xl font-bold text-ink">Chọn thông tin sẽ giữ</h2>
         <p className="mt-2 text-base leading-7 text-slate-600">
-          SaleMap chon san gia tri tu lead chinh neu co. Ban co the doi tung dong truoc khi gop.
+          SaleMap chọn sẵn giá trị từ lead chính nếu có. Bạn có thể đổi từng dòng trước khi gộp.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-[760px] border-collapse text-left text-sm">
@@ -219,14 +219,14 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Ghi chu, nhac viec va tag</h2>
+        <h2 className="text-xl font-bold text-ink">Ghi chú, nhắc việc và tag</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {group.leads.map((lead) => (
             <div className="rounded-lg bg-cloud px-4 py-3" key={lead.id}>
               <p className="font-bold text-ink">{lead.name}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                {group.notesCountByLeadId[lead.id] ?? 0} ghi chu -{" "}
-                {group.remindersCountByLeadId[lead.id] ?? 0} nhac viec -{" "}
+                {group.notesCountByLeadId[lead.id] ?? 0} ghi chú -{" "}
+                {group.remindersCountByLeadId[lead.id] ?? 0} nhắc việc -{" "}
                 {group.tagsByLeadId[lead.id]?.length ?? 0} tag
               </p>
             </div>
@@ -235,10 +235,10 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
       </section>
 
       <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Xac nhan gop lead</h2>
+        <h2 className="text-xl font-bold text-ink">Xác nhận gộp lead</h2>
         <p className="mt-2 text-base leading-7 text-slate-700">
-          Lead chinh se duoc giu lai. Cac lead con lai se duoc luu tru va lien ket vao lead chinh,
-          khong bi xoa vinh vien.
+          Lead chính sẽ được giữ lại. Các lead còn lại sẽ được lưu trữ và liên kết vào lead chính,
+          không bị xóa vĩnh viễn.
         </p>
         <label className="mt-4 flex items-start gap-3 text-sm font-bold text-ink">
           <input
@@ -247,7 +247,7 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
             onChange={(event) => setConfirmSafeMerge(event.target.checked)}
             type="checkbox"
           />
-          Toi hieu ghi chu, lich nhac va tag se duoc chuyen sang lead chinh.
+          Tôi hiểu ghi chú, lịch nhắc và tag sẽ được chuyển sang lead chính.
         </label>
         <button
           className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-ink px-5 py-3 text-base font-bold text-white hover:bg-ocean disabled:opacity-60 sm:w-auto"
@@ -256,11 +256,11 @@ export function MergeLeadsForm({ group }: MergeLeadsFormProps) {
           type="button"
         >
           {pending ? (
-            "Dang gop lead..."
+            "Đang gộp lead..."
           ) : (
             <>
               <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
-              Gop lead
+              Gộp lead
               <ArrowRight aria-hidden="true" className="h-5 w-5" />
             </>
           )}

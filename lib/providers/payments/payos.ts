@@ -10,7 +10,7 @@ const PAYOS_API_BASE_URL = "https://api-merchant.payos.vn";
 export class PayOSConfigError extends Error {
   constructor() {
     super(
-      "Chua cau hinh cong thanh toan. Vui long dung chuyen khoan thu cong hoac lien he ho tro.",
+      "Chưa cấu hình cổng thanh toán. Vui lòng dùng chuyển khoản thủ công hoặc liên hệ hỗ trợ.",
     );
     this.name = "PayOSConfigError";
   }

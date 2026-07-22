@@ -10,7 +10,7 @@ type CreateSavedViewFormProps = {
   sourceLabel?: string;
 };
 
-export function CreateSavedViewForm({ filters, sourceLabel = "bo loc hien tai" }: CreateSavedViewFormProps) {
+export function CreateSavedViewForm({ filters, sourceLabel = "bộ lọc hiện tại" }: CreateSavedViewFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -38,15 +38,15 @@ export function CreateSavedViewForm({ filters, sourceLabel = "bo loc hien tai" }
         | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the luu goc nhin.");
+        throw new Error(body?.error || "Không thể lưu góc nhìn.");
       }
 
-      setMessage("Da luu goc nhin lead.");
+      setMessage("Đã lưu góc nhìn lead.");
       setOpen(false);
       router.push(body?.data?.id ? `/app/leads/views/${body.data.id}` : "/app/leads/views");
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Khong the luu goc nhin.");
+      setMessage(error instanceof Error ? error.message : "Không thể lưu góc nhìn.");
     } finally {
       setPending(false);
     }
@@ -60,31 +60,31 @@ export function CreateSavedViewForm({ filters, sourceLabel = "bo loc hien tai" }
         type="button"
       >
         <Save aria-hidden="true" className="h-4 w-4" />
-        Luu thanh goc nhin
+        Lưu thành góc nhìn
       </button>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        Luu {sourceLabel} de mo nhanh lan sau.
+        Lưu {sourceLabel} để mở nhanh lần sau.
       </p>
       {open ? (
         <form action={submit} className="mt-4 grid gap-3">
           <label className="text-sm font-bold text-ink">
-            Ten goc nhin
+            Tên góc nhìn
             <input
               className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 px-3 py-2 text-base outline-none focus:border-ocean"
               maxLength={80}
               minLength={1}
               name="name"
-              placeholder="Khach cu dang quan tam"
+              placeholder="Khách cũ đang quan tâm"
               required
             />
           </label>
           <label className="text-sm font-bold text-ink">
-            Mo ta
+            Mô tả
             <textarea
               className="mt-2 min-h-24 w-full rounded-lg border border-slate-200 px-3 py-2 text-base leading-7 outline-none focus:border-ocean"
               maxLength={300}
               name="description"
-              placeholder="Dung cho nhom lead can cham soc hang ngay"
+              placeholder="Dùng cho nhóm lead cần chăm sóc hằng ngày"
             />
           </label>
           <label className="flex items-center gap-3 text-sm font-bold text-ink">
@@ -96,7 +96,7 @@ export function CreateSavedViewForm({ filters, sourceLabel = "bo loc hien tai" }
             disabled={pending}
             type="submit"
           >
-            {pending ? "Dang luu..." : "Luu goc nhin"}
+            {pending ? "Đang lưu..." : "Lưu góc nhìn"}
           </button>
         </form>
       ) : null}

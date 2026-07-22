@@ -173,7 +173,7 @@ export async function updateLeadStatusFromPipeline(input: UpdatePipelineStatusIn
   }
 
   if (!lead) {
-    throw new Error("Khong tim thay lead.");
+    throw new Error("Không tìm thấy lead.");
   }
 
   const fromStatus = input.fromStatus || (lead.status as string | null) || null;

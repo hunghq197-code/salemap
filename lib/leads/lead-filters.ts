@@ -265,17 +265,17 @@ export function getLeadFilterSummary(filters: LeadFilters) {
   const chips: string[] = [];
 
   if (normalized.status?.length) chips.push(`Status: ${normalized.status.join(", ")}`);
-  if (normalized.priority?.length) chips.push(`Uu tien: ${normalized.priority.join(", ")}`);
+  if (normalized.priority?.length) chips.push(`Ưu tiên: ${normalized.priority.join(", ")}`);
   if (normalized.tagIds?.length) chips.push(`Tag: ${normalized.tagIds.length} tag`);
-  if (normalized.source?.length) chips.push(`Nguon: ${normalized.source.join(", ")}`);
-  if (normalized.category?.length) chips.push(`Nganh: ${normalized.category.join(", ")}`);
+  if (normalized.source?.length) chips.push(`Nguồn: ${normalized.source.join(", ")}`);
+  if (normalized.category?.length) chips.push(`Ngành: ${normalized.category.join(", ")}`);
   if (normalized.followUp) chips.push(`Follow-up: ${normalized.followUp}`);
-  if (normalized.noFollowUp) chips.push("Chua co follow-up");
-  if (normalized.staleDays) chips.push(`Lau chua cham soc: ${normalized.staleDays} ngay`);
-  if (normalized.hasPhone === true) chips.push("Co so dien thoai");
-  if (normalized.hasEmail === true) chips.push("Co email");
-  if (normalized.archived) chips.push("Da luu tru");
-  if (normalized.deleted) chips.push("Da xoa mem");
+  if (normalized.noFollowUp) chips.push("Chưa có follow-up");
+  if (normalized.staleDays) chips.push(`Lâu chưa chăm sóc: ${normalized.staleDays} ngày`);
+  if (normalized.hasPhone === true) chips.push("Có số điện thoại");
+  if (normalized.hasEmail === true) chips.push("Có email");
+  if (normalized.archived) chips.push("Đã lưu trữ");
+  if (normalized.deleted) chips.push("Đã xóa mềm");
 
-  return chips.length > 0 ? chips : ["Tat ca lead dang hoat dong"];
+  return chips.length > 0 ? chips : ["Tất cả lead đang hoạt động"];
 }

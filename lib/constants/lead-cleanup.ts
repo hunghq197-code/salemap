@@ -1,33 +1,33 @@
 export const LEAD_DUPLICATE_REASONS = {
-  email: "Trung email",
-  multiple_signals: "Trung nhieu tin hieu",
-  name_address: "Trung ten va dia chi",
-  phone: "Trung so dien thoai",
-  website: "Trung website",
+  email: "Trùng email",
+  multiple_signals: "Trùng nhiều tín hiệu",
+  name_address: "Trùng tên và địa chỉ",
+  phone: "Trùng số điện thoại",
+  website: "Trùng website",
 } as const;
 
 export const DATA_QUALITY_ISSUES = {
-  duplicate_possible: "Co kha nang trung",
-  invalid_email: "Email khong hop le",
-  invalid_phone: "So dien thoai khong hop le",
-  invalid_website: "Website khong hop le",
-  missing_address: "Thieu dia chi",
-  missing_category: "Thieu nganh/loai khach",
-  missing_email: "Thieu email",
-  missing_follow_up: "Chua co lich follow-up",
-  missing_phone: "Thieu so dien thoai",
-  missing_status: "Thieu trang thai",
-  stale_lead: "Lead lau chua cham soc",
+  duplicate_possible: "Có khả năng trùng",
+  invalid_email: "Email không hợp lệ",
+  invalid_phone: "Số điện thoại không hợp lệ",
+  invalid_website: "Website không hợp lệ",
+  missing_address: "Thiếu địa chỉ",
+  missing_category: "Thiếu ngành/loại khách",
+  missing_email: "Thiếu email",
+  missing_follow_up: "Chưa có lịch follow-up",
+  missing_phone: "Thiếu số điện thoại",
+  missing_status: "Thiếu trạng thái",
+  stale_lead: "Lead lâu chưa chăm sóc",
 } as const;
 
 export const BULK_ACTION_TYPES = {
-  add_tags: "Them tag",
-  archive: "Luu tru",
-  remove_tags: "Go tag",
-  restore: "Khoi phuc",
-  set_priority: "Cap nhat muc uu tien",
-  soft_delete: "Xoa mem",
-  update_status: "Cap nhat trang thai",
+  add_tags: "Thêm tag",
+  archive: "Lưu trữ",
+  remove_tags: "Gỡ tag",
+  restore: "Khôi phục",
+  set_priority: "Cập nhật mức ưu tiên",
+  soft_delete: "Xóa mềm",
+  update_status: "Cập nhật trạng thái",
 } as const;
 
 export const MERGE_FIELD_OPTIONS = [
@@ -45,23 +45,23 @@ export const MERGE_FIELD_OPTIONS = [
 ] as const;
 
 export const MERGE_FIELD_LABELS: Record<(typeof MERGE_FIELD_OPTIONS)[number], string> = {
-  address: "Dia chi",
-  category: "Nganh/loai khach",
+  address: "Địa chỉ",
+  category: "Ngành/loại khách",
   email: "Email",
-  name: "Ten lead",
-  next_follow_up_at: "Follow-up tiep theo",
-  note_summary: "Ghi chu tom tat",
-  phone: "So dien thoai",
-  priority: "Muc uu tien",
-  source: "Nguon lead",
-  status: "Trang thai",
+  name: "Tên lead",
+  next_follow_up_at: "Follow-up tiếp theo",
+  note_summary: "Ghi chú tóm tắt",
+  phone: "Số điện thoại",
+  priority: "Mức ưu tiên",
+  source: "Nguồn lead",
+  status: "Trạng thái",
   website: "Website",
 };
 
 export const DATA_QUALITY_SEVERITY_LABELS = {
-  important: "Quan trong",
-  info: "Thong tin",
-  warning: "Can xem lai",
+  important: "Quan trọng",
+  info: "Thông tin",
+  warning: "Cần xem lại",
 } as const;
 
 export type BulkActionType = keyof typeof BULK_ACTION_TYPES;

@@ -18,7 +18,7 @@ function getString(value?: string | string[]) {
 function reasonLabel(reason?: string | null) {
   return reason && reason in LEAD_DUPLICATE_REASONS
     ? LEAD_DUPLICATE_REASONS[reason as keyof typeof LEAD_DUPLICATE_REASONS]
-    : "Co kha nang trung";
+    : "Có khả năng trùng";
 }
 
 export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
@@ -34,7 +34,7 @@ export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
         href="/app/leads/cleanup"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Ve trung tam don du lieu
+        Về trung tâm dọn dữ liệu
       </Link>
 
       <div className="mt-4 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -43,11 +43,11 @@ export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
             Duplicate leads
           </p>
           <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Lead co kha nang trung
+            Lead có khả năng trùng
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            SaleMap phat hien cac lead nay co the la cung mot khach hang. Hay xem tung nhom
-            truoc khi gop.
+            SaleMap phát hiện các lead này có thể là cùng một khách hàng. Hãy xem từng nhóm
+            trước khi gộp.
           </p>
         </div>
       </div>
@@ -74,14 +74,14 @@ export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
                     </span>
                   </div>
                   <h2 className="mt-4 text-xl font-bold text-ink">
-                    {group.leads.map((lead) => lead.name).join(" / ") || "Nhom lead trung"}
+                    {group.leads.map((lead) => lead.name).join(" / ") || "Nhóm lead trùng"}
                   </h2>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
                     {group.leads
                       .map((lead) => lead.phone || lead.email || lead.website || lead.address)
                       .filter(Boolean)
                       .slice(0, 3)
-                      .join(" - ") || "Chua co thong tin overlap de hien thi."}
+                      .join(" - ") || "Chưa có thông tin trùng khớp để hiển thị."}
                   </p>
                 </div>
                 <DuplicateGroupActions groupId={group.id} />
@@ -93,9 +93,9 @@ export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
               <SearchCheck aria-hidden="true" className="h-7 w-7" />
             </div>
-            <h2 className="mt-5 text-xl font-bold text-ink">Chua phat hien lead trung nao.</h2>
+            <h2 className="mt-5 text-xl font-bold text-ink">Chưa phát hiện lead trùng nào.</h2>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-              Bam quet lai neu ban vua import them lead hoac cap nhat du lieu.
+              Bấm quét lại nếu bạn vừa nhập thêm lead hoặc cập nhật dữ liệu.
             </p>
           </section>
         )}
@@ -105,7 +105,7 @@ export default async function DuplicateGroupsPage(props: DuplicatesPageProps) {
         <div className="mt-6 flex justify-center gap-2">
           {result.page > 1 ? (
             <Link className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink" href={`/app/leads/cleanup/duplicates?page=${result.page - 1}`}>
-              Trang truoc
+              Trang trước
             </Link>
           ) : null}
           {result.page < result.totalPages ? (

@@ -54,7 +54,7 @@ export default async function PaymentReturnPage(props: PaymentReturnPageProps) {
         href="/app/billing"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại billing
+        Quay lại gói sử dụng
       </Link>
 
       <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">

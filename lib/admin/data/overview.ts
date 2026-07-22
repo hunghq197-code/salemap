@@ -144,7 +144,7 @@ export async function getAdminOverviewData() {
     { label: "Tạo lead đầu tiên", users: distinctUserCount(leads) },
     { label: "Tạo note", users: distinctUserCount(notes) },
     { label: "Tạo reminder", users: distinctUserCount(reminders) },
-    { label: "Search khu vực", users: areaSearchUsers },
+    { label: "Tìm theo khu vực", users: areaSearchUsers },
     { label: "Search route", users: distinctUserCount(routes) },
     { label: "Gửi feedback", users: distinctUserCount(feedbackRows) },
     { label: "Quan tâm nâng cấp", users: distinctUserCount(upgradeRows) },

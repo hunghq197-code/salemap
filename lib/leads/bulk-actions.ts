@@ -53,7 +53,7 @@ async function verifyOwnedLeadIds(leadIds: string[], includeDeleted = false) {
   const ownedLeadIds = (data ?? []).map((lead) => String(lead.id));
 
   if (ownedLeadIds.length !== leadIds.length) {
-    throw new Error("Chi duoc thao tac voi lead cua tai khoan hien tai.");
+    throw new Error("Chỉ được thao tác với lead của tài khoản hiện tại.");
   }
 
   return { supabase, userId };
@@ -112,7 +112,7 @@ async function addTagsToLeads(leadIds: string[], payload: Record<string, unknown
   const tagIds = await resolveTagIds(payload);
 
   if (tagIds.length === 0) {
-    throw new Error("Can chon hoac nhap tag.");
+    throw new Error("Cần chọn hoặc nhập tag.");
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -151,7 +151,7 @@ async function removeTagsFromLeads(leadIds: string[], payload: Record<string, un
   const tagIds = await resolveTagIds(payload);
 
   if (tagIds.length === 0) {
-    throw new Error("Can chon tag de go.");
+    throw new Error("Cần chọn tag để gỡ.");
   }
 
   const { error } = await supabase
@@ -193,7 +193,7 @@ export async function createBulkActionJob(input: BulkActionInput) {
   const leadIds = Array.from(new Set(input.leadIds));
 
   if (leadIds.length === 0 || leadIds.length > 500) {
-    throw new Error("Moi lan chi thao tac toi da 500 lead.");
+    throw new Error("Mỗi lần chỉ thao tác tối đa 500 lead.");
   }
 
   const { supabase, userId } = await verifyOwnedLeadIds(
@@ -236,7 +236,7 @@ export async function executeBulkActionJob(jobId: string) {
   }
 
   if (!job) {
-    throw new Error("Khong tim thay bulk action job.");
+    throw new Error("Không tìm thấy tác vụ hàng loạt.");
   }
 
   const leadIds = ((job.target_lead_ids ?? []) as string[]).slice(0, 500);
@@ -289,7 +289,7 @@ export async function executeBulkActionJob(jobId: string) {
 
       if (updateError) throw updateError;
     } else {
-      throw new Error("Loai thao tac chua duoc ho tro.");
+      throw new Error("Loại thao tác chưa được hỗ trợ.");
     }
 
     await updateJob(jobId, {

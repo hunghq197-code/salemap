@@ -40,7 +40,7 @@ export default async function ImportJobPage(props: ImportJobPageProps) {
         href="/app/import"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại import
+        Quay lại nhập dữ liệu
       </Link>
 
       <div className="mt-4">

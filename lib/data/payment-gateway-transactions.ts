@@ -381,7 +381,7 @@ async function completePaidTransaction(
 
   await createNotification({
     actionUrl: "/app/billing",
-    content: `Goi ${subscription.plan_name} cua ban da duoc kich hoat tu dong sau khi payOS xac nhan thanh toan.`,
+    content: `Gói ${subscription.plan_name} của bạn đã được kích hoạt tự động sau khi payOS xác nhận thanh toán.`,
     metadata: {
       amountVnd: paymentRequest.amount_vnd,
       months,
@@ -390,7 +390,7 @@ async function completePaidTransaction(
       requestType,
       status: "active",
     },
-    title: `Goi ${subscription.plan_name} da duoc kich hoat`,
+    title: `Gói ${subscription.plan_name} đã được kích hoạt`,
     type: "subscription_activated",
     userId: paymentRequest.user_id,
   });
@@ -512,7 +512,7 @@ export async function createPayOSCheckoutTransactionForUser(
 
     await createNotification({
       actionUrl: `/app/billing/payment/return?orderCode=${orderCode}`,
-      content: "SaleMap da tao link thanh toan payOS cho goi ban chon.",
+      content: "SaleMap đã tạo liên kết thanh toán payOS cho gói bạn chọn.",
       metadata: {
         amountVnd,
         months,
@@ -521,7 +521,7 @@ export async function createPayOSCheckoutTransactionForUser(
         requestType,
         status: "pending",
       },
-      title: "Link thanh toan payOS da san sang",
+      title: "Liên kết thanh toán payOS đã sẵn sàng",
       type: "payment_gateway_transaction_created",
       userId,
     });

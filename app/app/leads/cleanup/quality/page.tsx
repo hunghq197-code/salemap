@@ -40,7 +40,7 @@ export default async function DataQualityPage(props: QualityPageProps) {
         href="/app/leads/cleanup"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Ve trung tam don du lieu
+        Về trung tâm dọn dữ liệu
       </Link>
 
       <div className="mt-4">
@@ -48,10 +48,10 @@ export default async function DataQualityPage(props: QualityPageProps) {
           Data quality
         </p>
         <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-          Chat luong du lieu lead
+          Chất lượng dữ liệu lead
         </h1>
         <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-          Xem cac lead thieu thong tin, sai dinh dang hoac da lau chua cham soc.
+          Xem các lead thiếu thông tin, sai định dạng hoặc đã lâu chưa chăm sóc.
         </p>
       </div>
 
@@ -61,11 +61,11 @@ export default async function DataQualityPage(props: QualityPageProps) {
 
       <div className="mt-6 flex flex-wrap gap-2">
         {[
-          ["open", "Tat ca dang mo", ""],
-          ["resolved", "Da xu ly", ""],
-          ["dismissed", "Da bo qua", ""],
-          ["open", "Sai dinh dang", "invalid_phone"],
-          ["open", "Lau chua cham soc", "stale_lead"],
+          ["open", "Tất cả đang mở", ""],
+          ["resolved", "Đã xử lý", ""],
+          ["dismissed", "Đã bỏ qua", ""],
+          ["open", "Sai định dạng", "invalid_phone"],
+          ["open", "Lâu chưa chăm sóc", "stale_lead"],
         ].map(([filterStatus, label, filterType]) => (
           <Link
             className={[
@@ -138,9 +138,9 @@ export default async function DataQualityPage(props: QualityPageProps) {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
               <AlertTriangle aria-hidden="true" className="h-7 w-7" />
             </div>
-            <h2 className="mt-5 text-xl font-bold text-ink">Chua co canh bao du lieu.</h2>
+            <h2 className="mt-5 text-xl font-bold text-ink">Chưa có cảnh báo dữ liệu.</h2>
             <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-              Bam quet lai neu ban vua import them lead hoac cap nhat danh sach.
+              Bấm quét lại nếu bạn vừa nhập thêm lead hoặc cập nhật danh sách.
             </p>
           </section>
         )}

@@ -179,12 +179,12 @@ export function getDateRangeForPeriod(input: AnalyticsPeriodSelection | string =
   const today = startOfDay(now);
   let start = addDays(today, -6);
   let end = addDays(today, 1);
-  let label = "7 ngay qua";
+  let label = "7 ngày qua";
 
   if (period === "today") {
     start = today;
     end = addDays(today, 1);
-    label = "Hom nay";
+    label = "Hôm nay";
   } else if (period === "yesterday") {
     start = addDays(today, -1);
     end = today;
@@ -192,19 +192,19 @@ export function getDateRangeForPeriod(input: AnalyticsPeriodSelection | string =
   } else if (period === "last_30_days") {
     start = addDays(today, -29);
     end = addDays(today, 1);
-    label = "30 ngay qua";
+    label = "30 ngày qua";
   } else if (period === "this_week") {
     start = startOfWeek(now);
     end = addDays(start, 7);
-    label = "Tuan nay";
+    label = "Tuần này";
   } else if (period === "this_month") {
     start = startOfMonth(now);
     end = endOfMonthExclusive(now);
-    label = "Thang nay";
+    label = "Tháng này";
   } else if (period === "custom" && selection.customFrom && selection.customTo) {
     start = startOfDay(new Date(`${selection.customFrom}T00:00:00`));
     end = addDays(startOfDay(new Date(`${selection.customTo}T00:00:00`)), 1);
-    label = "Tuy chon";
+    label = "Tùy chọn";
   }
 
   return {
@@ -225,7 +225,7 @@ export function getPreviousDateRange(range: DateRange): DateRange {
   return {
     end,
     endIso: end.toISOString(),
-    label: "Ky truoc",
+    label: "Kỳ trước",
     period: range.period,
     start,
     startIso: start.toISOString(),

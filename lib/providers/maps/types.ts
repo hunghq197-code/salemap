@@ -1,6 +1,7 @@
 export type MapPlaceResult = {
   address?: string;
   category?: string;
+  detailsLoaded?: boolean;
   distanceMeters?: number;
   googleMapsUrl?: string;
   latitude?: number;
@@ -12,6 +13,17 @@ export type MapPlaceResult = {
   raw?: unknown;
   userRatingsTotal?: number;
   website?: string;
+};
+
+export type MapPlaceDetails = Pick<
+  MapPlaceResult,
+  | "googleMapsUrl"
+  | "phone"
+  | "rating"
+  | "userRatingsTotal"
+  | "website"
+> & {
+  detailsLoaded: true;
 };
 
 export type MapRouteResult = {

@@ -16,7 +16,7 @@ export function DuplicateGroupActions({ groupId }: DuplicateGroupActionsProps) {
   const [error, setError] = useState<string | null>(null);
 
   async function dismissGroup() {
-    if (!window.confirm("Bo qua nhom trung nay? Lead se khong bi xoa.")) {
+    if (!window.confirm("Bỏ qua nhóm trùng này? Lead sẽ không bị xóa.")) {
       return;
     }
 
@@ -32,13 +32,13 @@ export function DuplicateGroupActions({ groupId }: DuplicateGroupActionsProps) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the bo qua nhom nay.");
+        throw new Error(body?.error || "Không thể bỏ qua nhóm này.");
       }
 
       trackDuplicateGroupDismissed();
       router.refresh();
     } catch (dismissError) {
-      setError(dismissError instanceof Error ? dismissError.message : "Khong the bo qua nhom.");
+      setError(dismissError instanceof Error ? dismissError.message : "Không thể bỏ qua nhóm.");
     } finally {
       setPending(false);
     }
@@ -51,7 +51,7 @@ export function DuplicateGroupActions({ groupId }: DuplicateGroupActionsProps) {
         href={`/app/leads/cleanup/duplicates/${groupId}`}
       >
         <Eye aria-hidden="true" className="h-4 w-4" />
-        Xem & gop
+        Xem và gộp
       </Link>
       <button
         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-rose-300 hover:text-rose-700 disabled:opacity-60"
@@ -60,7 +60,7 @@ export function DuplicateGroupActions({ groupId }: DuplicateGroupActionsProps) {
         type="button"
       >
         <XCircle aria-hidden="true" className="h-4 w-4" />
-        {pending ? "Dang bo qua..." : "Bo qua"}
+        {pending ? "Đang bỏ qua..." : "Bỏ qua"}
       </button>
       {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
     </div>

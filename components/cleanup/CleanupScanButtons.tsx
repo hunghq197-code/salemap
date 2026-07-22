@@ -22,7 +22,7 @@ async function postJson(url: string) {
     | null;
 
   if (!response.ok || !body?.success) {
-    throw new Error(body?.error || "Khong the quet du lieu luc nay.");
+    throw new Error(body?.error || "Không thể quét dữ liệu lúc này.");
   }
 
   return body.data ?? {};
@@ -45,13 +45,13 @@ export function CleanupScanButtons() {
         successCount: data.groupsCreated,
       });
       setState({
-        message: `Da tao ${data.groupsCreated ?? 0} nhom trung moi. ${data.groupsExisting ?? 0} nhom da ton tai.`,
+        message: `Đã tạo ${data.groupsCreated ?? 0} nhóm trùng mới. ${data.groupsExisting ?? 0} nhóm đã tồn tại.`,
         tone: "success",
       });
       router.refresh();
     } catch (error) {
       setState({
-        message: error instanceof Error ? error.message : "Khong the quet lead trung.",
+        message: error instanceof Error ? error.message : "Không thể quét lead trùng.",
         tone: "error",
       });
     } finally {
@@ -71,13 +71,13 @@ export function CleanupScanButtons() {
         successCount: data.openIssues,
       });
       setState({
-        message: `Da quet xong. Hien co ${data.openIssues ?? 0} canh bao dang mo.`,
+        message: `Đã quét xong. Hiện có ${data.openIssues ?? 0} cảnh báo đang mở.`,
         tone: "success",
       });
       router.refresh();
     } catch (error) {
       setState({
-        message: error instanceof Error ? error.message : "Khong the quet chat luong du lieu.",
+        message: error instanceof Error ? error.message : "Không thể quét chất lượng dữ liệu.",
         tone: "error",
       });
     } finally {
@@ -95,7 +95,7 @@ export function CleanupScanButtons() {
           type="button"
         >
           <SearchCheck aria-hidden="true" className="h-5 w-5" />
-          {pending === "duplicates" ? "Dang quet..." : "Quet lead trung"}
+          {pending === "duplicates" ? "Đang quét..." : "Quét lead trùng"}
         </button>
         <button
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-ink transition hover:border-ocean hover:text-ocean disabled:opacity-60"
@@ -104,7 +104,7 @@ export function CleanupScanButtons() {
           type="button"
         >
           <RefreshCw aria-hidden="true" className="h-5 w-5" />
-          {pending === "quality" ? "Dang quet..." : "Quet chat luong du lieu"}
+          {pending === "quality" ? "Đang quét..." : "Quét chất lượng dữ liệu"}
         </button>
       </div>
       {state ? (

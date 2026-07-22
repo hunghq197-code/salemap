@@ -30,7 +30,7 @@ export default async function AdminSalesAnalyticsPage(props: AdminSalesAnalytics
   return (
     <div className="mx-auto max-w-7xl">
       <AdminPageHeader
-        description="Theo dõi usage analytics và goal tracking ở mức tổng hợp. Trang này không hiển thị lead PII, số điện thoại, email, địa chỉ hoặc nội dung ghi chú."
+        description="Theo dõi mức sử dụng và mục tiêu bán hàng ở dạng tổng hợp. Trang này không hiển thị dữ liệu định danh, số điện thoại, email, địa chỉ hoặc nội dung ghi chú của lead."
         title="Sales Analytics"
       />
 

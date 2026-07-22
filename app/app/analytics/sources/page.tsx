@@ -38,7 +38,7 @@ export default async function SalesAnalyticsSourcesPage(props: SourcesPageProps)
         href="/app/analytics"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại analytics
+        Quay lại hiệu quả bán hàng
       </Link>
 
       <div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -50,7 +50,7 @@ export default async function SalesAnalyticsSourcesPage(props: SourcesPageProps)
             Hiệu quả theo nguồn
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-            So sánh nguồn lead theo tổng lead, lead quan tâm, follow-up và won.
+            So sánh nguồn lead theo tổng lead, lead quan tâm, follow-up và số lead đã chốt.
           </p>
         </div>
       </div>

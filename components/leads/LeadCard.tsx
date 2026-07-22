@@ -11,6 +11,7 @@ import Link from "next/link";
 import { LeadPriorityBadge } from "@/components/leads/LeadPriorityBadge";
 import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
 import type { LeadRecord } from "@/lib/data/leads";
+import { getGoogleMapsDirectionsUrl } from "@/lib/maps-url";
 
 type LeadCardProps = {
   lead: LeadRecord;
@@ -43,19 +44,13 @@ function formatDate(value?: string | null) {
 }
 
 function getDirectionsHref(lead: LeadRecord) {
-  if (lead.google_maps_url) {
-    return lead.google_maps_url;
-  }
-
-  if (lead.latitude != null && lead.longitude != null) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${lead.latitude},${lead.longitude}`;
-  }
-
-  if (lead.address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address)}`;
-  }
-
-  return null;
+  return getGoogleMapsDirectionsUrl({
+    address: lead.address,
+    googleMapsUrl: lead.google_maps_url,
+    latitude: lead.latitude,
+    longitude: lead.longitude,
+    placeId: lead.place_id,
+  });
 }
 
 export function LeadCard({ lead, selectable = false }: LeadCardProps) {
@@ -72,7 +67,7 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
           {selectable ? (
             <label className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-cloud">
               <input
-                aria-label={`Chon lead ${lead.name}`}
+                aria-label={`Chọn lead ${lead.name}`}
                 className="h-5 w-5"
                 name="leadIds"
                 type="checkbox"

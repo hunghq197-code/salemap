@@ -45,13 +45,13 @@ export function PipelineBoard({ columns }: PipelineBoardProps) {
         | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the cap nhat status.");
+        throw new Error(body?.error || "Không thể cập nhật trạng thái.");
       }
 
       setMessage(
         toStatus === "won"
-          ? "Da chuyen lead sang Da chot."
-          : "Da cap nhat trang thai lead.",
+          ? "Đã chuyển lead sang Đã chốt."
+          : "Đã cập nhật trạng thái lead.",
       );
 
       if (toStatus === "follow_up" && !body?.data?.next_follow_up_at) {
@@ -62,7 +62,7 @@ export function PipelineBoard({ columns }: PipelineBoardProps) {
 
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Khong the cap nhat status.");
+      setMessage(error instanceof Error ? error.message : "Không thể cập nhật trạng thái.");
     } finally {
       setPendingLeadId(null);
     }
@@ -79,7 +79,7 @@ export function PipelineBoard({ columns }: PipelineBoardProps) {
               href={`/app/leads/${followUpLeadId}#create-follow-up`}
             >
               <CalendarPlus aria-hidden="true" className="h-4 w-4" />
-              Tao follow-up
+              Tạo follow-up
             </Link>
           ) : null}
         </div>
@@ -121,7 +121,7 @@ export function PipelineBoard({ columns }: PipelineBoardProps) {
                           {lead.name}
                         </Link>
                         <p className="mt-1 truncate text-sm font-semibold text-slate-500">
-                          {lead.phone || lead.category || lead.source || "Chua co thong tin them"}
+                          {lead.phone || lead.category || lead.source || "Chưa có thông tin thêm"}
                         </p>
                       </div>
                       <Link
@@ -158,7 +158,7 @@ export function PipelineBoard({ columns }: PipelineBoardProps) {
                     ) : null}
 
                     <label className="mt-3 block text-xs font-bold text-slate-500">
-                      Doi trang thai
+                      Đổi trạng thái
                       <div className="mt-1 flex items-center gap-2">
                         <select
                           className="min-h-10 flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm font-bold text-ink outline-none focus:border-ocean"

@@ -27,7 +27,7 @@ export default async function PaymentInstructionPage(props: PaymentInstructionPa
           href="/app/billing"
         >
           <ArrowLeft aria-hidden="true" className="h-5 w-5" />
-          Quay lại billing
+          Quay lại gói sử dụng
         </Link>
       </div>
     );
@@ -45,7 +45,7 @@ export default async function PaymentInstructionPage(props: PaymentInstructionPa
         href="/app/billing"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại billing
+        Quay lại gói sử dụng
       </Link>
 
       <div className="mt-6 flex items-start gap-4">

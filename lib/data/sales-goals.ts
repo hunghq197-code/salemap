@@ -154,9 +154,9 @@ async function markCompletedIfNeeded(
     });
     await createNotification({
       actionUrl: "/app/analytics/goals",
-      content: `Ban da dat muc tieu ${goal.name}.`,
+      content: `Bạn đã đạt mục tiêu ${goal.name}.`,
       metadata: { goalId: goal.id, metricKey: goal.metric_key },
-      title: "Ban da hoan thanh muc tieu",
+      title: "Bạn đã hoàn thành mục tiêu",
       type: "sales_goal_completed",
       userId,
     });
@@ -284,7 +284,7 @@ export async function updateSalesGoal(goalId: string, input: UpdateSalesGoalInpu
   const current = await getSalesGoalById(goalId);
 
   if (!current) {
-    throw new Error("Khong tim thay muc tieu.");
+    throw new Error("Không tìm thấy mục tiêu.");
   }
 
   const { userId } = await createAuthedSupabaseServerClient();

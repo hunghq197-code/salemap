@@ -13,16 +13,16 @@ export type SubscriptionEventType =
   (typeof SUBSCRIPTION_EVENT_TYPES)[keyof typeof SUBSCRIPTION_EVENT_TYPES];
 
 export const CANCELLATION_REASON_OPTIONS = [
-  { label: "Gia chua phu hop", value: "too_expensive" },
-  { label: "Toi chua dung du nhieu", value: "not_using_enough" },
-  { label: "Thieu tinh nang toi can", value: "missing_feature" },
-  { label: "San pham con kho dung", value: "hard_to_use" },
-  { label: "Ket qua tim khach chua du tot", value: "data_quality" },
-  { label: "Tim theo khu vuc chua huu ich", value: "map_search_not_useful" },
-  { label: "Tim doc tuyen chua huu ich", value: "route_search_not_useful" },
-  { label: "Cong ty da co CRM/cong cu khac", value: "company_has_crm" },
-  { label: "Tam dung, co the quay lai sau", value: "temporary_pause" },
-  { label: "Ly do khac", value: "other" },
+  { label: "Giá chưa phù hợp", value: "too_expensive" },
+  { label: "Tôi chưa sử dụng đủ nhiều", value: "not_using_enough" },
+  { label: "Thiếu tính năng tôi cần", value: "missing_feature" },
+  { label: "Sản phẩm còn khó dùng", value: "hard_to_use" },
+  { label: "Kết quả tìm khách chưa đủ tốt", value: "data_quality" },
+  { label: "Tìm theo khu vực chưa hữu ích", value: "map_search_not_useful" },
+  { label: "Tìm dọc tuyến chưa hữu ích", value: "route_search_not_useful" },
+  { label: "Công ty đã có CRM/công cụ khác", value: "company_has_crm" },
+  { label: "Tạm dừng, có thể quay lại sau", value: "temporary_pause" },
+  { label: "Lý do khác", value: "other" },
 ] as const;
 
 export type CancellationReasonType =

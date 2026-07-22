@@ -1,4 +1,5 @@
 import type {
+  MapPlaceDetails,
   MapPlaceResult,
   MapRouteResult,
   RoutePlaceResult,
@@ -7,11 +8,12 @@ import type {
 const GOOGLE_MAPS_LEGACY_BASE_URL = "https://maps.googleapis.com/maps/api";
 const GOOGLE_PLACES_TEXT_SEARCH_URL =
   "https://places.googleapis.com/v1/places:searchText";
+const GOOGLE_PLACES_BASE_URL = "https://places.googleapis.com/v1/places";
 const MAX_RESULTS = 20;
 const MAX_ROUTE_RESULTS = 30;
-const MAX_ROUTE_SAMPLE_POINTS = 8;
+const MAX_ROUTE_SAMPLE_POINTS = 4;
 const GOOGLE_REQUEST_TIMEOUT_MS = 15_000;
-const PLACE_FIELD_MASK = [
+const PLACE_SEARCH_FIELD_MASK = [
   "places.id",
   "places.displayName",
   "places.formattedAddress",
@@ -19,11 +21,15 @@ const PLACE_FIELD_MASK = [
   "places.primaryType",
   "places.types",
   "places.businessStatus",
-  "places.rating",
-  "places.userRatingCount",
-  "places.nationalPhoneNumber",
-  "places.websiteUri",
   "places.googleMapsUri",
+].join(",");
+const PLACE_DETAILS_FIELD_MASK = [
+  "id",
+  "googleMapsUri",
+  "nationalPhoneNumber",
+  "rating",
+  "userRatingCount",
+  "websiteUri",
 ].join(",");
 
 type LatLng = {
@@ -166,7 +172,7 @@ async function fetchPlacesByText(input: {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": getApiKey(),
-        "X-Goog-FieldMask": PLACE_FIELD_MASK,
+        "X-Goog-FieldMask": PLACE_SEARCH_FIELD_MASK,
       },
       method: "POST",
       signal: AbortSignal.timeout(GOOGLE_REQUEST_TIMEOUT_MS),
@@ -193,12 +199,63 @@ async function fetchPlacesByText(input: {
   return payload.places ?? [];
 }
 
+export async function getPlaceDetails(placeId: string): Promise<MapPlaceDetails> {
+  let response: Response;
+
+  try {
+    const url = new URL(`${GOOGLE_PLACES_BASE_URL}/${encodeURIComponent(placeId)}`);
+    url.searchParams.set("languageCode", "vi");
+    url.searchParams.set("regionCode", "VN");
+
+    response = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "X-Goog-Api-Key": getApiKey(),
+        "X-Goog-FieldMask": PLACE_DETAILS_FIELD_MASK,
+      },
+      signal: AbortSignal.timeout(GOOGLE_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error instanceof MapProviderError) {
+      throw error;
+    }
+
+    throw new MapProviderError(
+      "Không thể tải thông tin liên hệ của địa điểm. Vui lòng thử lại.",
+      "MAP_PROVIDER_UNAVAILABLE",
+    );
+  }
+
+  const payload = (await response.json().catch(() => ({}))) as GooglePlacesError &
+    GoogleTextPlace;
+
+  if (!response.ok) {
+    throw getProviderError(response.status, payload);
+  }
+
+  return {
+    detailsLoaded: true,
+    googleMapsUrl: payload.googleMapsUri,
+    phone: payload.nationalPhoneNumber,
+    rating: payload.rating,
+    userRatingsTotal: payload.userRatingCount,
+    website: payload.websiteUri,
+  };
+}
+
 function assertLegacyGoogleStatus(payload: GoogleMapsStatus) {
   if (payload.status === "OK" || payload.status === "ZERO_RESULTS") {
     return;
   }
 
   if (payload.status === "REQUEST_DENIED") {
+    if (payload.error_message?.toLowerCase().includes("billing")) {
+      throw new MapProviderError(
+        "Google Maps chưa nhận diện Billing cho project chứa API key.",
+        "MAP_PROVIDER_BILLING_ERROR",
+      );
+    }
+
     throw new MapProviderError(
       "Google Maps từ chối API key. Hãy kiểm tra key và các API Geocoding/Directions đã được bật.",
       "MAP_PROVIDER_AUTH_ERROR",
@@ -303,6 +360,7 @@ function normalizeTextPlace(
   return {
     address: place.formattedAddress,
     category: place.primaryType || place.types?.[0],
+    detailsLoaded: false,
     distanceMeters,
     googleMapsUrl:
       place.googleMapsUri ||
@@ -310,17 +368,13 @@ function normalizeTextPlace(
     latitude,
     longitude,
     name,
-    phone: place.nationalPhoneNumber,
     placeId,
-    rating: place.rating,
     raw: {
       businessStatus: place.businessStatus,
       languageCode: place.displayName?.languageCode,
       provider: "google_places_new",
       types: place.types,
     },
-    userRatingsTotal: place.userRatingCount,
-    website: place.websiteUri,
   } satisfies MapPlaceResult;
 }
 

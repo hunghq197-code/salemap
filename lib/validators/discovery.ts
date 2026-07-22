@@ -56,6 +56,10 @@ export const routeSearchSchema = z.object({
     .max(200),
 });
 
+export const placeDetailsSchema = z.object({
+  placeId: z.string().trim().min(2).max(300),
+});
+
 export const savePlaceSchema = z.object({
   address: optionalText(300),
   category: optionalText(120),
@@ -76,5 +80,6 @@ export const savePlaceSchema = z.object({
 
 export type AreaSearchInput = z.infer<typeof areaSearchSchema>;
 export type NearMeSearchInput = z.infer<typeof nearMeSearchSchema>;
+export type PlaceDetailsInput = z.infer<typeof placeDetailsSchema>;
 export type RouteSearchInput = z.infer<typeof routeSearchSchema>;
 export type SavePlaceInput = z.infer<typeof savePlaceSchema>;

@@ -86,12 +86,12 @@ export function BulkActionsForm({
     const confirmation = formData.get("confirmation") === "on";
 
     if (leadIds.length === 0) {
-      setMessage("Hay chon it nhat mot lead.");
+      setMessage("Hãy chọn ít nhất một lead.");
       return;
     }
 
     if (["archive", "restore", "soft_delete"].includes(actionType) && !confirmation) {
-      setMessage("Can tick xac nhan truoc khi thuc hien thao tac nay.");
+      setMessage("Cần tích xác nhận trước khi thực hiện thao tác này.");
       return;
     }
 
@@ -115,7 +115,7 @@ export function BulkActionsForm({
         | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the thuc hien bulk action.");
+        throw new Error(body?.error || "Không thể thực hiện thao tác hàng loạt.");
       }
 
       trackBulkActionCompleted({
@@ -123,14 +123,14 @@ export function BulkActionsForm({
         selectedCount: leadIds.length,
         successCount: body?.data?.successCount,
       });
-      setMessage(`Da xu ly ${body?.data?.successCount ?? leadIds.length} lead.`);
+      setMessage(`Đã xử lý ${body?.data?.successCount ?? leadIds.length} lead.`);
       form.reset();
       setSelectedCount(0);
       setSelectAll(false);
       router.refresh();
     } catch (error) {
       trackBulkActionFailed({ actionType, failedCount: leadIds.length, selectedCount: leadIds.length });
-      setMessage(error instanceof Error ? error.message : "Khong the thuc hien bulk action.");
+      setMessage(error instanceof Error ? error.message : "Không thể thực hiện thao tác hàng loạt.");
     } finally {
       setPending(false);
     }
@@ -151,10 +151,10 @@ export function BulkActionsForm({
               onChange={(event) => toggleSelectAll(event.currentTarget.form!, event.target.checked)}
               type="checkbox"
             />
-            Chon tat ca trang nay ({currentPageLeadIds.length})
+            Chọn tất cả trang này ({currentPageLeadIds.length})
           </label>
           <div className="flex-1">
-            <p className="text-sm font-bold text-slate-600">Da chon {selectedCount} lead</p>
+            <p className="text-sm font-bold text-slate-600">Đã chọn {selectedCount} lead</p>
             <select
               className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base font-bold text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
               name="actionType"
@@ -171,7 +171,7 @@ export function BulkActionsForm({
 
           {actionType === "update_status" ? (
             <label className="flex-1 text-sm font-bold text-ink">
-              Trang thai
+              Trạng thái
               <select
                 className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
                 name="status"
@@ -187,7 +187,7 @@ export function BulkActionsForm({
 
           {actionType === "set_priority" ? (
             <label className="flex-1 text-sm font-bold text-ink">
-              Uu tien
+              Ưu tiên
               <select
                 className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
                 name="priority"
@@ -204,7 +204,7 @@ export function BulkActionsForm({
           {actionType === "add_tags" || actionType === "remove_tags" ? (
             <div className="grid flex-[1.4] gap-2 sm:grid-cols-2">
               <label className="text-sm font-bold text-ink">
-                Tag co san
+                Tag có sẵn
                 <select
                   className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
                   multiple
@@ -218,11 +218,11 @@ export function BulkActionsForm({
                 </select>
               </label>
               <label className="text-sm font-bold text-ink">
-                Tag moi
+                Tag mới
                 <input
                   className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
                   name="newTags"
-                  placeholder="khach cu, tiem nang"
+                  placeholder="khách cũ, tiềm năng"
                 />
               </label>
             </div>
@@ -231,7 +231,7 @@ export function BulkActionsForm({
           {["archive", "restore", "soft_delete"].includes(actionType) ? (
             <label className="flex flex-[1.2] items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm font-bold text-amber-900">
               <input className="mt-1 h-5 w-5" name="confirmation" type="checkbox" />
-              Toi hieu day la thao tac hang loat va co the anh huong den danh sach lead.
+              Tôi hiểu đây là thao tác hàng loạt và có thể ảnh hưởng đến danh sách lead.
             </label>
           ) : null}
 
@@ -241,7 +241,7 @@ export function BulkActionsForm({
             type="submit"
           >
             {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <CheckSquare aria-hidden="true" className="h-4 w-4" />}
-            Thuc hien
+            Thực hiện
           </button>
         </div>
         {message ? (

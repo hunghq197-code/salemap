@@ -26,6 +26,8 @@ const contentSecurityPolicy = [
     "https://app.posthog.com",
     "https://*.posthog.com",
     "https://*.i.posthog.com",
+    "https://maps.googleapis.com",
+    "https://maps.gstatic.com",
   ]
     .filter(Boolean)
     .join(" "),
@@ -35,6 +37,7 @@ const contentSecurityPolicy = [
     "https://*.supabase.co",
     "wss://*.supabase.co",
     "https://maps.googleapis.com",
+    "https://maps.gstatic.com",
     "https://www.clarity.ms",
     "https://*.clarity.ms",
     "https://*.bing.com",

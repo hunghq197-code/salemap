@@ -1,88 +1,88 @@
 export const ANALYTICS_PERIODS = {
-  custom: { label: "Tuy chon" },
-  last_30_days: { label: "30 ngay qua" },
-  last_7_days: { label: "7 ngay qua" },
-  this_month: { label: "Thang nay" },
-  this_week: { label: "Tuan nay" },
-  today: { label: "Hom nay" },
-  yesterday: { label: "Hom qua" },
+  custom: { label: "Tùy chọn" },
+  last_30_days: { label: "30 ngày qua" },
+  last_7_days: { label: "7 ngày qua" },
+  this_month: { label: "Tháng này" },
+  this_week: { label: "Tuần này" },
+  today: { label: "Hôm nay" },
+  yesterday: { label: "Hôm qua" },
 } as const;
 
 export type AnalyticsPeriodKey = keyof typeof ANALYTICS_PERIODS;
 
 export const SALES_METRICS = {
-  ai_requests: { label: "Luot AI", shortLabel: "AI" },
-  area_searches: { label: "Tim theo khu vuc", shortLabel: "Khu vuc" },
-  exports_completed: { label: "Luot export", shortLabel: "Export" },
-  followups_completed: { label: "Follow-up hoan thanh", shortLabel: "Hoan thanh" },
-  followups_created: { label: "Follow-up da tao", shortLabel: "Follow-up" },
-  import_rows_completed: { label: "Dong import thanh cong", shortLabel: "Import" },
-  lead_notes_created: { label: "Ghi chu da tao", shortLabel: "Ghi chu" },
-  leads_contacted: { label: "Lead da lien he", shortLabel: "Lien he" },
-  leads_created: { label: "Lead moi", shortLabel: "Lead moi" },
-  leads_lost: { label: "Lead da mat", shortLabel: "Lost" },
-  leads_not_fit: { label: "Lead khong phu hop", shortLabel: "Not fit" },
-  leads_won: { label: "Lead da chot", shortLabel: "Won" },
-  map_leads_saved: { label: "Lead luu tu ban do", shortLabel: "Ban do" },
-  near_me_searches: { label: "Tim quanh toi", shortLabel: "Gan toi" },
-  pipeline_status_changes: { label: "Cap nhat pipeline", shortLabel: "Pipeline" },
-  route_searches: { label: "Tim doc tuyen", shortLabel: "Tuyen" },
-  templates_copied: { label: "Mau da sao chep", shortLabel: "Mau" },
+  ai_requests: { label: "Lượt AI", shortLabel: "AI" },
+  area_searches: { label: "Tìm theo khu vực", shortLabel: "Khu vực" },
+  exports_completed: { label: "Lượt xuất dữ liệu", shortLabel: "Xuất" },
+  followups_completed: { label: "Follow-up hoàn thành", shortLabel: "Hoàn thành" },
+  followups_created: { label: "Follow-up đã tạo", shortLabel: "Follow-up" },
+  import_rows_completed: { label: "Dòng nhập thành công", shortLabel: "Nhập" },
+  lead_notes_created: { label: "Ghi chú đã tạo", shortLabel: "Ghi chú" },
+  leads_contacted: { label: "Lead đã liên hệ", shortLabel: "Liên hệ" },
+  leads_created: { label: "Lead mới", shortLabel: "Lead mới" },
+  leads_lost: { label: "Lead đã mất", shortLabel: "Đã mất" },
+  leads_not_fit: { label: "Lead không phù hợp", shortLabel: "Không phù hợp" },
+  leads_won: { label: "Lead đã chốt", shortLabel: "Đã chốt" },
+  map_leads_saved: { label: "Lead lưu từ bản đồ", shortLabel: "Bản đồ" },
+  near_me_searches: { label: "Tìm quanh tôi", shortLabel: "Gần tôi" },
+  pipeline_status_changes: { label: "Cập nhật pipeline", shortLabel: "Pipeline" },
+  route_searches: { label: "Tìm dọc tuyến", shortLabel: "Tuyến" },
+  templates_copied: { label: "Mẫu đã sao chép", shortLabel: "Mẫu" },
 } as const;
 
 export type SalesMetricKey = keyof typeof SALES_METRICS;
 
 export const GOAL_PERIODS = {
-  custom: "Tuy chon",
-  daily: "Hang ngay",
-  monthly: "Hang thang",
-  weekly: "Hang tuan",
+  custom: "Tùy chọn",
+  daily: "Hằng ngày",
+  monthly: "Hằng tháng",
+  weekly: "Hằng tuần",
 } as const;
 
 export type GoalPeriodType = keyof typeof GOAL_PERIODS;
 
 export const GOAL_STATUSES = {
-  active: "Dang hoat dong",
-  archived: "Da luu tru",
-  completed: "Da hoan thanh",
-  paused: "Tam dung",
+  active: "Đang hoạt động",
+  archived: "Đã lưu trữ",
+  completed: "Đã hoàn thành",
+  paused: "Tạm dừng",
 } as const;
 
 export type SalesGoalStatus = keyof typeof GOAL_STATUSES;
 
 export const GOAL_TEMPLATES = {
   daily_leads: {
-    description: "Giup ban duy tri dau vao moi moi ngay.",
+    description: "Giúp bạn duy trì nguồn lead mới mỗi ngày.",
     metricKey: "leads_created",
-    name: "Tao 10 lead moi moi ngay",
+    name: "Tạo 10 lead mới mỗi ngày",
     periodType: "daily",
     targetValue: 10,
   },
   monthly_won: {
-    description: "Theo doi dau ra that su cua pipeline moi thang.",
+    description: "Theo dõi kết quả thực tế của pipeline mỗi tháng.",
     metricKey: "leads_won",
-    name: "Chot 5 lead moi thang",
+    name: "Chốt 5 lead mỗi tháng",
     periodType: "monthly",
     targetValue: 5,
   },
   weekly_contacts: {
-    description: "Bien lead moi thanh cac cuoc lien he thuc te.",
+    description: "Biến lead mới thành các cuộc liên hệ thực tế.",
     metricKey: "leads_contacted",
-    name: "Lien he 30 lead moi tuan",
+    name: "Liên hệ 30 lead mỗi tuần",
     periodType: "weekly",
     targetValue: 30,
   },
   weekly_followups: {
-    description: "Giu nhip cham soc khach da trao doi.",
+    description: "Giữ nhịp chăm sóc khách đã trao đổi.",
     metricKey: "followups_completed",
-    name: "Hoan thanh 20 follow-up moi tuan",
+    name: "Hoàn thành 20 follow-up mỗi tuần",
     periodType: "weekly",
     targetValue: 20,
   },
   weekly_route_searches: {
-    description: "Phu tuyen thi truong bang route search deu dan.",
+    description: "Phủ tuyến thị trường bằng tìm kiếm dọc tuyến đều đặn.",
     metricKey: "route_searches",
-    name: "Tim 50 khach doc tuyen moi tuan",
+    name: "Tìm 50 khách dọc tuyến mỗi tuần",
     periodType: "weekly",
     targetValue: 50,
   },
@@ -102,23 +102,23 @@ export type GoalTemplateKey = keyof typeof GOAL_TEMPLATES;
 export const FUNNEL_STAGES = ["new", "contacted", "interested", "follow_up", "won"] as const;
 
 export const FUNNEL_STAGE_LABELS: Record<(typeof FUNNEL_STAGES)[number], string> = {
-  contacted: "Da lien he",
+  contacted: "Đã liên hệ",
   follow_up: "Follow-up",
-  interested: "Quan tam",
-  new: "Moi",
-  won: "Da chot",
+  interested: "Quan tâm",
+  new: "Mới",
+  won: "Đã chốt",
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
-  ai_created: "AI ho tro",
+  ai_created: "AI hỗ trợ",
   import_csv: "Import CSV",
   import_excel: "Import Excel",
-  manual: "Thu cong",
-  map_area: "Tim theo khu vuc",
-  map_near_me: "Tim quanh toi",
-  near_me: "Tim quanh toi",
-  other: "Khac",
-  route_search: "Tim doc tuyen",
+  manual: "Thủ công",
+  map_area: "Tìm theo khu vực",
+  map_near_me: "Tìm quanh tôi",
+  near_me: "Tìm quanh tôi",
+  other: "Khác",
+  route_search: "Tìm dọc tuyến",
 };
 
 export function getSourceLabel(source?: string | null) {

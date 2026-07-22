@@ -15,7 +15,8 @@ const loginCopy = {
     emailNotConfirmed:
       "This email has not been confirmed, so Supabase is blocking login. For internal testing, turn off Confirm Email in Supabase or confirm the user manually in Authentication > Users.",
     invalidCredentials:
-      "Email or password is incorrect. If you just registered and have not received a confirmation email, check the Confirm Email setting in Supabase.",
+      "Email or password is incorrect. Use Forgot password if you no longer remember it.",
+    forgotPassword: "Forgot password?",
     missingFields: "Please enter email and password.",
     configMissing:
       "Missing Supabase public config. Please set NEXT_PUBLIC_SUPABASE_URL and a public Supabase key.",
@@ -36,8 +37,13 @@ const loginCopy = {
     emailNotConfirmed:
       "Email này chưa được xác nhận nên Supabase chưa cho đăng nhập. Khi test nội bộ, hãy tắt Confirm Email trong Supabase hoặc vào Authentication > Users để confirm user thủ công.",
     invalidCredentials:
-      "Email hoặc mật khẩu chưa đúng. Nếu bạn vừa đăng ký nhưng chưa nhận mail xác nhận, hãy kiểm tra cài đặt Confirm Email trong Supabase.",
+      "Email hoặc mật khẩu chưa đúng. Hãy dùng Quên mật khẩu nếu bạn không còn nhớ mật khẩu.",
+    configMissing:
+      "Thiếu cấu hình Supabase public. Hãy kiểm tra NEXT_PUBLIC_SUPABASE_URL và public key.",
+    forgotPassword: "Quên mật khẩu?",
     missingFields: "Vui lòng nhập email và mật khẩu.",
+    network:
+      "Không kết nối được Supabase lúc này. Hãy kiểm tra mạng hoặc Supabase project URL.",
     password: "Mật khẩu",
     passwordPlaceholder: "Nhập mật khẩu",
     registerLink: "Tạo tài khoản",
@@ -68,6 +74,14 @@ function getLoginErrorMessage(errorMessage: string, copy: LoginCopy) {
     return copy.invalidCredentials;
   }
 
+  if (
+    message.includes("failed to fetch") ||
+    message.includes("fetch failed") ||
+    message.includes("network")
+  ) {
+    return copy.network;
+  }
+
   if (message.includes("rate limit")) {
     return copy.rateLimit;
   }
@@ -77,7 +91,6 @@ function getLoginErrorMessage(errorMessage: string, copy: LoginCopy) {
 
 function getUnexpectedLoginErrorMessage(
   error: unknown,
-  locale: string,
   copy: LoginCopy,
 ) {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
@@ -86,9 +99,7 @@ function getUnexpectedLoginErrorMessage(
     message.includes("supabase public env") ||
     message.includes("next_public_supabase")
   ) {
-    return locale === "vi"
-      ? "Thiếu cấu hình Supabase public. Hãy kiểm tra NEXT_PUBLIC_SUPABASE_URL và public key."
-      : "Missing Supabase public config. Please set NEXT_PUBLIC_SUPABASE_URL and a public Supabase key.";
+    return copy.configMissing;
   }
 
   if (
@@ -96,9 +107,7 @@ function getUnexpectedLoginErrorMessage(
     message.includes("fetch failed") ||
     message.includes("networkerror")
   ) {
-    return locale === "vi"
-      ? "Không kết nối được Supabase lúc này. Hãy kiểm tra mạng hoặc Supabase project URL."
-      : "Could not reach Supabase right now. Please check your network or Supabase project URL.";
+    return copy.network;
   }
 
   return copy.unknownCatch;
@@ -157,7 +166,7 @@ export function LoginForm() {
       setIsRedirecting(true);
       router.replace("/app/dashboard");
     } catch (loginError) {
-      setError(getUnexpectedLoginErrorMessage(loginError, locale, copy));
+      setError(getUnexpectedLoginErrorMessage(loginError, copy));
     } finally {
       if (!shouldKeepBusy) {
         setIsSubmitting(false);
@@ -184,9 +193,14 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label className="text-sm font-bold text-ink" htmlFor="login-password">
-          {copy.password}
-        </label>
+        <div className="flex items-center justify-between gap-3">
+          <label className="text-sm font-bold text-ink" htmlFor="login-password">
+            {copy.password}
+          </label>
+          <Link className="text-sm font-bold text-ocean hover:text-ink" href="/forgot-password">
+            {copy.forgotPassword}
+          </Link>
+        </div>
         <input
           autoComplete="current-password"
           className={inputClasses()}

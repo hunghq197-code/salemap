@@ -1,26 +1,9 @@
-const CACHE_NAME = "salemap-app-shell-v1";
+const CACHE_NAME = "salemap-app-shell-v2";
 const LOCAL_HOSTNAMES = ["localhost", "127.0.0.1", "0.0.0.0"];
 const IS_LOCALHOST = LOCAL_HOSTNAMES.includes(self.location.hostname);
 
 const APP_SHELL_URLS = [
   "/",
-  "/app/dashboard",
-  "/app/pipeline",
-  "/app/analytics",
-  "/app/analytics/goals",
-  "/app/leads",
-  "/app/leads/views",
-  "/app/leads/cleanup",
-  "/app/leads/cleanup/duplicates",
-  "/app/leads/cleanup/quality",
-  "/app/leads/bulk-actions",
-  "/app/reminders",
-  "/app/templates",
-  "/app/import",
-  "/app/settings",
-  "/app/install",
-  "/app/offline",
-  "/beta-status",
   "/offline.html",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -62,9 +45,13 @@ function shouldSkip(request) {
   if (!isSameOrigin(request)) return true;
   if (url.pathname.startsWith("/api")) return true;
   if (url.pathname.startsWith("/admin")) return true;
-  if (url.pathname.startsWith("/app/billing/payment")) return true;
+  if (url.pathname.startsWith("/app/billing")) return true;
+  if (url.pathname.startsWith("/auth")) return true;
+  if (url.pathname === "/forgot-password") return true;
   if (url.pathname === "/login") return true;
+  if (url.pathname === "/onboarding") return true;
   if (url.pathname === "/register") return true;
+  if (url.pathname === "/update-password") return true;
   if (url.pathname.startsWith("/_next/webpack-hmr")) return true;
   if (url.pathname.includes("webpack.hot-update")) return true;
   if (url.searchParams.has("__nextDataReq")) return true;

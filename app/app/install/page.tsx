@@ -34,7 +34,7 @@ export default function InstallPage() {
             Cài SaleMap như app trên điện thoại
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-8 text-slate-600">
-            Sau khi cài, bạn có thể mở SaleMap nhanh từ màn hình chính, giữ app shell khi mạng
+            Sau khi cài, bạn có thể mở SaleMap nhanh từ màn hình chính, giữ giao diện gần đây khi mạng
             yếu và tiếp tục nhập ghi chú mà không sợ mất nội dung.
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -43,7 +43,7 @@ export default function InstallPage() {
               href="/app/dashboard"
             >
               <Smartphone aria-hidden="true" className="h-5 w-5" />
-              Quay lại dashboard
+              Quay lại tổng quan
             </Link>
             <Link
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm transition hover:border-ocean"

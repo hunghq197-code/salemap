@@ -28,12 +28,12 @@ export function SavedViewActions({ isPinned, isSystem, viewId }: SavedViewAction
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the cap nhat ghim.");
+        throw new Error(body?.error || "Không thể cập nhật ghim.");
       }
 
       router.refresh();
     } catch (pinError) {
-      setError(pinError instanceof Error ? pinError.message : "Khong the cap nhat ghim.");
+      setError(pinError instanceof Error ? pinError.message : "Không thể cập nhật ghim.");
     } finally {
       setPending(null);
     }
@@ -41,11 +41,11 @@ export function SavedViewActions({ isPinned, isSystem, viewId }: SavedViewAction
 
   async function deleteView() {
     if (isSystem) {
-      setError("Smart view mac dinh khong the xoa.");
+      setError("Góc nhìn thông minh mặc định không thể xóa.");
       return;
     }
 
-    if (!window.confirm("Xoa goc nhin lead nay? Lead se khong bi xoa.")) {
+    if (!window.confirm("Xóa góc nhìn lead này? Lead sẽ không bị xóa.")) {
       return;
     }
 
@@ -57,13 +57,13 @@ export function SavedViewActions({ isPinned, isSystem, viewId }: SavedViewAction
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the xoa goc nhin.");
+        throw new Error(body?.error || "Không thể xóa góc nhìn.");
       }
 
       router.push("/app/leads/views");
       router.refresh();
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Khong the xoa goc nhin.");
+      setError(deleteError instanceof Error ? deleteError.message : "Không thể xóa góc nhìn.");
     } finally {
       setPending(null);
     }
@@ -78,7 +78,7 @@ export function SavedViewActions({ isPinned, isSystem, viewId }: SavedViewAction
         type="button"
       >
         {isPinned ? <PinOff aria-hidden="true" className="h-4 w-4" /> : <Pin aria-hidden="true" className="h-4 w-4" />}
-        {pending === "pin" ? "Dang luu..." : isPinned ? "Bo ghim" : "Ghim"}
+        {pending === "pin" ? "Đang lưu..." : isPinned ? "Bỏ ghim" : "Ghim"}
       </button>
       <button
         className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
@@ -87,7 +87,7 @@ export function SavedViewActions({ isPinned, isSystem, viewId }: SavedViewAction
         type="button"
       >
         <Trash2 aria-hidden="true" className="h-4 w-4" />
-        {pending === "delete" ? "Dang xoa..." : "Xoa"}
+        {pending === "delete" ? "Đang xóa..." : "Xóa"}
       </button>
       {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
     </div>

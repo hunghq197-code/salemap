@@ -7,6 +7,8 @@ import type {
 } from "@/lib/providers/maps/types";
 
 type SearchResultsListProps = {
+  loadingDetailsPlaceId?: string | null;
+  onLoadDetails: (place: DiscoveryPlaceResult) => void;
   onSave: (place: DiscoveryPlaceResult) => void;
   results: DiscoveryPlaceResult[];
   savingPlaceId?: string | null;
@@ -14,6 +16,8 @@ type SearchResultsListProps = {
 };
 
 export function SearchResultsList({
+  loadingDetailsPlaceId,
+  onLoadDetails,
   onSave,
   results,
   savingPlaceId,
@@ -38,7 +42,9 @@ export function SearchResultsList({
     <div className="space-y-4">
       {results.map((place) => (
         <PlaceResultCard
+          detailsLoading={loadingDetailsPlaceId === place.placeId}
           key={place.placeId}
+          onLoadDetails={onLoadDetails}
           onSave={onSave}
           place={place}
           saving={savingPlaceId === place.placeId}

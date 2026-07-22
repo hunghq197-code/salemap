@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AreaSearchForm } from "@/components/discovery/AreaSearchForm";
 import { LocationPermissionNotice } from "@/components/discovery/LocationPermissionNotice";
 import { MapPreview } from "@/components/discovery/MapPreview";
@@ -55,6 +55,18 @@ type SaveResponse = ApiError & {
     alreadySaved: boolean;
     leadId: string;
   };
+};
+
+type PlaceDetailsResponse = ApiError & {
+  data?: Pick<
+    DiscoveryPlaceResult,
+    | "detailsLoaded"
+    | "googleMapsUrl"
+    | "phone"
+    | "rating"
+    | "userRatingsTotal"
+    | "website"
+  >;
 };
 
 type DiscoverTabsProps = {
@@ -173,11 +185,20 @@ export function DiscoverTabs({
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
   const [searchState, setSearchState] = useState<SearchState | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingDetailsPlaceId, setLoadingDetailsPlaceId] = useState<string | null>(null);
   const [savingPlaceId, setSavingPlaceId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [quotaReached, setQuotaReached] = useState<QuotaReachedState | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const searchControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      searchControllerRef.current?.abort();
+    },
+    [],
+  );
 
   function handleTabChange(tab: ActiveTab) {
     if (tab === "route" && !routeSearchEnabled) {
@@ -185,6 +206,9 @@ export function DiscoverTabs({
       return;
     }
 
+    searchControllerRef.current?.abort();
+    searchControllerRef.current = null;
+    setLoading(false);
     setActiveTab(tab);
     setError(null);
     setNotice(null);
@@ -198,6 +222,9 @@ export function DiscoverTabs({
     payload: Record<string, unknown>,
     source: DiscoverySource,
   ) {
+    searchControllerRef.current?.abort();
+    const controller = new AbortController();
+    searchControllerRef.current = controller;
     setLoading(true);
     setError(null);
     setNotice(null);
@@ -217,6 +244,7 @@ export function DiscoverTabs({
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
         method: "POST",
+        signal: controller.signal,
       });
       const result = (await response.json()) as SearchResponse;
 
@@ -257,6 +285,10 @@ export function DiscoverTabs({
       const checklistKey = getChecklistKeyForSearch(source);
       if (checklistKey) trackBetaChecklistItemCompleted({ checklistKey });
     } catch (searchError) {
+      if (searchError instanceof DOMException && searchError.name === "AbortError") {
+        return;
+      }
+
       setError(
         searchError instanceof Error
           ? searchError.message
@@ -269,7 +301,66 @@ export function DiscoverTabs({
         source,
       });
     } finally {
-      setLoading(false);
+      if (searchControllerRef.current === controller) {
+        searchControllerRef.current = null;
+        setLoading(false);
+      }
+    }
+  }
+
+  async function loadPlaceDetails(
+    place: DiscoveryPlaceResult,
+    reportError = true,
+  ): Promise<DiscoveryPlaceResult> {
+    if (place.detailsLoaded) {
+      return place;
+    }
+
+    setLoadingDetailsPlaceId(place.placeId);
+
+    try {
+      const response = await fetch("/api/discovery/place-details", {
+        body: JSON.stringify({ placeId: place.placeId }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const result = (await response.json()) as PlaceDetailsResponse;
+
+      if (!response.ok || !result.success || !result.data) {
+        throw new Error(
+          getApiErrorMessage(result, searchState?.source),
+        );
+      }
+
+      const enrichedPlace = {
+        ...place,
+        ...result.data,
+        detailsLoaded: true,
+      };
+
+      setSearchState((current) =>
+        current
+          ? {
+              ...current,
+              results: current.results.map((item) =>
+                item.placeId === place.placeId ? enrichedPlace : item,
+              ),
+            }
+          : current,
+      );
+
+      return enrichedPlace;
+    } catch (detailsError) {
+      if (reportError) {
+        setError(
+          detailsError instanceof Error
+            ? detailsError.message
+            : "Không thể tải thông tin liên hệ. Vui lòng thử lại.",
+        );
+      }
+      throw detailsError;
+    } finally {
+      setLoadingDetailsPlaceId(null);
     }
   }
 
@@ -345,23 +436,33 @@ export function DiscoverTabs({
     setSuccessMessage(null);
 
     try {
+      let placeToSave = place;
+
+      if (!place.detailsLoaded) {
+        try {
+          placeToSave = await loadPlaceDetails(place, false);
+        } catch {
+          // A lead can still be saved with the core search fields.
+        }
+      }
+
       const response = await fetch("/api/discovery/save-place", {
         body: JSON.stringify({
-          address: place.address,
-          category: place.category,
-          googleMapsUrl: place.googleMapsUrl,
-          latitude: place.latitude,
-          longitude: place.longitude,
-          name: place.name,
-          phone: place.phone,
-          placeId: place.placeId,
-          rating: place.rating,
-          rawPlaceData: place.raw,
+          address: placeToSave.address,
+          category: placeToSave.category,
+          googleMapsUrl: placeToSave.googleMapsUrl,
+          latitude: placeToSave.latitude,
+          longitude: placeToSave.longitude,
+          name: placeToSave.name,
+          phone: placeToSave.phone,
+          placeId: placeToSave.placeId,
+          rating: placeToSave.rating,
+          rawPlaceData: placeToSave.raw,
           routeId: searchState?.route?.id,
           routeStopId: place.routeStopId,
           source: searchState?.source || "map_area",
-          userRatingsTotal: place.userRatingsTotal,
-          website: place.website,
+          userRatingsTotal: placeToSave.userRatingsTotal,
+          website: placeToSave.website,
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -401,8 +502,8 @@ export function DiscoverTabs({
             : ANALYTICS_EVENTS.MAP_PLACE_DUPLICATE_SAVED,
           {
             category: place.category,
-            hasPhone: Boolean(place.phone),
-            hasWebsite: Boolean(place.website),
+            hasPhone: Boolean(placeToSave.phone),
+            hasWebsite: Boolean(placeToSave.website),
             source: searchState?.source,
           },
         );
@@ -414,8 +515,8 @@ export function DiscoverTabs({
             : ANALYTICS_EVENTS.MAP_PLACE_SAVED_AS_LEAD,
           {
             category: place.category,
-            hasPhone: Boolean(place.phone),
-            hasWebsite: Boolean(place.website),
+            hasPhone: Boolean(placeToSave.phone),
+            hasWebsite: Boolean(placeToSave.website),
             source: searchState?.source,
           },
         );
@@ -519,8 +620,12 @@ export function DiscoverTabs({
             center={searchState.center}
             mode={isRouteResult ? "route" : "places"}
             results={searchState.results}
+            routePolyline={searchState.route?.polyline}
+            showCenterMarker={searchState.source === "map_near_me"}
           />
           <SearchResultsList
+            loadingDetailsPlaceId={loadingDetailsPlaceId}
+            onLoadDetails={(place) => void loadPlaceDetails(place)}
             onSave={handleSavePlace}
             results={searchState.results}
             savingPlaceId={savingPlaceId}

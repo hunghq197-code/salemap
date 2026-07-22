@@ -35,6 +35,7 @@ import { getLeadById } from "@/lib/data/leads";
 import { getLeadNotes } from "@/lib/data/lead-notes";
 import { getTags } from "@/lib/data/tags";
 import { getLeadMergeMetadata } from "@/lib/leads/merge-leads";
+import { getGoogleMapsDirectionsUrl } from "@/lib/maps-url";
 
 export const dynamic = "force-dynamic";
 
@@ -118,13 +119,13 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
   const isMapLead =
     !isRouteLead && (lead.external_source === "google_maps" || lead.source?.startsWith("map_"));
   const sourceBadgeLabel = isRouteLead ? "Từ tuyến đường" : isMapLead ? "Từ Google Maps" : null;
-  const directionsHref =
-    lead.google_maps_url ||
-    (lead.latitude != null && lead.longitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${lead.latitude},${lead.longitude}`
-      : lead.address
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address)}`
-        : null);
+  const directionsHref = getGoogleMapsDirectionsUrl({
+    address: lead.address,
+    googleMapsUrl: lead.google_maps_url,
+    latitude: lead.latitude,
+    longitude: lead.longitude,
+    placeId: lead.place_id,
+  });
   const infoItems: Array<{ icon: LucideIcon; label: string; value: string }> = [
     { icon: Phone, label: "Số điện thoại", value: lead.phone || "Chưa có" },
     { icon: Mail, label: "Email", value: lead.email || "Chưa có" },

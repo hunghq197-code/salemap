@@ -78,39 +78,39 @@ async function getCleanupOverview() {
 
 const cards = [
   {
-    description: "Cac nhom SaleMap nghi la cung mot khach hang.",
+    description: "Các nhóm SaleMap nhận thấy có thể là cùng một khách hàng.",
     href: "/app/leads/cleanup/duplicates",
     icon: Sparkles,
     key: "duplicateGroups",
-    label: "Lead co kha nang trung",
+    label: "Lead có khả năng trùng",
   },
   {
-    description: "Lead thieu phone, email, dia chi, nganh hoac follow-up.",
+    description: "Lead thiếu số điện thoại, email, địa chỉ, ngành hoặc follow-up.",
     href: "/app/leads/cleanup/quality?status=open",
     icon: AlertTriangle,
     key: "missingInfo",
-    label: "Lead thieu thong tin",
+    label: "Lead thiếu thông tin",
   },
   {
-    description: "Phone, email hoac website can xem lai dinh dang.",
+    description: "Số điện thoại, email hoặc website cần xem lại định dạng.",
     href: "/app/leads/cleanup/quality?status=open",
     icon: ShieldCheck,
     key: "invalidData",
-    label: "Du lieu sai dinh dang",
+    label: "Dữ liệu sai định dạng",
   },
   {
-    description: "Lead dang mo nhung da lau chua duoc cham soc.",
+    description: "Lead đang mở nhưng đã lâu chưa được chăm sóc.",
     href: "/app/leads/cleanup/quality?type=stale_lead&status=open",
     icon: RefreshCw,
     key: "staleLeads",
-    label: "Lead lau chua cham soc",
+    label: "Lead lâu chưa chăm sóc",
   },
   {
-    description: "Theo doi cac thao tac cap nhat hang loat.",
+    description: "Theo dõi các thao tác cập nhật hàng loạt.",
     href: "/app/leads/bulk-actions",
     icon: History,
     key: "bulkJobs",
-    label: "Lich su bulk actions",
+    label: "Lịch sử thao tác hàng loạt",
   },
 ] as const;
 
@@ -126,11 +126,11 @@ export default async function LeadCleanupPage() {
             Data cleanup
           </p>
           <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Don du lieu lead
+            Dọn dữ liệu lead
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Phat hien lead trung, thieu thong tin va thao tac hang loat de danh sach khach hang
-            cua ban gon hon.
+            Phát hiện lead trùng, thiếu thông tin và thao tác hàng loạt để danh sách khách hàng
+            của bạn gọn hơn.
           </p>
         </div>
         <Link
@@ -138,7 +138,7 @@ export default async function LeadCleanupPage() {
           href="/app/leads"
         >
           <Archive aria-hidden="true" className="h-5 w-5" />
-          Ve danh sach lead
+          Về danh sách lead
         </Link>
       </div>
 
@@ -168,12 +168,12 @@ export default async function LeadCleanupPage() {
       </div>
 
       <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Cach SaleMap don du lieu an toan</h2>
+        <h2 className="text-xl font-bold text-ink">Cách SaleMap dọn dữ liệu an toàn</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {[
-            "Khong tu dong sua neu ban chua xac nhan.",
-            "Merge co preview va chon field can giu.",
-            "Lead bi merge chi duoc luu tru, khong bi xoa vinh vien.",
+            "Không tự động sửa nếu bạn chưa xác nhận.",
+            "Gộp lead có bản xem trước và cho phép chọn trường cần giữ.",
+            "Lead được gộp chỉ được lưu trữ, không bị xóa vĩnh viễn.",
           ].map((item) => (
             <div className="rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-700" key={item}>
               {item}

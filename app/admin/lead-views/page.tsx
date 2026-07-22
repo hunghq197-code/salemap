@@ -30,7 +30,7 @@ export default async function AdminLeadViewsPage(props: AdminLeadViewsPageProps)
   return (
     <div className="mx-auto max-w-7xl">
       <AdminPageHeader
-        description="Theo doi pipeline usage, saved views va smart view usage. Trang nay khong hien thi raw lead PII."
+        description="Theo dõi mức sử dụng pipeline, góc nhìn đã lưu và góc nhìn thông minh. Trang này không hiển thị dữ liệu định danh của lead."
         title="Lead Views"
       />
 

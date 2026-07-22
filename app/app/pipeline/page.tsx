@@ -41,7 +41,7 @@ export default async function PipelinePage() {
             Pipeline ban hang
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Theo doi lead theo tung trang thai cham soc. MVP nay dung dropdown doi status tren
+            Theo dõi lead theo từng trạng thái chăm sóc. Bạn có thể đổi trạng thái trực tiếp trên
             tung card de hoat dong tot ca desktop lan mobile.
           </p>
         </div>
@@ -56,7 +56,7 @@ export default async function PipelinePage() {
             className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
             href="/app/leads/views"
           >
-            Mo goc nhin lead
+            Mở góc nhìn lead
           </Link>
           <Link
             className="inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
@@ -68,10 +68,10 @@ export default async function PipelinePage() {
       </div>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={UsersRound} label="Tong lead dang mo" value={summary.totalActiveLeads} />
-        <SummaryCard icon={Bell} label="Can follow-up" value={summary.followUpCount} />
-        <SummaryCard icon={CheckCircle2} label="Da chot" value={summary.wonCount} />
-        <SummaryCard icon={BarChart3} label="Da mat / khong phu hop" value={summary.lostCount} />
+        <SummaryCard icon={UsersRound} label="Tổng lead đang mở" value={summary.totalActiveLeads} />
+        <SummaryCard icon={Bell} label="Cần follow-up" value={summary.followUpCount} />
+        <SummaryCard icon={CheckCircle2} label="Đã chốt" value={summary.wonCount} />
+        <SummaryCard icon={BarChart3} label="Đã mất / không phù hợp" value={summary.lostCount} />
       </section>
 
       <section className="mt-6">

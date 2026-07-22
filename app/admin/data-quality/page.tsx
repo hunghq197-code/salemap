@@ -30,7 +30,7 @@ export default async function AdminDataQualityPage(props: AdminDataQualityPagePr
   return (
     <div className="mx-auto max-w-7xl">
       <AdminPageHeader
-        description="Theo doi duplicate groups, data quality issues va bulk actions. Trang nay khong hien thi phone, email, dia chi hay raw note."
+        description="Theo dõi nhóm lead trùng, vấn đề chất lượng dữ liệu và thao tác hàng loạt. Trang này không hiển thị số điện thoại, email, địa chỉ hoặc nội dung ghi chú."
         title="Data Quality"
       />
 

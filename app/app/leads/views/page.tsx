@@ -6,7 +6,7 @@ import { getSavedViewsWithCounts } from "@/lib/data/lead-saved-views";
 export const dynamic = "force-dynamic";
 
 function formatDate(value?: string | null) {
-  if (!value) return "Chua mo";
+  if (!value) return "Chưa mở";
 
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
@@ -28,11 +28,11 @@ function ViewCard({
             {view.is_pinned ? (
               <span className="inline-flex min-h-7 items-center gap-1 rounded-full bg-mint/15 px-3 py-1 text-xs font-bold text-ocean">
                 <Pin aria-hidden="true" className="h-3 w-3" />
-                Da ghim
+                Đã ghim
               </span>
             ) : null}
             <span className="inline-flex min-h-7 items-center rounded-full bg-cloud px-3 py-1 text-xs font-bold text-slate-600">
-              {view.view_type === "custom" ? "Cua ban" : "Smart view"}
+              {view.view_type === "custom" ? "Của bạn" : "Góc nhìn thông minh"}
             </span>
           </div>
           <h2 className="mt-3 text-xl font-bold text-ink">{view.name}</h2>
@@ -45,7 +45,7 @@ function ViewCard({
         </span>
       </div>
       <p className="mt-3 text-xs font-semibold text-slate-500">
-        Mo lan cuoi: {formatDate(view.last_used_at)}
+        Mở lần cuối: {formatDate(view.last_used_at)}
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Link
@@ -53,7 +53,7 @@ function ViewCard({
           href={`/app/leads/views/${view.id}`}
         >
           <Eye aria-hidden="true" className="h-4 w-4" />
-          Mo
+          Mở
         </Link>
         <SavedViewActions
           isPinned={view.is_pinned}
@@ -79,10 +79,10 @@ export default async function LeadViewsPage() {
             Saved views
           </p>
           <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Goc nhin lead
+            Góc nhìn lead
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Luu cac bo loc hay dung de mo nhanh danh sach lead quan trong moi ngay.
+            Lưu các bộ lọc hay dùng để mở nhanh danh sách lead quan trọng mỗi ngày.
           </p>
         </div>
         <Link
@@ -90,18 +90,18 @@ export default async function LeadViewsPage() {
           href="/app/leads"
         >
           <Plus aria-hidden="true" className="h-5 w-5" />
-          Tao tu bo loc lead
+          Tạo từ bộ lọc lead
         </Link>
       </div>
 
       <section className="mt-6">
-        <h2 className="text-xl font-bold text-ink">Goc nhin duoc ghim</h2>
+        <h2 className="text-xl font-bold text-ink">Góc nhìn được ghim</h2>
         <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pinnedViews.length > 0 ? (
             pinnedViews.map((view) => <ViewCard key={view.id} view={view} />)
           ) : (
             <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-7 text-slate-600 shadow-sm md:col-span-2 xl:col-span-3">
-              Chua co goc nhin nao duoc ghim. Hay ghim smart view quan trong de mo nhanh tu
+              Chưa có góc nhìn nào được ghim. Hãy ghim góc nhìn quan trọng để mở nhanh từ
               dashboard.
             </div>
           )}
@@ -111,7 +111,7 @@ export default async function LeadViewsPage() {
       <section className="mt-8">
         <div className="flex items-center gap-2">
           <Sparkles aria-hidden="true" className="h-5 w-5 text-ocean" />
-          <h2 className="text-xl font-bold text-ink">Smart views mac dinh</h2>
+          <h2 className="text-xl font-bold text-ink">Góc nhìn thông minh mặc định</h2>
         </div>
         <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {smartViews.map((view) => (
@@ -121,14 +121,14 @@ export default async function LeadViewsPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-xl font-bold text-ink">Goc nhin cua ban</h2>
+        <h2 className="text-xl font-bold text-ink">Góc nhìn của bạn</h2>
         <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {customViews.length > 0 ? (
             customViews.map((view) => <ViewCard key={view.id} view={view} />)
           ) : (
             <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-7 text-slate-600 shadow-sm md:col-span-2 xl:col-span-3">
-              Ban chua co saved view rieng. Vao danh sach lead, chon bo loc roi bam luu thanh
-              goc nhin.
+              Bạn chưa có góc nhìn riêng. Vào danh sách lead, chọn bộ lọc rồi bấm lưu thành
+              góc nhìn.
             </div>
           )}
         </div>

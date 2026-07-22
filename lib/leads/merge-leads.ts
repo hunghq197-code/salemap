@@ -90,7 +90,7 @@ async function fetchMergeLeads(leadIds: string[], userId: string) {
 
   if (error) {
     if (error.code === "42703") {
-      throw new Error("Chua chay SQL lead-cleanup-bulk-actions-schema.sql.");
+      throw new Error("Chưa chạy SQL lead-cleanup-bulk-actions-schema.sql.");
     }
 
     throw new Error(error.message);
@@ -207,7 +207,7 @@ function buildMergedPayload(leads: MergeLeadRecord[], input: MergeLeadsInput) {
   const primary = byId.get(input.primaryLeadId);
 
   if (!primary) {
-    throw new Error("Lead chinh khong hop le.");
+    throw new Error("Lead chính không hợp lệ.");
   }
 
   return MERGE_FIELD_OPTIONS.reduce<Record<string, string | null>>((payload, field) => {
@@ -301,7 +301,7 @@ export async function previewLeadMerge(input: MergeLeadsInput) {
   const leads = await fetchMergeLeads(leadIds, userId);
 
   if (leads.length !== leadIds.length) {
-    throw new Error("Chi duoc merge lead cua tai khoan hien tai.");
+    throw new Error("Chỉ được gộp lead của tài khoản hiện tại.");
   }
 
   return buildMergedPayload(leads, input);
@@ -313,17 +313,17 @@ export async function mergeLeads(input: MergeLeadsInput) {
   const allLeadIds = uniqueIds([input.primaryLeadId, ...mergedLeadIds]);
 
   if (mergedLeadIds.length === 0) {
-    throw new Error("Can chon it nhat mot lead de gop.");
+    throw new Error("Cần chọn ít nhất một lead để gộp.");
   }
 
   const leads = await fetchMergeLeads(allLeadIds, userId);
 
   if (leads.length !== allLeadIds.length) {
-    throw new Error("Chi duoc merge lead cua tai khoan hien tai.");
+    throw new Error("Chỉ được gộp lead của tài khoản hiện tại.");
   }
 
   if (leads.some((lead) => lead.deleted_at || lead.merged_at)) {
-    throw new Error("Khong the merge lead da xoa hoac da duoc gop.");
+    throw new Error("Không thể gộp lead đã xóa hoặc đã được gộp.");
   }
 
   if (input.mergeGroupId) {
@@ -331,7 +331,7 @@ export async function mergeLeads(input: MergeLeadsInput) {
     const groupIds = new Set(group?.lead_ids ?? []);
 
     if (!group || allLeadIds.some((leadId) => !groupIds.has(leadId))) {
-      throw new Error("Nhom lead trung khong hop le.");
+      throw new Error("Nhóm lead trùng không hợp lệ.");
     }
   }
 
@@ -455,7 +455,7 @@ export async function dismissMergeGroup(groupId: string) {
   }
 
   if (!data) {
-    throw new Error("Khong tim thay nhom lead trung.");
+    throw new Error("Không tìm thấy nhóm lead trùng.");
   }
 }
 

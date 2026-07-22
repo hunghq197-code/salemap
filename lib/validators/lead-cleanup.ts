@@ -52,7 +52,7 @@ export const bulkActionSchema = z
       if (typeof status !== "string" || !leadStatusValues.includes(status)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Trang thai chua hop le.",
+          message: "Trạng thái chưa hợp lệ.",
           path: ["payload", "status"],
         });
       }
@@ -64,7 +64,7 @@ export const bulkActionSchema = z
       if (typeof priority !== "string" || !leadPriorityValues.includes(priority)) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Muc uu tien chua hop le.",
+          message: "Mức ưu tiên chưa hợp lệ.",
           path: ["payload", "priority"],
         });
       }
@@ -77,7 +77,7 @@ export const bulkActionSchema = z
       if (tagIds.length === 0 && tagNames.length === 0) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Can chon hoac nhap tag.",
+          message: "Cần chọn hoặc nhập tag.",
           path: ["payload", "tagIds"],
         });
       }
@@ -91,7 +91,7 @@ export const bulkActionSchema = z
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Can xac nhan truoc khi thuc hien.",
+        message: "Cần xác nhận trước khi thực hiện.",
         path: ["confirmation"],
       });
     }

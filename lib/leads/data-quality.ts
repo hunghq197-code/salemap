@@ -111,39 +111,39 @@ export function scanLeadDataQuality(lead: LeadForQuality): LeadDataQualityIssue[
         "missing_phone",
         "phone",
         "warning",
-        "Lead chua co so dien thoai hoac email de lien he.",
+        "Lead chưa có số điện thoại hoặc email để liên hệ.",
       ),
     );
   }
 
   if (hasPhone && digitsOnly(lead.phone).length < 9) {
     issues.push(
-      issue("invalid_phone", "phone", "important", "So dien thoai co ve chua dung dinh dang."),
+      issue("invalid_phone", "phone", "important", "Số điện thoại có vẻ chưa đúng định dạng."),
     );
   }
 
   if (hasEmail && !isValidEmail(lead.email || "")) {
-    issues.push(issue("invalid_email", "email", "important", "Email chua dung dinh dang."));
+    issues.push(issue("invalid_email", "email", "important", "Email chưa đúng định dạng."));
   }
 
   if (lead.website && !isValidWebsite(lead.website)) {
     issues.push(
-      issue("invalid_website", "website", "warning", "Website chua dung dinh dang URL."),
+      issue("invalid_website", "website", "warning", "Website chưa đúng định dạng URL."),
     );
   }
 
   if (!lead.status) {
-    issues.push(issue("missing_status", "status", "warning", "Lead chua co trang thai."));
+    issues.push(issue("missing_status", "status", "warning", "Lead chưa có trạng thái."));
   }
 
   if (!lead.category) {
     issues.push(
-      issue("missing_category", "category", "warning", "Lead chua co nganh hoac loai khach."),
+      issue("missing_category", "category", "warning", "Lead chưa có ngành hoặc loại khách."),
     );
   }
 
   if (!lead.address) {
-    issues.push(issue("missing_address", "address", "info", "Lead chua co dia chi."));
+    issues.push(issue("missing_address", "address", "info", "Lead chưa có địa chỉ."));
   }
 
   if (isOpenStatus(lead.status) && !lead.next_follow_up_at && isOlderThan(lead.created_at, 7)) {
@@ -152,7 +152,7 @@ export function scanLeadDataQuality(lead: LeadForQuality): LeadDataQualityIssue[
         "missing_follow_up",
         "next_follow_up_at",
         "warning",
-        "Lead dang mo nhung chua co lich follow-up.",
+        "Lead đang mở nhưng chưa có lịch follow-up.",
       ),
     );
   }
@@ -163,7 +163,7 @@ export function scanLeadDataQuality(lead: LeadForQuality): LeadDataQualityIssue[
     isOlderThan(lead.last_contacted_at || lead.created_at, 30)
   ) {
     issues.push(
-      issue("stale_lead", "last_contacted_at", "info", "Lead da lau chua duoc cham soc."),
+      issue("stale_lead", "last_contacted_at", "info", "Lead đã lâu chưa được chăm sóc."),
     );
   }
 
@@ -192,7 +192,7 @@ export async function scanLeadDataQualityForUser(userId: string) {
 
   if (leadError) {
     if (leadError.code === "42703") {
-      throw new Error("Chua chay SQL lead-cleanup-bulk-actions-schema.sql.");
+      throw new Error("Chưa chạy SQL lead-cleanup-bulk-actions-schema.sql.");
     }
 
     throw new Error(leadError.message);
@@ -212,7 +212,7 @@ export async function scanLeadDataQualityForUser(userId: string) {
 
     if (issuesError) {
       if (isMissingCleanupSchema(issuesError)) {
-        throw new Error("Chua chay SQL lead-cleanup-bulk-actions-schema.sql.");
+        throw new Error("Chưa chạy SQL lead-cleanup-bulk-actions-schema.sql.");
       }
 
       throw new Error(issuesError.message);
@@ -329,7 +329,7 @@ async function updateDataQualityIssueStatus(issueId: string, status: "dismissed"
   }
 
   if (!data) {
-    throw new Error("Khong tim thay canh bao du lieu.");
+    throw new Error("Không tìm thấy cảnh báo dữ liệu.");
   }
 }
 
@@ -344,5 +344,5 @@ export async function dismissDataQualityIssue(issueId: string) {
 export function getDataQualityIssueLabel(issueType?: string | null) {
   return issueType && issueType in DATA_QUALITY_ISSUES
     ? DATA_QUALITY_ISSUES[issueType as DataQualityIssueType]
-    : issueType || "Can xem lai";
+    : issueType || "Cần xem lại";
 }

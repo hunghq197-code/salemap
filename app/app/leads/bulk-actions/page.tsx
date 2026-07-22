@@ -37,7 +37,7 @@ export default async function BulkActionsHistoryPage(props: BulkActionsHistoryPa
         href="/app/leads/cleanup"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Ve trung tam don du lieu
+        Về trung tâm dọn dữ liệu
       </Link>
 
       <div className="mt-4">
@@ -45,10 +45,10 @@ export default async function BulkActionsHistoryPage(props: BulkActionsHistoryPa
           Bulk actions
         </p>
         <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-          Lich su thao tac hang loat
+          Lịch sử thao tác hàng loạt
         </h1>
         <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-          Theo doi cac lan cap nhat trang thai, tag, uu tien, luu tru hoac xoa mem lead.
+          Theo dõi các lần cập nhật trạng thái, tag, ưu tiên, lưu trữ hoặc xóa mềm lead.
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export default async function BulkActionsHistoryPage(props: BulkActionsHistoryPa
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
               <History aria-hidden="true" className="h-7 w-7" />
             </div>
-            <h2 className="mt-5 text-xl font-bold text-ink">Chua co bulk action nao.</h2>
+            <h2 className="mt-5 text-xl font-bold text-ink">Chưa có thao tác hàng loạt nào.</h2>
           </section>
         )}
       </div>

@@ -36,7 +36,7 @@ export function DataQualityIssueActions({
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
       if (!response.ok) {
-        throw new Error(body?.error || "Khong the cap nhat canh bao.");
+        throw new Error(body?.error || "Không thể cập nhật cảnh báo.");
       }
 
       if (action === "resolve") {
@@ -47,7 +47,7 @@ export function DataQualityIssueActions({
 
       router.refresh();
     } catch (updateError) {
-      setError(updateError instanceof Error ? updateError.message : "Khong the cap nhat canh bao.");
+      setError(updateError instanceof Error ? updateError.message : "Không thể cập nhật cảnh báo.");
     } finally {
       setPending(null);
     }
@@ -62,7 +62,7 @@ export function DataQualityIssueActions({
         type="button"
       >
         <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-        {pending === "resolve" ? "Dang xu ly..." : "Da xu ly"}
+        {pending === "resolve" ? "Đang xử lý..." : "Đã xử lý"}
       </button>
       <button
         className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean disabled:opacity-60"
@@ -71,7 +71,7 @@ export function DataQualityIssueActions({
         type="button"
       >
         <XCircle aria-hidden="true" className="h-4 w-4" />
-        {pending === "dismiss" ? "Dang bo qua..." : "Bo qua"}
+        {pending === "dismiss" ? "Đang bỏ qua..." : "Bỏ qua"}
       </button>
       {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
     </div>

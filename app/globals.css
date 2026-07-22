@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+.salemap-map-info {
+  max-width: 260px;
+  color: #0f172a;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.salemap-map-info strong {
+  display: block;
+  font-size: 14px;
+}
+
+.salemap-map-info p {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 13px;
+}
+
 :root {
   color-scheme: light;
 }

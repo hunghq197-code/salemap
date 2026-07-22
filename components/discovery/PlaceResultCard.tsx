@@ -3,6 +3,8 @@
 import {
   ExternalLink,
   Globe,
+  Info,
+  LoaderCircle,
   MapPin,
   Navigation,
   Phone,
@@ -12,12 +14,15 @@ import {
 import Link from "next/link";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { trackMapEvent } from "@/lib/analytics/client";
+import { getGoogleMapsDirectionsUrl } from "@/lib/maps-url";
 import type {
   DiscoveryPlaceResult,
   DiscoverySource,
 } from "@/lib/providers/maps/types";
 
 type PlaceResultCardProps = {
+  detailsLoading: boolean;
+  onLoadDetails: (place: DiscoveryPlaceResult) => void;
   onSave: (place: DiscoveryPlaceResult) => void;
   place: DiscoveryPlaceResult;
   saving: boolean;
@@ -54,16 +59,25 @@ function formatCategory(value?: string) {
   return categoryLabels[value] || value.replaceAll("_", " ");
 }
 
-export function PlaceResultCard({ onSave, place, saving, source }: PlaceResultCardProps) {
+export function PlaceResultCard({
+  detailsLoading,
+  onLoadDetails,
+  onSave,
+  place,
+  saving,
+  source,
+}: PlaceResultCardProps) {
   const distance = formatDistance(place.distanceMeters);
   const routeDistance = formatDistance(place.distanceFromRouteMeters);
   const originDistance = formatDistance(place.distanceFromOriginMeters);
   const categoryLabel = formatCategory(place.category);
-  const directionsUrl =
-    place.googleMapsUrl ||
-    (place.latitude != null && place.longitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`
-      : undefined);
+  const directionsUrl = getGoogleMapsDirectionsUrl({
+    address: place.address,
+    googleMapsUrl: place.googleMapsUrl,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    placeId: place.placeId,
+  });
 
   const safeProperties = {
     category: place.category,
@@ -152,6 +166,21 @@ export function PlaceResultCard({ onSave, place, saving, source }: PlaceResultCa
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {!place.detailsLoaded ? (
+          <button
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={detailsLoading || saving}
+            onClick={() => onLoadDetails(place)}
+            type="button"
+          >
+            {detailsLoading ? (
+              <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
+            ) : (
+              <Info aria-hidden="true" className="h-4 w-4" />
+            )}
+            {detailsLoading ? "Đang tải..." : "Xem thông tin liên hệ"}
+          </button>
+        ) : null}
         {directionsUrl ? (
           <a
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"

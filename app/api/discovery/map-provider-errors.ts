@@ -4,6 +4,9 @@ const DEFAULT_MAPS_CONFIG_MESSAGE =
 const DEFAULT_MAPS_ACCESS_MESSAGE =
   "Google Maps API key chưa được cấp quyền, sai giới hạn truy cập, hoặc chưa bật API/billing cần thiết.";
 
+const DEFAULT_MAPS_BILLING_MESSAGE =
+  "Google Maps chưa nhận diện Billing cho project chứa API key. Vui lòng kiểm tra Billing và thử lại sau.";
+
 const DEFAULT_MAPS_QUOTA_MESSAGE =
   "Google Maps đang vượt quota hoặc giới hạn truy cập. Vui lòng thử lại sau.";
 
@@ -37,6 +40,13 @@ export function getMapProviderApiError(
   ) {
     return {
       message: DEFAULT_MAPS_ACCESS_MESSAGE,
+      status: 503,
+    };
+  }
+
+  if (code === "MAP_PROVIDER_BILLING_ERROR") {
+    return {
+      message: DEFAULT_MAPS_BILLING_MESSAGE,
       status: 503,
     };
   }

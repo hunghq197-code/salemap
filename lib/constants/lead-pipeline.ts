@@ -3,32 +3,32 @@ import { LEAD_STATUSES } from "@/lib/constants/lead-status";
 export const PIPELINE_COLUMNS = LEAD_STATUSES.map((status, index) => ({
   description:
     status.value === "new"
-      ? "Lead vua luu, can phan loai va lien he."
+      ? "Lead vừa lưu, cần phân loại và liên hệ."
       : status.value === "contacted"
-        ? "Lead da co lan lien he dau tien."
+        ? "Lead đã có lần liên hệ đầu tiên."
         : status.value === "interested"
-          ? "Lead co tin hieu quan tam."
+          ? "Lead có tín hiệu quan tâm."
           : status.value === "follow_up"
-            ? "Lead can hen lai hoac theo sat."
+            ? "Lead cần hẹn lại hoặc theo sát."
             : status.value === "won"
-              ? "Lead da chot thanh cong."
+              ? "Lead đã chốt thành công."
               : status.value === "lost"
-                ? "Lead da mat co hoi."
-                : "Lead khong phu hop de tiep tuc.",
+                ? "Lead đã mất cơ hội."
+                : "Lead không phù hợp để tiếp tục.",
   emptyText:
     status.value === "new"
-      ? "Chua co lead moi."
+      ? "Chưa có lead mới."
       : status.value === "contacted"
-        ? "Chua co lead da lien he."
+        ? "Chưa có lead đã liên hệ."
         : status.value === "interested"
-          ? "Chua co lead dang quan tam."
+          ? "Chưa có lead đang quan tâm."
           : status.value === "follow_up"
-            ? "Chua co lead can hen lai."
+            ? "Chưa có lead cần hẹn lại."
             : status.value === "won"
-              ? "Chua co lead da chot."
+              ? "Chưa có lead đã chốt."
               : status.value === "lost"
-                ? "Chua co lead da mat."
-                : "Chua co lead khong phu hop.",
+                ? "Chưa có lead đã mất."
+                : "Chưa có lead không phù hợp.",
   isNegativeOutcome: status.value === "lost" || status.value === "not_fit",
   isPositiveOutcome: status.value === "won",
   key: status.value,
@@ -47,42 +47,42 @@ export const PIPELINE_COLUMNS = LEAD_STATUSES.map((status, index) => ({
 export const SMART_VIEW_DEFINITIONS = {
   imported_leads: {
     color: "#0f5f8f",
-    description: "Lead duoc tao tu import CSV hoac Excel.",
+    description: "Lead được tạo từ tệp CSV hoặc Excel.",
     filters: { archived: false, deleted: false, source: ["import_csv", "import_excel"] },
     icon: "file-spreadsheet",
-    name: "Lead tu import",
+    name: "Lead từ tệp nhập",
   },
   interested_leads: {
     color: "#10b981",
-    description: "Lead dang quan tam hoac can hen lai.",
+    description: "Lead đang quan tâm hoặc cần hẹn lại.",
     filters: { archived: false, deleted: false, status: ["interested", "follow_up"] },
     icon: "sparkles",
-    name: "Lead dang quan tam",
+    name: "Lead đang quan tâm",
   },
   lost_leads: {
     color: "#f43f5e",
-    description: "Lead da mat hoac khong phu hop.",
+    description: "Lead đã mất hoặc không phù hợp.",
     filters: { archived: false, deleted: false, status: ["lost", "not_fit"] },
     icon: "x-circle",
-    name: "Da mat / Khong phu hop",
+    name: "Đã mất / Không phù hợp",
   },
   map_leads: {
     color: "#0284c7",
-    description: "Lead duoc luu tu tim kiem ban do.",
+    description: "Lead được lưu từ tìm kiếm bản đồ.",
     filters: { archived: false, deleted: false, source: ["map_near_me", "map_area"] },
     icon: "map",
-    name: "Lead tu ban do",
+    name: "Lead từ bản đồ",
   },
   new_leads: {
     color: "#64748b",
-    description: "Lead moi can duoc cham soc.",
+    description: "Lead mới cần được chăm sóc.",
     filters: { archived: false, deleted: false, status: ["new"] },
     icon: "plus",
-    name: "Lead moi",
+    name: "Lead mới",
   },
   no_followup: {
     color: "#f59e0b",
-    description: "Lead dang mo nhung chua co lich hen tiep theo.",
+    description: "Lead đang mở nhưng chưa có lịch hẹn tiếp theo.",
     filters: {
       archived: false,
       deleted: false,
@@ -90,18 +90,18 @@ export const SMART_VIEW_DEFINITIONS = {
       status: ["new", "contacted", "interested", "follow_up"],
     },
     icon: "calendar-x",
-    name: "Chua co lich follow-up",
+    name: "Chưa có lịch follow-up",
   },
   route_leads: {
     color: "#6366f1",
-    description: "Lead duoc luu tu tim kiem doc tuyen.",
+    description: "Lead được lưu từ tìm kiếm dọc tuyến.",
     filters: { archived: false, deleted: false, source: ["route_search"] },
     icon: "route",
-    name: "Lead tu tuyen duong",
+    name: "Lead từ tuyến đường",
   },
   stale_leads: {
     color: "#f97316",
-    description: "Lead da lau chua duoc cham soc.",
+    description: "Lead đã lâu chưa được chăm sóc.",
     filters: {
       archived: false,
       deleted: false,
@@ -109,31 +109,31 @@ export const SMART_VIEW_DEFINITIONS = {
       status: ["new", "contacted", "interested", "follow_up"],
     },
     icon: "clock",
-    name: "Lau chua cham soc",
+    name: "Lâu chưa chăm sóc",
   },
   today_followups: {
     color: "#14b8a6",
-    description: "Lead co lich follow-up hom nay hoac da qua han.",
+    description: "Lead có lịch follow-up hôm nay hoặc đã quá hạn.",
     filters: { archived: false, deleted: false, followUp: "today_or_overdue" },
     icon: "bell",
-    name: "Can follow-up hom nay",
+    name: "Cần follow-up hôm nay",
   },
   won_leads: {
     color: "#22c55e",
-    description: "Lead da chot thanh cong.",
+    description: "Lead đã chốt thành công.",
     filters: { archived: false, deleted: false, status: ["won"] },
     icon: "check",
-    name: "Da chot",
+    name: "Đã chốt",
   },
 } as const;
 
 export const LEAD_SORT_OPTIONS = [
-  { direction: "desc", label: "Moi cap nhat", value: "updated_at" },
-  { direction: "desc", label: "Moi tao", value: "created_at" },
-  { direction: "asc", label: "Tao cu nhat", value: "created_at" },
-  { direction: "asc", label: "Ten A-Z", value: "name" },
-  { direction: "asc", label: "Follow-up gan nhat", value: "next_follow_up_at" },
-  { direction: "desc", label: "Doi status gan nhat", value: "status_changed_at" },
+  { direction: "desc", label: "Mới cập nhật", value: "updated_at" },
+  { direction: "desc", label: "Mới tạo", value: "created_at" },
+  { direction: "asc", label: "Tạo cũ nhất", value: "created_at" },
+  { direction: "asc", label: "Tên A-Z", value: "name" },
+  { direction: "asc", label: "Follow-up gần nhất", value: "next_follow_up_at" },
+  { direction: "desc", label: "Đổi trạng thái gần nhất", value: "status_changed_at" },
 ] as const;
 
 export const LEAD_FILTER_KEYS = [
