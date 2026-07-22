@@ -813,3 +813,8 @@ Implemented changes:
 Deployment note:
 
 - Run `supabase/performance-indexes.sql` in Supabase after the existing schema files when the environment has enough data for query speed to matter.
+
+## 2026-07-22 Update - Area Search Autocomplete
+
+- Reused the Google Maps autocomplete input from Route Search for the Discover "Theo khu vực" area field.
+- Area Search now suggests specific addresses, roads, wards, and districts while still submitting the same `areaText` payload to the existing API.

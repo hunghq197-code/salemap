@@ -1,7 +1,8 @@
 "use client";
 
 import { MapPinned, Search } from "lucide-react";
-import type { FormEvent } from "react";
+import { FormEvent, useState } from "react";
+import { RouteEndpointAutocompleteInput } from "@/components/discovery/RouteEndpointAutocompleteInput";
 
 type AreaSearchFormProps = {
   loading: boolean;
@@ -21,12 +22,14 @@ const radiusOptions = [
 ] as const;
 
 export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
+  const [areaText, setAreaText] = useState("");
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
     onSubmit({
-      areaText: String(formData.get("areaText") || "").trim(),
+      areaText: areaText.trim(),
       keyword: String(formData.get("keyword") || "").trim(),
       radiusMeters: Number(formData.get("radiusMeters") || 2000),
     });
@@ -47,24 +50,12 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
       </div>
 
       <div className="mt-5 grid gap-4">
-        <label className="text-sm font-bold text-ink">
-          Khu vực
-          <div className="relative mt-2">
-            <MapPinned
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              autoComplete="street-address"
-              className="min-h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-11 pr-3 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-              maxLength={200}
-              minLength={2}
-              name="areaText"
-              placeholder="Nhập phường, quận, tỉnh/thành..."
-              required
-            />
-          </div>
-        </label>
+        <RouteEndpointAutocompleteInput
+          label="Khu vực hoặc địa chỉ cụ thể"
+          onChange={setAreaText}
+          placeholder="Ví dụ: 25 Nguyễn Huệ, Phường Bến Nghé hoặc Quận 1"
+          value={areaText}
+        />
 
         <label className="text-sm font-bold text-ink">
           Keyword cần tìm
