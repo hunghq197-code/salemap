@@ -5,21 +5,21 @@ Chạy `supabase/admin-security.sql` trước để tạo bảng `admin_users`, 
 ## Tạo super_admin đầu tiên
 
 1. Đăng ký hoặc tạo user bình thường trong SaleMap.
-2. Tạo env local tạm thời:
+2. Đảm bảo `.env.local` có:
 
 ```powershell
-$env:NEXT_PUBLIC_SUPABASE_URL="https://..."
-$env:SUPABASE_SERVICE_ROLE_KEY="..."
-$env:BOOTSTRAP_ADMIN_EMAIL="email-cua-ban@example.com"
+NEXT_PUBLIC_SUPABASE_URL="https://..."
+SUPABASE_SERVICE_ROLE_KEY="..."
 ```
 
-3. Chạy:
+3. Set email admin trong terminal rồi chạy:
 
 ```powershell
+$env:BOOTSTRAP_ADMIN_EMAIL="email-cua-ban@example.com"
 npm run admin:bootstrap
 ```
 
-Script chỉ in email được bootstrap, không in service role key.
+Script tự đọc `.env.local`/`.env`, chỉ in email được bootstrap, không in service role key.
 
 ## Thu hồi quyền admin
 
