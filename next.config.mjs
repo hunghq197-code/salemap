@@ -37,6 +37,7 @@ const contentSecurityPolicy = [
     "https://*.supabase.co",
     "wss://*.supabase.co",
     "https://maps.googleapis.com",
+    "https://places.googleapis.com",
     "https://maps.gstatic.com",
     "https://www.clarity.ms",
     "https://*.clarity.ms",
