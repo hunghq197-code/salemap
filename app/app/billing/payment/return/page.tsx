@@ -3,9 +3,7 @@ import Link from "next/link";
 import { PayOSPaymentPageTracker } from "@/components/billing/PayOSPaymentPageTracker";
 import {
   getPaymentGatewayTransactionByOrderCodeForCurrentUser,
-  syncPayOSGatewayTransaction,
 } from "@/lib/data/payment-gateway-transactions";
-import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +30,9 @@ export default async function PaymentReturnPage(props: PaymentReturnPageProps) {
 
   if (orderCode) {
     try {
-      const { userId } = await createAuthedSupabaseServerClient();
-      transaction = await syncPayOSGatewayTransaction({ orderCode, userId });
-    } catch {
       transaction = await getPaymentGatewayTransactionByOrderCodeForCurrentUser(orderCode);
+    } catch {
+      transaction = null;
     }
   }
 
@@ -77,7 +74,7 @@ export default async function PaymentReturnPage(props: PaymentReturnPageProps) {
         <p className="mt-3 text-base leading-8 text-slate-600">
           {isPaid
             ? "SaleMap đã ghi nhận thanh toán và tự động cập nhật gói sử dụng của bạn."
-            : "Chúng tôi đang kiểm tra trạng thái giao dịch của bạn. Nếu bạn đã thanh toán, hệ thống sẽ cập nhật sau vài phút."}
+            : "Chúng tôi đang chờ webhook payOS hợp lệ. Nếu bạn đã thanh toán, hệ thống sẽ cập nhật sau vài phút."}
         </p>
 
         {transaction ? (

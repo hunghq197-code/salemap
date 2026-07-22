@@ -5,6 +5,14 @@ import { CancellationReasonModal } from "@/components/billing/CancellationReason
 import { RenewSubscriptionButton } from "@/components/billing/RenewSubscriptionButton";
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { FeatureDisabledNotice } from "@/components/ui/FeatureDisabledNotice";
+import {
+  getAllowedBillingProviders,
+  getPaymentsForUser,
+  isBillingProviderEnabled,
+  toSafeBillingPayment,
+} from "@/lib/billing/payments";
+import { getManualBankPreview } from "@/lib/billing/providers/manual-bank";
+import type { SafeBillingPayment } from "@/lib/billing/types";
 import { BILLING_QUOTA_ACTIONS } from "@/lib/constants/quota";
 import {
   getSubscriptionPlan,
@@ -28,6 +36,7 @@ const statusLabels: Record<string, string> = {
   paid: "Đã thanh toán",
   past_due: "Quá hạn",
   pending: "Chờ chuyển khoản",
+  processing: "Đang xử lý",
   rejected: "Bị từ chối",
   waiting_confirmation: "Chờ xác nhận",
 };
@@ -129,6 +138,60 @@ const gatewayStatusLabels: Record<string, string> = {
   unknown: "Chưa rõ",
 };
 
+function BillingPaymentHistory({ items }: { items: SafeBillingPayment[] }) {
+  return (
+    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div>
+        <h2 className="text-xl font-bold text-ink">Lịch sử thanh toán</h2>
+        <p className="mt-2 text-base leading-7 text-slate-600">
+          Theo dõi payment order mới theo provider: chuyển khoản, VietQR và payOS.
+        </p>
+      </div>
+
+      {items.length > 0 ? (
+        <div className="mt-5 space-y-3">
+          {items.map((item) => (
+            <article className="rounded-lg border border-slate-200 bg-cloud/40 p-4" key={item.id}>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-bold text-ink">
+                      {item.planId === "pro_plus" ? "Pro Plus" : "Pro"}
+                    </h3>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-ocean">
+                      {statusLabels[item.status] || item.status}
+                    </span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
+                      {item.provider}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {formatDate(item.createdAt)} · {formatCurrency(item.amount)}
+                  </p>
+                  <p className="mt-1 font-mono text-sm font-bold text-ink">
+                    {item.paymentCode || item.orderCode}
+                  </p>
+                </div>
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
+                  href={`/app/billing/checkout?paymentId=${item.id}`}
+                >
+                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                  Xem chi tiết
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
+          Bạn chưa có payment order nào trong hệ billing mới.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function PaymentMethodsSection() {
   return (
     <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -137,13 +200,13 @@ function PaymentMethodsSection() {
         <div className="rounded-lg border border-ocean/20 bg-ocean/5 p-4">
           <h3 className="font-bold text-ink">payOS / VietQR</h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Tạo link checkout tự động. Khi payOS xác nhận thanh toán, SaleMap tự kích hoạt gói và cập nhật quota.
+            payOS chỉ tự kích hoạt gói khi webhook hợp lệ. Return page không thay đổi subscription.
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-cloud/50 p-4">
           <h3 className="font-bold text-ink">Chuyển khoản thủ công</h3>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Không thanh toán được qua payOS? Bạn vẫn có thể tạo yêu cầu chuyển khoản để admin kiểm tra thủ công.
+            Giai đoạn đầu có thể dùng chuyển khoản/VietQR thủ công. Admin đối soát xong mới kích hoạt gói.
           </p>
         </div>
       </div>
@@ -235,6 +298,24 @@ export default async function BillingPage() {
     getMyPaymentGatewayTransactions(),
     isFeatureEnabled("upgrade_interest"),
   ]);
+  const billingPayments = await getPaymentsForUser(
+    subscriptionResult.subscription.user_id,
+    20,
+  );
+  const manualBank = getManualBankPreview();
+  const providerOptions = getAllowedBillingProviders().map((provider) => ({
+    configured:
+      provider === "payos"
+        ? process.env.PAYOS_ENABLED === "true" &&
+          Boolean(
+            process.env.PAYOS_CLIENT_ID &&
+              process.env.PAYOS_API_KEY &&
+              process.env.PAYOS_CHECKSUM_KEY,
+          )
+        : manualBank.configured,
+    enabled: isBillingProviderEnabled(provider),
+    id: provider,
+  }));
   const quota = await getDailyUsageSnapshot(BILLING_QUOTA_ACTIONS);
   const subscription = subscriptionResult.subscription;
   const isFree = subscription.plan_key === "free_beta";
@@ -256,7 +337,7 @@ export default async function BillingPage() {
             Gói sử dụng
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Nâng cấp hoặc gia hạn Pro/Pro Plus bằng chuyển khoản thủ công. SaleMap sẽ kích hoạt gói sau khi admin xác nhận thanh toán.
+            Nâng cấp hoặc gia hạn Pro/Pro Plus bằng chuyển khoản, VietQR thủ công hoặc payOS. SaleMap chỉ kích hoạt gói sau khi server xác nhận thanh toán hợp lệ.
           </p>
         </div>
       </div>
@@ -344,6 +425,8 @@ export default async function BillingPage() {
 
       <PaymentMethodsSection />
 
+      <BillingPaymentHistory items={billingPayments.map(toSafeBillingPayment)} />
+
       <PaymentGatewayHistory items={paymentGatewayTransactions} />
 
       <PaymentHistory
@@ -352,7 +435,10 @@ export default async function BillingPage() {
 
       <section className="mt-8">
         {upgradeEnabled ? (
-          <BillingPlans currentPlanKey={subscription.plan_key} />
+          <BillingPlans
+            currentPlanKey={subscription.plan_key}
+            providers={providerOptions}
+          />
         ) : (
           <FeatureDisabledNotice flagKey="upgrade_interest" />
         )}

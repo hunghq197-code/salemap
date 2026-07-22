@@ -172,6 +172,23 @@ function extractProviderInfo(raw: unknown) {
   };
 }
 
+function sanitizePayOSWebhookPayload(payload: PayOSWebhookPayload) {
+  const data = toRecord(payload.data);
+
+  return {
+    code: payload.code,
+    data: {
+      amount: numberFrom(data.amount, data.amountPaid, data.totalAmount),
+      orderCode: numberFrom(data.orderCode),
+      paymentLinkId: textFrom(data.paymentLinkId),
+      providerStatus: textFrom(data.code, data.status),
+      reference: textFrom(data.reference),
+    },
+    desc: payload.desc,
+    success: payload.success,
+  };
+}
+
 async function generateUniqueOrderCode() {
   const supabase = createSupabaseAdminClient();
 
@@ -715,10 +732,10 @@ export async function cancelPayOSGatewayTransactionForCurrentUser(orderCode: num
 
 export async function handlePayOSWebhook(payload: PayOSWebhookPayload) {
   if (!verifyPayOSWebhookSignature(payload)) {
-    console.error("Invalid payOS webhook signature");
     throw new InvalidPayOSWebhookSignatureError();
   }
 
+  const safeWebhookPayload = sanitizePayOSWebhookPayload(payload);
   const providerInfo = extractProviderInfo(payload);
   const orderCode = numberFrom(payload.data?.orderCode, providerInfo.orderCode);
 
@@ -750,7 +767,7 @@ export async function handlePayOSWebhook(payload: PayOSWebhookPayload) {
       providerReference: providerInfo.providerReference,
       providerStatus: webhookCode || providerInfo.providerStatus || "paid",
       providerTransactionDatetime: providerInfo.providerTransactionDatetime,
-      rawWebhookPayload: payload,
+      rawWebhookPayload: safeWebhookPayload,
     });
 
     return {
@@ -779,7 +796,7 @@ export async function handlePayOSWebhook(payload: PayOSWebhookPayload) {
         providerInfo.providerTransactionDatetime ??
         transaction.provider_transaction_datetime ??
         null,
-      raw_webhook_payload: payload,
+      raw_webhook_payload: safeWebhookPayload,
       status,
       updated_at: now,
     })

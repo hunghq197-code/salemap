@@ -287,6 +287,30 @@ const tests = [
     () => expectCrossOriginBlocked({ pathname: "/api/payment-requests" }),
   ],
   [
+    "billing create-payment API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/billing/create-payment",
+        body: { planId: "pro", provider: "manual_bank_transfer" },
+      }),
+  ],
+  [
+    "billing confirm-transfer API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname:
+          "/api/billing/payments/00000000-0000-0000-0000-000000000000/confirm-transfer",
+      }),
+  ],
+  [
+    "billing cancel-payment API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/billing/cancel-payment",
+        body: { paymentId: "00000000-0000-0000-0000-000000000000" },
+      }),
+  ],
+  [
     "payOS create-link API blocks cross-origin",
     () => expectCrossOriginBlocked({ pathname: "/api/payments/payos/create-link" }),
   ],

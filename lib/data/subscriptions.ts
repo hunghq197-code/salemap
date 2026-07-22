@@ -1,5 +1,6 @@
 ﻿import type { DailyQuotaAction } from "@/lib/constants/quota";
 import { SUBSCRIPTION_EVENT_TYPES } from "@/lib/constants/subscription-lifecycle";
+import { getQuotaLimit } from "@/lib/billing/entitlements";
 import {
   getPlanQuotaLimit,
   getSubscriptionPlan,
@@ -636,6 +637,12 @@ export async function getDailyQuotaLimitForUser(
 
   if (!safeUserId) {
     return getPlanQuotaLimit("free_beta", actionType);
+  }
+
+  try {
+    return await getQuotaLimit(safeUserId, actionType);
+  } catch {
+    // Keep the legacy quota path alive until the billing migration has run.
   }
 
   const supabase = createSupabaseAdminClient();

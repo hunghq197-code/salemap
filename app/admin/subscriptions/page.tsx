@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   downgradeSubscriptionAction,
   extendSubscriptionAction,
+  grantTrialAction,
   markSubscriptionCancelledAction,
 } from "@/app/admin/subscriptions/actions";
 import { AdminField } from "@/components/admin/AdminField";
@@ -135,6 +136,7 @@ export default async function AdminSubscriptionsPage(props: AdminSubscriptionsPa
             const extendAction = extendSubscriptionAction.bind(null, subscription.id || "");
             const downgradeAction = downgradeSubscriptionAction.bind(null, subscription.id || "");
             const cancelAction = markSubscriptionCancelledAction.bind(null, subscription.id || "");
+            const trialAction = grantTrialAction.bind(null, subscription.id || "");
 
             return (
               <tr key={subscription.id || subscription.user_id}>
@@ -162,6 +164,16 @@ export default async function AdminSubscriptionsPage(props: AdminSubscriptionsPa
                       <input className="min-h-9 w-40 rounded-lg border border-slate-200 px-2 py-1 text-xs" name="reason" placeholder="Lý do downgrade" />
                       <button className="min-h-9 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white" type="submit">
                         Downgrade Free
+                      </button>
+                    </form>
+                    <form action={trialAction} className="flex gap-2">
+                      <input className="min-h-9 w-16 rounded-lg border border-slate-200 px-2 py-1 text-xs" name="days" placeholder="14" />
+                      <select className="min-h-9 rounded-lg border border-slate-200 px-2 py-1 text-xs" name="planId" defaultValue="pro">
+                        <option value="pro">Pro</option>
+                        <option value="pro_plus">Pro Plus</option>
+                      </select>
+                      <button className="min-h-9 rounded-lg bg-ocean px-3 py-2 text-xs font-bold text-white" type="submit">
+                        Grant trial
                       </button>
                     </form>
                     <form action={cancelAction} className="flex gap-2">

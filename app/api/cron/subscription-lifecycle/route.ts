@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  downgradeExpiredSubscriptions,
+  expireSubscriptions,
+} from "@/lib/billing/subscriptions";
 import { processSubscriptionLifecycle } from "@/lib/data/subscription-lifecycle";
 
 function isAuthorized(request: Request) {
@@ -23,9 +27,18 @@ async function handler(request: Request) {
     return unauthorizedResponse();
   }
 
-  const data = await processSubscriptionLifecycle();
+  const movedToGrace = await expireSubscriptions();
+  const expiredFromGrace = await downgradeExpiredSubscriptions();
+  const legacy = await processSubscriptionLifecycle();
 
-  return NextResponse.json({ data, success: true });
+  return NextResponse.json({
+    data: {
+      ...legacy,
+      expiredFromGrace,
+      movedToGrace,
+    },
+    success: true,
+  });
 }
 
 export async function GET(request: Request) {

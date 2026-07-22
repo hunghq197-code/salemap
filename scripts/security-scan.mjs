@@ -97,6 +97,45 @@ function scanFile(filePath) {
     });
   }
 
+  if (
+    clientFile &&
+    /from\s+["']@\/lib\/billing\/(entitlements|payments|providers|subscriptions)\b/.test(
+      content,
+    )
+  ) {
+    addFinding(
+      filePath,
+      "client-billing-server-import",
+      "Client/component file imports server-only billing module.",
+    );
+  }
+
+  if (
+    relPath === "app/api/billing/create-payment/route.ts" &&
+    /amount\??\s*:\s*z\./.test(content)
+  ) {
+    addFinding(
+      filePath,
+      "create-payment-accepts-amount",
+      "Create payment API schema must not accept amount from client.",
+    );
+  }
+
+  if (
+    /(app\/app\/billing\/success\/page\.tsx|app\/app\/billing\/cancel\/page\.tsx|app\/app\/billing\/payment\/return\/page\.tsx|app\/app\/billing\/payment\/cancel\/page\.tsx)$/.test(
+      relPath,
+    ) &&
+    /syncPayOSGatewayTransaction|processPaymentPaid|activateSubscriptionForUser|activateSubscriptionFromPayment|renewSubscriptionForUser|cancelPayOSGatewayTransactionForCurrentUser/.test(
+      content,
+    )
+  ) {
+    addFinding(
+      filePath,
+      "return-page-mutates-billing",
+      "Billing return/cancel page must not update payment/subscription state.",
+    );
+  }
+
   if (/console\.(log|debug|info)\s*\(\s*process\.env/.test(content)) {
     addFinding(filePath, "log-env", "Source logs process.env.");
   }
@@ -115,6 +154,19 @@ function scanFile(filePath) {
 }
 
 INCLUDE_DIRS.flatMap((dir) => walk(path.join(ROOT, dir))).forEach(scanFile);
+
+const envExamplePath = path.join(ROOT, ".env.example");
+if (existsSync(envExamplePath)) {
+  const envExample = readFileSync(envExamplePath, "utf8");
+
+  if (/NEXT_PUBLIC_PAYOS_(API_KEY|CHECKSUM_KEY)/.test(envExample)) {
+    addFinding(
+      envExamplePath,
+      "public-payos-secret-env",
+      ".env.example must not define NEXT_PUBLIC payOS secret variables.",
+    );
+  }
+}
 
 if (FINDINGS.length > 0) {
   console.error("SECURITY SCAN FAIL");

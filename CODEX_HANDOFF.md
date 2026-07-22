@@ -921,3 +921,86 @@ Deployment note:
 
 - Run `supabase/onboarding-activation.sql` after the existing schema files. `SUPABASE_SQL_SETUP.md` lists it as step 26.
 - Demo data is marked with `is_demo = true` and delete only targets current-user demo rows.
+
+## 2026-07-22 Update - Billing Provider Architecture MVP
+
+This phase implemented the multi-provider billing foundation requested after onboarding/security:
+
+- Added `supabase/billing-provider-architecture.sql`.
+  - Adds/extends `subscriptions` with `plan_id`, provider, trial/grace fields.
+  - Adds new `payments` and `payment_events` tables.
+  - Extends `subscription_events` with `payment_id`, plan/status transitions, and metadata.
+  - Adds RLS select policies for users to view only their own billing data.
+- Added `lib/billing/*`.
+  - `plans.ts`: Free/Pro/Pro Plus source of truth. Pro is 149.000đ/month, Pro Plus is 399.000đ/month.
+  - `providers/manual-bank.ts`: manual bank transfer + VietQR URL support.
+  - `providers/payos.ts`: server-only payOS create/status/cancel/webhook normalization.
+  - `payments.ts`: create payment, confirm transfer, paid processing, failed/cancelled, webhook handling, reconciliation.
+  - `subscriptions.ts`: free fallback, activate/extend/change/cancel/trial/grace/expire.
+  - `entitlements.ts`: server-side plan entitlements and quota summary.
+- Added user APIs:
+  - `/api/billing/plans`
+  - `/api/billing/current`
+  - `/api/billing/create-payment`
+  - `/api/billing/payments`
+  - `/api/billing/payments/[paymentId]`
+  - `/api/billing/payments/[paymentId]/confirm-transfer`
+  - `/api/billing/cancel-payment`
+  - `/api/billing/payos/return`
+  - `/api/billing/payos/cancel`
+- Added user routes:
+  - `/app/billing/checkout`
+  - `/app/billing/success`
+  - `/app/billing/cancel`
+  - `/app/settings/billing` redirects to `/app/billing`.
+- Updated `/app/billing`.
+  - Shows new payment history while keeping legacy `payment_requests` and `payment_gateway_transactions` history.
+  - Lets user pick provider explicitly: manual bank transfer, VietQR manual, payOS only if enabled.
+  - Manual/VietQR payment starts `pending`; user confirmation changes to `waiting_confirmation` only.
+- Updated admin:
+  - `/admin/payments` now shows new `payments` table with mark paid/failed/cancel actions.
+  - `/api/admin/payments` returns new provider payments plus legacy payment requests.
+  - `/api/admin/payments/[paymentId]/mark-paid` handles new `payments` first, then falls back to legacy payment requests.
+  - Added `/mark-failed`, `/cancel`, and subscription `/grant-trial`.
+  - Added grant-trial UI in `/admin/subscriptions`.
+- Updated payOS webhook:
+  - New billing payments are processed first.
+  - Invalid webhook writes `invalid_payment_webhook` security event.
+  - Amount mismatch does not activate subscription and writes `payment_amount_mismatch`.
+  - Duplicate paid webhook is idempotent through `subscription_events.payment_id`.
+  - Legacy payOS fallback remains for old `payment_gateway_transactions`.
+  - Legacy payOS webhook payload storage was sanitized to avoid storing `signature`.
+- Updated cron:
+  - `/api/cron/payment-reconciliation` checks pending payOS payments with `CRON_SECRET`.
+  - `/api/cron/subscription-lifecycle` now runs billing grace/expired handling before legacy renewal work.
+- Updated security scan:
+  - Blocks server-only billing module imports from client files.
+  - Blocks create-payment schemas that accept client amount.
+  - Blocks billing return/cancel pages from mutating payment/subscription state.
+  - Blocks public payOS secret env names.
+- Updated `.env.example` with billing/manual bank/VietQR/payOS/app URL variables.
+
+Validation already run:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with 0 warnings and 0 errors.
+- Security scan passed.
+
+Still needed before live testing:
+
+- Run `supabase/billing-provider-architecture.sql` in Supabase.
+- Fill billing env vars in Vercel/local `.env.local`, especially:
+  - `BILLING_BANK_NAME`
+  - `BILLING_BANK_ACCOUNT_NUMBER`
+  - `BILLING_BANK_ACCOUNT_NAME`
+  - optional `VIETQR_BANK_BIN`
+  - payOS vars only when enabling payOS.
+- Run `npm run build` before commit/push if not already done in the active session.

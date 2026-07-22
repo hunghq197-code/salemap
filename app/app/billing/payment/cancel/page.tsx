@@ -1,7 +1,7 @@
 import { ArrowLeft, XCircle } from "lucide-react";
 import Link from "next/link";
 import { PayOSPaymentPageTracker } from "@/components/billing/PayOSPaymentPageTracker";
-import { cancelPayOSGatewayTransactionForCurrentUser } from "@/lib/data/payment-gateway-transactions";
+import { getPaymentGatewayTransactionByOrderCodeForCurrentUser } from "@/lib/data/payment-gateway-transactions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +24,9 @@ export default async function PaymentCancelPage(props: PaymentCancelPageProps) {
 
   if (orderCode) {
     try {
-      transaction = await cancelPayOSGatewayTransactionForCurrentUser(orderCode);
+      transaction = await getPaymentGatewayTransactionByOrderCodeForCurrentUser(orderCode);
     } catch {
-      // The page should still render even if the local status was already final.
+      transaction = null;
     }
   }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Landmark, Loader2, QrCode, Sparkles, WalletCards } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   trackBillingPageViewed,
   trackPaymentRequestCreated,
@@ -11,21 +11,26 @@ import {
   trackPayOSPaymentLinkCreateFailed,
 } from "@/lib/analytics/client";
 import {
-  isPaidSubscriptionPlanKey,
-  SUBSCRIPTION_PLANS,
-  type PaidSubscriptionPlanKey,
-  type SubscriptionPlanKey,
-} from "@/lib/constants/subscription-plans";
+  BILLING_PLANS,
+  fromSubscriptionPlanKey,
+} from "@/lib/billing/plans";
+import type { PaymentProviderId, PlanId, SafeBillingPayment } from "@/lib/billing/types";
+import type { SubscriptionPlanKey } from "@/lib/constants/subscription-plans";
+
+export type BillingProviderOption = {
+  configured: boolean;
+  enabled: boolean;
+  id: PaymentProviderId;
+};
 
 type BillingPlansProps = {
   currentPlanKey?: SubscriptionPlanKey;
+  providers?: BillingProviderOption[];
 };
 
-type PaymentRequestResponse = {
+type CreatePaymentResponse = {
   data?: {
-    amountVnd?: number;
-    id?: string;
-    planKey?: string;
+    payment?: SafeBillingPayment;
   };
   error?: {
     message?: string;
@@ -33,27 +38,25 @@ type PaymentRequestResponse = {
   success?: boolean;
 };
 
-type PayOSPaymentLinkResponse = {
-  data?: {
-    checkoutUrl?: string;
-    orderCode?: number;
-    paymentRequestId?: string;
-    transactionId?: string;
-  };
-  error?: {
-    message?: string;
-  };
-  success?: boolean;
+const plans = [BILLING_PLANS.free, BILLING_PLANS.pro, BILLING_PLANS.pro_plus];
+
+const providerLabels: Record<PaymentProviderId, { description: string; label: string }> = {
+  manual_bank_transfer: {
+    description: "Tạo lệnh chuyển khoản để admin đối soát và kích hoạt gói.",
+    label: "Chuyển khoản",
+  },
+  payos: {
+    description: "Tạo checkout tự động. Gói chỉ active khi webhook hợp lệ.",
+    label: "payOS",
+  },
+  vietqr_manual: {
+    description: "Quét VietQR hoặc chuyển khoản, admin xác nhận sau đối soát.",
+    label: "VietQR thủ công",
+  },
 };
 
-const plans = [
-  SUBSCRIPTION_PLANS.free_beta,
-  SUBSCRIPTION_PLANS.pro,
-  SUBSCRIPTION_PLANS.pro_plus,
-];
-
-function planClasses(planKey: string) {
-  const highlighted = planKey === "pro";
+function planClasses(planId: string) {
+  const highlighted = planId === "pro";
 
   return [
     "flex h-full flex-col rounded-lg border bg-white p-5 shadow-sm",
@@ -61,135 +64,127 @@ function planClasses(planKey: string) {
   ].join(" ");
 }
 
-function getCta(planKey: string, currentPlanKey?: string) {
-  if (planKey === currentPlanKey) {
+function getCta(planId: string, currentPlanId?: string) {
+  if (planId === currentPlanId) {
     return "Đang sử dụng";
   }
 
-  if (planKey === "free_beta") {
+  if (planId === "free") {
     return "Gói miễn phí";
   }
 
-  return planKey === "pro" ? "Thanh toán Pro" : "Thanh toán Pro Plus";
+  return planId === "pro" ? "Chọn Pro" : "Chọn Pro Plus";
 }
 
-function getRequestType(
-  planKey: PaidSubscriptionPlanKey,
-  currentPlanKey?: SubscriptionPlanKey,
-) {
-  if (
-    currentPlanKey &&
-    isPaidSubscriptionPlanKey(currentPlanKey) &&
-    currentPlanKey !== planKey
-  ) {
-    return "plan_change" as const;
+function providerIcon(provider: PaymentProviderId) {
+  if (provider === "payos") {
+    return WalletCards;
   }
 
-  return "new_subscription" as const;
+  if (provider === "vietqr_manual") {
+    return QrCode;
+  }
+
+  return Landmark;
 }
 
-export function BillingPlans({ currentPlanKey = "free_beta" }: BillingPlansProps) {
+export function BillingPlans({
+  currentPlanKey = "free_beta",
+  providers = [],
+}: BillingPlansProps) {
   const router = useRouter();
+  const currentPlanId = fromSubscriptionPlanKey(currentPlanKey);
   const [error, setError] = useState("");
-  const [manualSubmittingPlan, setManualSubmittingPlan] = useState<string | null>(null);
-  const [submittingPlan, setSubmittingPlan] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(null);
+  const [submittingKey, setSubmittingKey] = useState<string | null>(null);
+  const providerOptions = useMemo(() => {
+    const defaultProviders: BillingProviderOption[] = [
+      { configured: true, enabled: true, id: "manual_bank_transfer" },
+      { configured: true, enabled: true, id: "vietqr_manual" },
+    ];
+
+    return providers.length > 0 ? providers : defaultProviders;
+  }, [providers]);
 
   useEffect(() => {
     trackBillingPageViewed();
   }, []);
 
-  async function handlePayOSUpgrade(planKey: PaidSubscriptionPlanKey) {
-    if (submittingPlan || manualSubmittingPlan) {
+  async function handleCreatePayment(planId: PlanId, provider: PaymentProviderId) {
+    if (submittingKey) {
       return;
     }
 
-    const plan = SUBSCRIPTION_PLANS[planKey];
-    const requestType = getRequestType(planKey, currentPlanKey);
+    const plan = BILLING_PLANS[planId];
+    const key = `${planId}:${provider}`;
     setError("");
-    setSubmittingPlan(planKey);
+    setSubmittingKey(key);
 
     try {
-      const response = await fetch("/api/payments/payos/create-link", {
-        body: JSON.stringify({ months: 1, planKey, requestType }),
+      const response = await fetch("/api/billing/create-payment", {
+        body: JSON.stringify({
+          billingPeriod: "monthly",
+          planId,
+          provider,
+        }),
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
       });
-      const result = (await response.json()) as PayOSPaymentLinkResponse;
+      const result = (await response.json()) as CreatePaymentResponse;
+      const payment = result.data?.payment;
 
-      if (!response.ok || !result.success || !result.data?.checkoutUrl) {
-        throw new Error(result.error?.message || "Không thể tạo link thanh toán.");
-      }
-
-      trackPayOSPaymentLinkCreated({
-        amountVnd: plan.priceVnd,
-        planKey,
-        provider: "payos",
-        requestType,
-        status: "pending",
-      });
-      trackPayOSCheckoutRedirected({
-        amountVnd: plan.priceVnd,
-        planKey,
-        provider: "payos",
-        requestType,
-        status: "pending",
-      });
-      window.location.assign(result.data.checkoutUrl);
-    } catch (upgradeError) {
-      trackPayOSPaymentLinkCreateFailed({
-        amountVnd: plan.priceVnd,
-        planKey,
-        provider: "payos",
-        requestType,
-        status: "failed",
-      });
-      setError(
-        upgradeError instanceof Error
-          ? upgradeError.message
-          : "Không thể tạo link thanh toán lúc này.",
-      );
-      setSubmittingPlan(null);
-    }
-  }
-
-  async function handleManualUpgrade(planKey: PaidSubscriptionPlanKey) {
-    if (submittingPlan || manualSubmittingPlan) {
-      return;
-    }
-
-    const requestType = getRequestType(planKey, currentPlanKey);
-    setError("");
-    setManualSubmittingPlan(planKey);
-
-    try {
-      const response = await fetch("/api/payment-requests", {
-        body: JSON.stringify({ planKey, requestType }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      });
-      const result = (await response.json()) as PaymentRequestResponse;
-
-      if (!response.ok || !result.success || !result.data?.id) {
-        throw new Error(result.error?.message || "Không thể tạo yêu cầu chuyển khoản.");
+      if (!response.ok || !result.success || !payment) {
+        throw new Error(result.error?.message || "Không thể tạo yêu cầu thanh toán.");
       }
 
       trackPaymentRequestCreated({
-        amountVnd: result.data.amountVnd,
-        planKey: result.data.planKey,
+        amountVnd: payment.amount,
+        planKey: planId,
         sourcePage: "billing",
       });
-      router.push(`/app/billing/payment/${result.data.id}`);
-    } catch (upgradeError) {
+
+      if (provider === "payos") {
+        trackPayOSPaymentLinkCreated({
+          amountVnd: payment.amount,
+          planKey: planId,
+          provider: "payos",
+          requestType: "new_subscription",
+          status: payment.status,
+        });
+
+        if (payment.checkoutUrl) {
+          trackPayOSCheckoutRedirected({
+            amountVnd: payment.amount,
+            planKey: planId,
+            provider: "payos",
+            requestType: "new_subscription",
+            status: payment.status,
+          });
+          window.location.assign(payment.checkoutUrl);
+          return;
+        }
+      }
+
+      router.push(`/app/billing/checkout?paymentId=${payment.id}`);
+    } catch (paymentError) {
+      if (provider === "payos") {
+        trackPayOSPaymentLinkCreateFailed({
+          amountVnd: plan.priceMonthly,
+          planKey: planId,
+          provider: "payos",
+          requestType: "new_subscription",
+          status: "failed",
+        });
+      }
+
       setError(
-        upgradeError instanceof Error
-          ? upgradeError.message
-          : "Không thể tạo yêu cầu chuyển khoản lúc này.",
+        paymentError instanceof Error
+          ? paymentError.message
+          : "Không thể tạo yêu cầu thanh toán lúc này.",
       );
-      setManualSubmittingPlan(null);
+      setSubmittingKey(null);
     }
   }
 
@@ -203,14 +198,12 @@ export function BillingPlans({ currentPlanKey = "free_beta" }: BillingPlansProps
 
       <div className="grid gap-5 lg:grid-cols-3">
         {plans.map((plan) => {
-          const isCurrentPlan = plan.key === currentPlanKey;
-          const isFree = plan.key === "free_beta";
-          const isSubmitting = submittingPlan === plan.key;
-          const isManualSubmitting = manualSubmittingPlan === plan.key;
-          const disabled = isCurrentPlan || isFree || Boolean(submittingPlan || manualSubmittingPlan);
+          const isCurrentPlan = plan.id === currentPlanId;
+          const isFree = plan.id === "free";
+          const disabled = isCurrentPlan || isFree || Boolean(submittingKey);
 
           return (
-            <article className={planClasses(plan.key)} key={plan.key}>
+            <article className={planClasses(plan.id)} key={plan.id}>
               <div className="min-h-[142px]">
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                   <h2 className="text-2xl font-bold text-ink">{plan.name}</h2>
@@ -231,7 +224,14 @@ export function BillingPlans({ currentPlanKey = "free_beta" }: BillingPlansProps
               </div>
 
               <ul className="mt-5 flex-1 space-y-3">
-                {plan.features.map((feature) => (
+                {[
+                  `${plan.mapSearchDailyLimit} lượt tìm map/ngày`,
+                  `${plan.routeSearchDailyLimit} lượt tìm dọc tuyến/ngày`,
+                  `${plan.leadLimit.toLocaleString("vi-VN")} lead`,
+                  `${plan.importMonthlyLimit} lượt import/tháng`,
+                  `${plan.exportDailyLimit} lượt export/ngày`,
+                  `${plan.aiDailyLimit} lượt AI/ngày`,
+                ].map((feature) => (
                   <li
                     className="flex gap-3 text-sm font-semibold leading-6 text-slate-700"
                     key={feature}
@@ -252,27 +252,46 @@ export function BillingPlans({ currentPlanKey = "free_beta" }: BillingPlansProps
                       : "border border-slate-200 bg-white text-ink hover:border-ocean",
                 ].join(" ")}
                 disabled={disabled}
-                onClick={() => handlePayOSUpgrade(plan.key as PaidSubscriptionPlanKey)}
+                onClick={() => setSelectedPlanId(plan.id)}
                 type="button"
               >
-                {isSubmitting ? <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" /> : null}
-                {isSubmitting ? "Đang tạo link thanh toán..." : getCta(plan.key, currentPlanKey)}
+                {getCta(plan.id, currentPlanId)}
               </button>
 
-              {!isFree && !isCurrentPlan ? (
-                <button
-                  className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-ocean disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={Boolean(submittingPlan || manualSubmittingPlan)}
-                  onClick={() => handleManualUpgrade(plan.key as PaidSubscriptionPlanKey)}
-                  type="button"
-                >
-                  {isManualSubmitting ? (
-                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                  ) : null}
-                  {isManualSubmitting
-                    ? "Đang tạo yêu cầu..."
-                    : "Không thanh toán được? Chuyển khoản thủ công"}
-                </button>
+              {selectedPlanId === plan.id && !isFree && !isCurrentPlan ? (
+                <div className="mt-4 space-y-2">
+                  {providerOptions
+                    .filter((provider) => provider.enabled)
+                    .map((provider) => {
+                      const Icon = providerIcon(provider.id);
+                      const isSubmitting = submittingKey === `${plan.id}:${provider.id}`;
+                      const disabledProvider = !provider.configured || Boolean(submittingKey);
+
+                      return (
+                        <button
+                          className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm font-bold text-ink transition hover:border-ocean disabled:cursor-not-allowed disabled:bg-cloud disabled:text-slate-500"
+                          disabled={disabledProvider}
+                          key={provider.id}
+                          onClick={() => handleCreatePayment(plan.id, provider.id)}
+                          type="button"
+                        >
+                          {isSubmitting ? (
+                            <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-ocean" />
+                          )}
+                          <span>
+                            <span className="block">{providerLabels[provider.id].label}</span>
+                            <span className="block text-xs font-semibold leading-5 text-slate-500">
+                              {provider.configured
+                                ? providerLabels[provider.id].description
+                                : "Chưa cấu hình chuyển khoản"}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
               ) : null}
             </article>
           );

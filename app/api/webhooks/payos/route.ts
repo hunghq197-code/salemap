@@ -4,7 +4,9 @@ import {
   InvalidPayOSWebhookSignatureError,
 } from "@/lib/data/payment-gateway-transactions";
 import { writeSecurityEvent } from "@/lib/admin/audit-log";
-import { PayOSConfigError, type PayOSWebhookPayload } from "@/lib/providers/payments";
+import { handlePayOSWebhookForBilling } from "@/lib/billing/payments";
+import { BillingError } from "@/lib/billing/billing-errors";
+import { PayOSConfigError } from "@/lib/providers/payments";
 import { rateLimitByIp, rateLimitResponse } from "@/lib/security/rate-limit";
 
 function errorResponse(code: string, message: string, status = 400) {
@@ -14,23 +16,6 @@ function errorResponse(code: string, message: string, status = 400) {
       success: false,
     },
     { status },
-  );
-}
-
-function isPayOSWebhookPayload(value: unknown): value is PayOSWebhookPayload {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const payload = value as Record<string, unknown>;
-
-  return (
-    typeof payload.code === "string" &&
-    typeof payload.desc === "string" &&
-    typeof payload.success === "boolean" &&
-    typeof payload.signature === "string" &&
-    Boolean(payload.data) &&
-    typeof payload.data === "object"
   );
 }
 
@@ -56,18 +41,29 @@ export async function POST(request: Request) {
 
   const payload = await request.json().catch(() => null);
 
-  if (!isPayOSWebhookPayload(payload)) {
-    return errorResponse("INVALID_WEBHOOK_PAYLOAD", "Payload webhook không hợp lệ.");
-  }
-
   try {
-    const result = await handlePayOSWebhook(payload);
+    const billingResult = await handlePayOSWebhookForBilling(payload, request);
+
+    if (!("reason" in billingResult) || billingResult.reason !== "PAYMENT_NOT_FOUND") {
+      return NextResponse.json({
+        data: billingResult,
+        success: true,
+      });
+    }
+
+    const result = await handlePayOSWebhook(
+      payload as Parameters<typeof handlePayOSWebhook>[0],
+    );
 
     return NextResponse.json({
       data: result,
       success: true,
     });
   } catch (error) {
+    if (error instanceof BillingError) {
+      return errorResponse(error.code, error.message, error.status);
+    }
+
     if (error instanceof InvalidPayOSWebhookSignatureError) {
       await writeSecurityEvent({
         eventType: "invalid_payment_webhook",
