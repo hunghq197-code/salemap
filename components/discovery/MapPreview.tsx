@@ -2,7 +2,12 @@
 
 import { AlertTriangle, MapPinned, RotateCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { loadGoogleMaps } from "@/lib/google-maps/load-google-maps";
+import {
+  GOOGLE_MAPS_AUTH_ERROR_MESSAGE,
+  GoogleMapsAuthError,
+  loadGoogleMaps,
+  setGoogleMapsAuthFailureHandler,
+} from "@/lib/google-maps/load-google-maps";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 
 type MapPoint = {
@@ -152,6 +157,12 @@ export function MapPreview({
       }
 
       try {
+        setGoogleMapsAuthFailureHandler(() => {
+          if (!active) return;
+
+          setMapReady(false);
+          setError(GOOGLE_MAPS_AUTH_ERROR_MESSAGE);
+        });
         await loadGoogleMaps();
 
         if (!active || !containerRef.current) {
@@ -192,7 +203,9 @@ export function MapPreview({
       } catch (mapError) {
         if (active) {
           setError(
-            mapError instanceof Error
+            mapError instanceof GoogleMapsAuthError
+              ? GOOGLE_MAPS_AUTH_ERROR_MESSAGE
+              : mapError instanceof Error
               ? mapError.message
               : "Không thể tải bản đồ Google. Hãy kiểm tra browser key hoặc thử tải lại trang.",
           );
