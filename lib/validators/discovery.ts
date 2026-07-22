@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const radiusSchema = z.coerce.number().refine(
-  (value) => [1000, 3000, 5000, 10000].includes(value),
+  (value) => [500, 1000, 2000, 3000, 5000].includes(value),
   "Bán kính tìm kiếm chưa hợp lệ.",
 );
 
@@ -24,6 +24,11 @@ const optionalText = (maxLength: number) =>
     .optional()
     .or(z.literal(""));
 
+const coordinatesSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+});
+
 export const nearMeSearchSchema = z.object({
   keyword: keywordSchema,
   latitude: z.coerce.number().min(-90).max(90),
@@ -31,15 +36,21 @@ export const nearMeSearchSchema = z.object({
   radiusMeters: radiusSchema,
 });
 
-export const areaSearchSchema = z.object({
-  areaText: z
-    .string()
-    .trim()
-    .min(2, "Vui lòng nhập khu vực ít nhất 2 ký tự.")
-    .max(200, "Khu vực không được dài quá 200 ký tự."),
-  keyword: keywordSchema,
-  radiusMeters: radiusSchema,
-});
+export const areaSearchSchema = z
+  .object({
+    areaText: optionalText(200),
+    center: coordinatesSchema.optional(),
+    keyword: keywordSchema,
+    radiusMeters: radiusSchema,
+  })
+  .refine(
+    (value) =>
+      Boolean(value.center || (value.areaText && value.areaText.length >= 2)),
+    {
+      message: "Vui lòng nhập khu vực hoặc chọn vị trí trên bản đồ.",
+      path: ["areaText"],
+    },
+  );
 
 export const routeSearchSchema = z.object({
   bufferMeters: routeBufferSchema,

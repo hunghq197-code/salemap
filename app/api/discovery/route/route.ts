@@ -170,10 +170,12 @@ export async function POST(request: Request) {
         quota: usage,
         results: decoratedResults,
         route: {
+          destination: route.destination,
           destinationText: route.destination.text || parsed.data.destinationText,
           distanceMeters: route.distanceMeters,
           durationSeconds: route.durationSeconds,
           id: routeId,
+          origin: route.origin,
           originText: route.origin.text || parsed.data.originText,
           polyline: route.polyline,
         },

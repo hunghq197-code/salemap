@@ -7,32 +7,38 @@ import type {
 } from "@/lib/providers/maps/types";
 
 type SearchResultsListProps = {
+  hoveredPlaceId?: string | null;
   loadingDetailsPlaceId?: string | null;
+  onHoverPlace?: (placeId: string | null) => void;
   onLoadDetails: (place: DiscoveryPlaceResult) => void;
   onSave: (place: DiscoveryPlaceResult) => void;
+  onSelectPlace?: (placeId: string) => void;
   results: DiscoveryPlaceResult[];
   savingPlaceId?: string | null;
+  selectedPlaceId?: string | null;
   source: DiscoverySource;
 };
 
 export function SearchResultsList({
+  hoveredPlaceId,
   loadingDetailsPlaceId,
+  onHoverPlace,
   onLoadDetails,
   onSave,
+  onSelectPlace,
   results,
   savingPlaceId,
+  selectedPlaceId,
   source,
 }: SearchResultsListProps) {
   if (results.length === 0) {
-    const isRouteSearch = source === "route_search";
-
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <h2 className="text-xl font-bold text-ink">Không tìm thấy kết quả phù hợp.</h2>
+        <h2 className="text-xl font-bold text-ink">
+          Không tìm thấy địa điểm phù hợp.
+        </h2>
         <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-          {isRouteSearch
-            ? "Hãy thử từ khóa khác hoặc tăng khoảng cách lệch tuyến."
-            : "Hãy thử từ khóa khác hoặc tăng bán kính tìm kiếm."}
+          Hãy thử keyword khác, tăng bán kính hoặc đổi khu vực.
         </p>
       </section>
     );
@@ -43,11 +49,15 @@ export function SearchResultsList({
       {results.map((place) => (
         <PlaceResultCard
           detailsLoading={loadingDetailsPlaceId === place.placeId}
+          hovered={hoveredPlaceId === place.placeId}
           key={place.placeId}
+          onHover={onHoverPlace}
           onLoadDetails={onLoadDetails}
           onSave={onSave}
+          onSelect={onSelectPlace}
           place={place}
           saving={savingPlaceId === place.placeId}
+          selected={selectedPlaceId === place.placeId}
           source={source}
         />
       ))}

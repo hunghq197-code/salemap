@@ -13,10 +13,11 @@ type AreaSearchFormProps = {
 };
 
 const radiusOptions = [
-  { label: "1 km", value: 1000 },
-  { label: "3 km", value: 3000 },
-  { label: "5 km", value: 5000 },
-  { label: "10 km", value: 10000 },
+  { label: "500m", value: 500 },
+  { label: "1km", value: 1000 },
+  { label: "2km", value: 2000 },
+  { label: "3km", value: 3000 },
+  { label: "5km", value: 5000 },
 ] as const;
 
 export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
@@ -27,7 +28,7 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
     onSubmit({
       areaText: String(formData.get("areaText") || "").trim(),
       keyword: String(formData.get("keyword") || "").trim(),
-      radiusMeters: Number(formData.get("radiusMeters") || 3000),
+      radiusMeters: Number(formData.get("radiusMeters") || 2000),
     });
   }
 
@@ -36,9 +37,18 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
       className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
       onSubmit={handleSubmit}
     >
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr_180px]">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ocean">
+          Theo khu vực
+        </p>
+        <h2 className="mt-2 text-xl font-bold text-ink">
+          Tìm khách theo khu vực
+        </h2>
+      </div>
+
+      <div className="mt-5 grid gap-4">
         <label className="text-sm font-bold text-ink">
-          Tìm quanh khu vực
+          Khu vực
           <div className="relative mt-2">
             <MapPinned
               aria-hidden="true"
@@ -50,14 +60,14 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
               maxLength={200}
               minLength={2}
               name="areaText"
-              placeholder="Ví dụ: Thủ Đức, TP.HCM"
+              placeholder="Nhập phường, quận, tỉnh/thành..."
               required
             />
           </div>
         </label>
 
         <label className="text-sm font-bold text-ink">
-          Bạn muốn tìm địa điểm nào?
+          Keyword cần tìm
           <div className="relative mt-2">
             <Search
               aria-hidden="true"
@@ -69,17 +79,17 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
               maxLength={100}
               minLength={2}
               name="keyword"
-              placeholder="Ví dụ: dầu nhớt, nhà thuốc, quán ăn..."
+              placeholder="Ví dụ: nhà thuốc, quán ăn, đại lý, showroom..."
               required
             />
           </div>
         </label>
 
         <label className="text-sm font-bold text-ink">
-          Tìm trong bán kính
+          Bán kính
           <select
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-            defaultValue={3000}
+            defaultValue={2000}
             name="radiusMeters"
           >
             {radiusOptions.map((option) => (
@@ -92,12 +102,12 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
       </div>
 
       <button
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3] disabled:cursor-not-allowed disabled:opacity-70"
         disabled={loading}
         type="submit"
       >
         <MapPinned aria-hidden="true" className="h-5 w-5" />
-        {loading ? "Đang tìm địa điểm thật..." : "Tìm trong khu vực này"}
+        {loading ? "Đang tìm địa điểm thật..." : "Tìm trong khu vực"}
       </button>
     </form>
   );

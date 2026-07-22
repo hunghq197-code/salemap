@@ -59,10 +59,20 @@ export type DiscoveryPlaceResult = MapPlaceResult & {
 };
 
 export type DiscoveryRouteResult = {
+  destination?: {
+    latitude?: number;
+    longitude?: number;
+    text: string;
+  };
   destinationText: string;
   distanceMeters?: number;
   durationSeconds?: number;
   id?: string;
+  origin?: {
+    latitude?: number;
+    longitude?: number;
+    text: string;
+  };
   originText: string;
   polyline?: string;
 };

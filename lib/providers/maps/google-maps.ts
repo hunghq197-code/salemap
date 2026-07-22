@@ -11,7 +11,7 @@ const GOOGLE_PLACES_TEXT_SEARCH_URL =
 const GOOGLE_PLACES_BASE_URL = "https://places.googleapis.com/v1/places";
 const MAX_RESULTS = 20;
 const MAX_ROUTE_RESULTS = 30;
-const MAX_ROUTE_SAMPLE_POINTS = 4;
+const MAX_ROUTE_SAMPLE_POINTS = 6;
 const GOOGLE_REQUEST_TIMEOUT_MS = 15_000;
 const PLACE_SEARCH_FIELD_MASK = [
   "places.id",

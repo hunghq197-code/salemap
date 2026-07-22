@@ -10,6 +10,7 @@ import { RouteSearchForm } from "@/components/discovery/RouteSearchForm";
 import { RouteSummaryCard } from "@/components/discovery/RouteSummaryCard";
 import { SearchResultsList } from "@/components/discovery/SearchResultsList";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
+import { useDeviceLocation } from "@/hooks/useDeviceLocation";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
   trackBetaChecklistItemCompleted,
@@ -24,9 +25,15 @@ import type {
 } from "@/lib/providers/maps/types";
 
 type ActiveTab = "area" | "near-me" | "route";
+type MobileView = "list" | "map";
+
+type MapPoint = {
+  latitude: number;
+  longitude: number;
+};
 
 type SearchState = {
-  center?: { latitude: number; longitude: number } | null;
+  center?: MapPoint | null;
   quota?: DiscoveryQuota | null;
   results: DiscoveryPlaceResult[];
   route?: DiscoveryRouteResult;
@@ -43,7 +50,7 @@ type ApiError = {
 
 type SearchResponse = ApiError & {
   data?: {
-    center?: { latitude: number; longitude: number };
+    center?: MapPoint;
     quota: DiscoveryQuota;
     results: DiscoveryPlaceResult[];
     route?: DiscoveryRouteResult;
@@ -81,10 +88,10 @@ type QuotaReachedState = {
   used: number;
 };
 
-type CurrentLocation = {
-  accuracyMeters: number;
-  latitude: number;
-  longitude: number;
+type AreaSearchMemory = {
+  areaText?: string;
+  keyword: string;
+  radiusMeters: number;
 };
 
 function getApiErrorMessage(payload: ApiError, source?: DiscoverySource) {
@@ -95,37 +102,6 @@ function getApiErrorMessage(payload: ApiError, source?: DiscoverySource) {
   return source === "route_search"
     ? "Không thể tìm dữ liệu tuyến đường lúc này. Vui lòng thử lại sau."
     : "Không thể tìm dữ liệu bản đồ lúc này. Vui lòng thử lại sau.";
-}
-
-function getCurrentPosition() {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      maximumAge: 30_000,
-      timeout: 15_000,
-    });
-  });
-}
-
-function getGeolocationErrorMessage(error: unknown) {
-  const code =
-    error && typeof error === "object" && "code" in error
-      ? Number((error as { code?: unknown }).code)
-      : 0;
-
-  if (!code) {
-    return "Không lấy được vị trí hiện tại. Hãy thử lại hoặc dùng tìm theo khu vực.";
-  }
-
-  if (code === 1) {
-    return "Bạn chưa cho phép SaleMap truy cập vị trí. Hãy bật quyền vị trí cho trang này rồi thử lại, hoặc dùng tab Theo khu vực.";
-  }
-
-  if (code === 2) {
-    return "Thiết bị chưa xác định được vị trí. Hãy bật GPS/Wi-Fi rồi thử lại, hoặc dùng tab Theo khu vực.";
-  }
-
-  return "Việc lấy vị trí mất quá lâu. Hãy thử lại ở nơi có tín hiệu tốt hơn hoặc dùng tab Theo khu vực.";
 }
 
 function getSearchEvents(source: DiscoverySource) {
@@ -175,23 +151,85 @@ function getReachedQuota(actionType: DailyQuotaAction): QuotaReachedState {
   };
 }
 
+function getRadiusBucket(value?: unknown) {
+  const meters = Number(value || 0);
+
+  if (!meters) return "none";
+  return meters >= 1000 ? `${meters / 1000}km` : `${meters}m`;
+}
+
+function getSafeSearchProperties(
+  payload: Record<string, unknown>,
+  source: DiscoverySource,
+) {
+  const radiusValue =
+    source === "route_search" ? payload.bufferMeters : payload.radiusMeters;
+
+  return {
+    keywordLength: String(payload.keyword || "").length,
+    radiusBucket: getRadiusBucket(radiusValue),
+    searchType: source,
+    source,
+  };
+}
+
+function scrollPlaceCardIntoView(placeId: string) {
+  requestAnimationFrame(() => {
+    const cards = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-discovery-place-card]"),
+    );
+    const card = cards.find((item) => item.dataset.placeId === placeId);
+
+    card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+}
+
 export function DiscoverTabs({
   initialTab = "near-me",
   routeSearchEnabled = true,
 }: DiscoverTabsProps) {
+  const deviceLocation = useDeviceLocation();
   const [activeTab, setActiveTab] = useState<ActiveTab>(
     initialTab === "route" && !routeSearchEnabled ? "near-me" : initialTab,
   );
-  const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
-  const [searchState, setSearchState] = useState<SearchState | null>(null);
+  const [areaMapMoved, setAreaMapMoved] = useState(false);
+  const [hoveredPlaceId, setHoveredPlaceId] = useState<string | null>(null);
+  const [lastAreaSearch, setLastAreaSearch] = useState<AreaSearchMemory | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
-  const [loadingDetailsPlaceId, setLoadingDetailsPlaceId] = useState<string | null>(null);
-  const [savingPlaceId, setSavingPlaceId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingDetailsPlaceId, setLoadingDetailsPlaceId] = useState<
+    string | null
+  >(null);
+  const [mobileView, setMobileView] = useState<MobileView>("list");
   const [notice, setNotice] = useState<string | null>(null);
-  const [quotaReached, setQuotaReached] = useState<QuotaReachedState | null>(null);
+  const [quotaReached, setQuotaReached] = useState<QuotaReachedState | null>(
+    null,
+  );
+  const [savingPlaceId, setSavingPlaceId] = useState<string | null>(null);
+  const [searchState, setSearchState] = useState<SearchState | null>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const searchControllerRef = useRef<AbortController | null>(null);
+  const viewportCenterRef = useRef<MapPoint | null>(null);
+  const locationTrackedRef = useRef(false);
+
+  const hasLocation =
+    deviceLocation.latitude != null && deviceLocation.longitude != null;
+  const locationCenter = hasLocation
+    ? {
+        latitude: deviceLocation.latitude as number,
+        longitude: deviceLocation.longitude as number,
+      }
+    : null;
+  const isRouteResult = searchState?.source === "route_search";
+  const mapCenter = searchState?.center ?? locationCenter;
+  const showSearchThisArea =
+    activeTab === "area" &&
+    searchState?.source === "map_area" &&
+    areaMapMoved &&
+    Boolean(lastAreaSearch);
 
   useEffect(
     () => () => {
@@ -199,6 +237,35 @@ export function DiscoverTabs({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!hasLocation || locationTrackedRef.current) {
+      return;
+    }
+
+    locationTrackedRef.current = true;
+    trackMapEvent(ANALYTICS_EVENTS.DEVICE_LOCATION_SUCCESS, {
+      source: "map_near_me",
+    });
+  }, [hasLocation]);
+
+  useEffect(() => {
+    if (!deviceLocation.error) {
+      return;
+    }
+
+    trackMapEvent(ANALYTICS_EVENTS.DEVICE_LOCATION_FAILED, {
+      errorCode: deviceLocation.permissionState,
+      source: "map_near_me",
+    });
+  }, [deviceLocation.error, deviceLocation.permissionState]);
+
+  function resetTransientState() {
+    setError(null);
+    setNotice(null);
+    setQuotaReached(null);
+    setSuccessMessage(null);
+  }
 
   function handleTabChange(tab: ActiveTab) {
     if (tab === "route" && !routeSearchEnabled) {
@@ -208,36 +275,35 @@ export function DiscoverTabs({
 
     searchControllerRef.current?.abort();
     searchControllerRef.current = null;
-    setLoading(false);
     setActiveTab(tab);
-    setError(null);
-    setNotice(null);
-    setQuotaReached(null);
-    setSuccessMessage(null);
+    setAreaMapMoved(false);
+    setHoveredPlaceId(null);
+    setLoading(false);
+    setMobileView("list");
     setSearchState(null);
+    setSelectedPlaceId(null);
+    resetTransientState();
   }
 
   async function submitSearch(
-    endpoint: "/api/discovery/area" | "/api/discovery/near-me" | "/api/discovery/route",
+    endpoint:
+      | "/api/discovery/area"
+      | "/api/discovery/near-me"
+      | "/api/discovery/route",
     payload: Record<string, unknown>,
     source: DiscoverySource,
   ) {
     searchControllerRef.current?.abort();
     const controller = new AbortController();
     searchControllerRef.current = controller;
+    setAreaMapMoved(false);
+    setHoveredPlaceId(null);
     setLoading(true);
-    setError(null);
-    setNotice(null);
-    setQuotaReached(null);
-    setSuccessMessage(null);
+    setSelectedPlaceId(null);
+    resetTransientState();
 
     const events = getSearchEvents(source);
-    trackMapEvent(events.started, {
-      bufferMeters: Number(payload.bufferMeters || 0),
-      keyword: String(payload.keyword || ""),
-      radiusMeters: Number(payload.radiusMeters || 0),
-      source,
-    });
+    trackMapEvent(events.started, getSafeSearchProperties(payload, source));
 
     try {
       const response = await fetch(endpoint, {
@@ -256,7 +322,7 @@ export function DiscoverTabs({
         throw new Error(getApiErrorMessage(result, source));
       }
 
-      setSearchState({
+      const nextState = {
         center:
           result.data.center ||
           (source === "map_near_me"
@@ -269,17 +335,18 @@ export function DiscoverTabs({
         results: result.data.results,
         route: result.data.route,
         source,
-      });
+      };
+
+      setSearchState(nextState);
+      setMobileView("map");
 
       trackMapEvent(events.completed, {
-        bufferMeters: Number(payload.bufferMeters || 0),
+        ...getSafeSearchProperties(payload, source),
+        hasResults: result.data.results.length > 0,
         hasRouteDistance: Boolean(result.data.route?.distanceMeters),
         hasRouteDuration: Boolean(result.data.route?.durationSeconds),
-        keyword: String(payload.keyword || ""),
-        radiusMeters: Number(payload.radiusMeters || 0),
         remainingQuota: result.data.quota.remaining,
         resultCount: result.data.results.length,
-        source,
       });
 
       const checklistKey = getChecklistKeyForSearch(source);
@@ -295,10 +362,9 @@ export function DiscoverTabs({
           : getApiErrorMessage({}, source),
       );
       trackMapEvent(events.failed, {
-        bufferMeters: Number(payload.bufferMeters || 0),
-        keyword: String(payload.keyword || ""),
-        radiusMeters: Number(payload.radiusMeters || 0),
-        source,
+        ...getSafeSearchProperties(payload, source),
+        errorCode:
+          searchError instanceof Error ? searchError.message.slice(0, 80) : "UNKNOWN",
       });
     } finally {
       if (searchControllerRef.current === controller) {
@@ -327,9 +393,7 @@ export function DiscoverTabs({
       const result = (await response.json()) as PlaceDetailsResponse;
 
       if (!response.ok || !result.success || !result.data) {
-        throw new Error(
-          getApiErrorMessage(result, searchState?.source),
-        );
+        throw new Error(getApiErrorMessage(result, searchState?.source));
       }
 
       const enrichedPlace = {
@@ -364,45 +428,32 @@ export function DiscoverTabs({
     }
   }
 
+  function handleRequestLocation() {
+    trackMapEvent(ANALYTICS_EVENTS.DEVICE_LOCATION_REQUESTED, {
+      source: "map_near_me",
+    });
+    void deviceLocation.requestLocation();
+  }
+
   async function handleNearMeSearch(input: {
     keyword: string;
     radiusMeters: number;
   }) {
-    if (!navigator.geolocation) {
-      setNotice(
-        "Trình duyệt này không hỗ trợ định vị. Bạn có thể dùng tab Theo khu vực để nhập địa điểm thủ công.",
-      );
+    if (!locationCenter) {
+      setNotice("Bấm dùng vị trí hiện tại để bắt đầu.");
       return;
     }
 
-    setLoading(true);
-    setNotice(null);
-    setError(null);
-    setQuotaReached(null);
-
-    try {
-      const position = await getCurrentPosition();
-      const location = {
-        accuracyMeters: position.coords.accuracy,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      };
-      setCurrentLocation(location);
-
-      await submitSearch(
-        "/api/discovery/near-me",
-        {
-          keyword: input.keyword,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          radiusMeters: input.radiusMeters,
-        },
-        "map_near_me",
-      );
-    } catch (locationError) {
-      setLoading(false);
-      setNotice(getGeolocationErrorMessage(locationError));
-    }
+    await submitSearch(
+      "/api/discovery/near-me",
+      {
+        keyword: input.keyword,
+        latitude: locationCenter.latitude,
+        longitude: locationCenter.longitude,
+        radiusMeters: input.radiusMeters,
+      },
+      "map_near_me",
+    );
   }
 
   async function handleAreaSearch(input: {
@@ -410,7 +461,30 @@ export function DiscoverTabs({
     keyword: string;
     radiusMeters: number;
   }) {
+    setLastAreaSearch(input);
     await submitSearch("/api/discovery/area", input, "map_area");
+  }
+
+  async function handleSearchThisArea(center: MapPoint) {
+    if (!lastAreaSearch) {
+      return;
+    }
+
+    await submitSearch(
+      "/api/discovery/area",
+      {
+        center,
+        keyword: lastAreaSearch.keyword,
+        radiusMeters: lastAreaSearch.radiusMeters,
+      },
+      "map_area",
+    );
+    trackMapEvent(ANALYTICS_EVENTS.MAP_SEARCH_THIS_AREA_CLICKED, {
+      keywordLength: lastAreaSearch.keyword.length,
+      radiusBucket: getRadiusBucket(lastAreaSearch.radiusMeters),
+      searchType: "map_area",
+      source: "map_area",
+    });
   }
 
   async function handleRouteSearch(input: {
@@ -425,6 +499,27 @@ export function DiscoverTabs({
     }
 
     await submitSearch("/api/discovery/route", input, "route_search");
+  }
+
+  function handleViewportCenterChange(center: MapPoint) {
+    viewportCenterRef.current = center;
+
+    if (activeTab === "area" && searchState?.source === "map_area") {
+      setAreaMapMoved(true);
+    }
+  }
+
+  function handleSelectPlace(placeId: string, source: "card" | "marker") {
+    setSelectedPlaceId(placeId);
+    scrollPlaceCardIntoView(placeId);
+    trackMapEvent(
+      source === "marker"
+        ? ANALYTICS_EVENTS.MAP_MARKER_CLICKED
+        : ANALYTICS_EVENTS.PLACE_CARD_CLICKED,
+      {
+        source: searchState?.source,
+      },
+    );
   }
 
   async function handleSavePlace(place: DiscoveryPlaceResult) {
@@ -442,7 +537,7 @@ export function DiscoverTabs({
         try {
           placeToSave = await loadPlaceDetails(place, false);
         } catch {
-          // A lead can still be saved with the core search fields.
+          // Core search fields are enough to create the lead.
         }
       }
 
@@ -495,7 +590,7 @@ export function DiscoverTabs({
 
       const isRouteSearch = searchState?.source === "route_search";
       if (result.data.alreadySaved) {
-        setSuccessMessage("Địa điểm này đã có trong lead cá nhân của bạn.");
+        setSuccessMessage("Địa điểm này đã có trong danh sách lead của bạn.");
         trackMapEvent(
           isRouteSearch
             ? ANALYTICS_EVENTS.ROUTE_PLACE_DUPLICATE_SAVED
@@ -533,7 +628,41 @@ export function DiscoverTabs({
     }
   }
 
-  const isRouteResult = searchState?.source === "route_search";
+  const form =
+    activeTab === "near-me" ? (
+      <NearMeSearchForm
+        hasLocation={hasLocation}
+        loading={loading}
+        locationAccuracyMeters={deviceLocation.accuracy}
+        locationError={deviceLocation.error}
+        locationLoading={deviceLocation.loading}
+        onRequestLocation={handleRequestLocation}
+        onSubmit={handleNearMeSearch}
+      />
+    ) : activeTab === "area" ? (
+      <AreaSearchForm loading={loading} onSubmit={handleAreaSearch} />
+    ) : (
+      <RouteSearchForm loading={loading} onSubmit={handleRouteSearch} />
+    );
+
+  const map = (
+    <MapPreview
+      center={mapCenter}
+      hoveredPlaceId={hoveredPlaceId}
+      mode={isRouteResult ? "route" : "places"}
+      onMarkerClick={(placeId) => handleSelectPlace(placeId, "marker")}
+      onSearchThisArea={handleSearchThisArea}
+      onViewportCenterChange={handleViewportCenterChange}
+      results={searchState?.results ?? []}
+      routeDestination={searchState?.route?.destination}
+      routeOrigin={searchState?.route?.origin}
+      routePolyline={searchState?.route?.polyline}
+      searchThisAreaLoading={loading}
+      searchThisAreaVisible={showSearchThisArea}
+      selectedPlaceId={selectedPlaceId}
+      showCenterMarker={searchState?.source === "map_near_me" || (!searchState && hasLocation)}
+    />
+  );
 
   return (
     <div className="mt-6">
@@ -566,73 +695,104 @@ export function DiscoverTabs({
         })}
       </div>
 
-      <div className="mt-5">
-        {activeTab === "near-me" ? (
-          <NearMeSearchForm
-            loading={loading}
-            locationAccuracyMeters={currentLocation?.accuracyMeters}
-            onSubmit={handleNearMeSearch}
-          />
-        ) : activeTab === "area" ? (
-          <AreaSearchForm loading={loading} onSubmit={handleAreaSearch} />
-        ) : (
-          <RouteSearchForm loading={loading} onSubmit={handleRouteSearch} />
-        )}
-      </div>
-
-      <LocationPermissionNotice message={notice} />
-
-      {error ? (
-        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
-          {error}
-        </div>
-      ) : null}
-
-      {quotaReached ? (
-        <QuotaWarning
-          actionType={quotaReached.actionType}
-          className="mt-4"
-          limit={quotaReached.limit}
-          reached
-          remaining={quotaReached.remaining}
-          used={quotaReached.used}
-        />
-      ) : null}
-
-      {successMessage ? (
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
-          {successMessage}
-        </div>
-      ) : null}
-
       {searchState ? (
-        <div className="mt-6 space-y-5">
-          {isRouteResult && searchState.route ? (
-            <RouteSummaryCard
-              count={searchState.results.length}
-              quota={searchState.quota}
-              route={searchState.route}
-            />
-          ) : (
-            <QuotaBar count={searchState.results.length} quota={searchState.quota} />
-          )}
-          <MapPreview
-            center={searchState.center}
-            mode={isRouteResult ? "route" : "places"}
-            results={searchState.results}
-            routePolyline={searchState.route?.polyline}
-            showCenterMarker={searchState.source === "map_near_me"}
-          />
-          <SearchResultsList
-            loadingDetailsPlaceId={loadingDetailsPlaceId}
-            onLoadDetails={(place) => void loadPlaceDetails(place)}
-            onSave={handleSavePlace}
-            results={searchState.results}
-            savingPlaceId={savingPlaceId}
-            source={searchState.source}
-          />
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200 lg:hidden">
+          <button
+            className={[
+              "min-h-10 rounded-lg text-sm font-bold",
+              mobileView === "list" ? "bg-ink text-white" : "text-slate-600",
+            ].join(" ")}
+            onClick={() => setMobileView("list")}
+            type="button"
+          >
+            Danh sách
+          </button>
+          <button
+            className={[
+              "min-h-10 rounded-lg text-sm font-bold",
+              mobileView === "map" ? "bg-ink text-white" : "text-slate-600",
+            ].join(" ")}
+            onClick={() => setMobileView("map")}
+            type="button"
+          >
+            Bản đồ
+          </button>
         </div>
       ) : null}
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
+        <section
+          className={[
+            "space-y-5",
+            searchState && mobileView === "map" ? "hidden lg:block" : "",
+          ].join(" ")}
+        >
+          {form}
+
+          <LocationPermissionNotice message={notice} />
+
+          {error ? (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          {quotaReached ? (
+            <QuotaWarning
+              actionType={quotaReached.actionType}
+              limit={quotaReached.limit}
+              reached
+              remaining={quotaReached.remaining}
+              used={quotaReached.used}
+            />
+          ) : null}
+
+          {successMessage ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
+              {successMessage}
+            </div>
+          ) : null}
+
+          {searchState ? (
+            <>
+              {isRouteResult && searchState.route ? (
+                <RouteSummaryCard
+                  count={searchState.results.length}
+                  quota={searchState.quota}
+                  route={searchState.route}
+                />
+              ) : (
+                <QuotaBar
+                  count={searchState.results.length}
+                  quota={searchState.quota}
+                />
+              )}
+
+              <SearchResultsList
+                hoveredPlaceId={hoveredPlaceId}
+                loadingDetailsPlaceId={loadingDetailsPlaceId}
+                onHoverPlace={setHoveredPlaceId}
+                onLoadDetails={(place) => void loadPlaceDetails(place)}
+                onSave={handleSavePlace}
+                onSelectPlace={(placeId) => handleSelectPlace(placeId, "card")}
+                results={searchState.results}
+                savingPlaceId={savingPlaceId}
+                selectedPlaceId={selectedPlaceId}
+                source={searchState.source}
+              />
+            </>
+          ) : null}
+        </section>
+
+        <section
+          className={[
+            "lg:sticky lg:top-24",
+            searchState && mobileView === "list" ? "hidden lg:block" : "",
+          ].join(" ")}
+        >
+          {map}
+        </section>
+      </div>
     </div>
   );
 }

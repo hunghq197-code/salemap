@@ -1,5 +1,5 @@
 const DEFAULT_MAPS_CONFIG_MESSAGE =
-  "Chưa cấu hình Google Maps API key trên server. Vui lòng kiểm tra biến GOOGLE_MAPS_API_KEY.";
+  "Chưa cấu hình tìm kiếm địa điểm cho môi trường này.";
 
 const DEFAULT_MAPS_ACCESS_MESSAGE =
   "Google Maps API key chưa được cấp quyền, sai giới hạn truy cập, hoặc chưa bật API/billing cần thiết.";
@@ -8,7 +8,7 @@ const DEFAULT_MAPS_BILLING_MESSAGE =
   "Google Maps chưa nhận diện Billing cho project chứa API key. Vui lòng kiểm tra Billing và thử lại sau.";
 
 const DEFAULT_MAPS_QUOTA_MESSAGE =
-  "Google Maps đang vượt quota hoặc giới hạn truy cập. Vui lòng thử lại sau.";
+  "Dịch vụ tìm kiếm đang quá tải hoặc hết hạn mức. Vui lòng thử lại sau.";
 
 const DEFAULT_MAPS_UNAVAILABLE_MESSAGE =
   "Google Maps đang tạm thời không phản hồi. Vui lòng thử lại sau.";
@@ -65,6 +65,14 @@ export function getMapProviderApiError(
     return {
       message: DEFAULT_MAPS_UNAVAILABLE_MESSAGE,
       status: 503,
+    };
+  }
+
+  if (code === "ROUTE_NOT_FOUND") {
+    return {
+      message:
+        "Không tìm được tuyến đường phù hợp. Vui lòng kiểm tra điểm đầu và điểm cuối.",
+      status: 404,
     };
   }
 

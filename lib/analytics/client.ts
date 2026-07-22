@@ -947,14 +947,19 @@ export function trackMapEvent(
   properties?: {
     bufferMeters?: number;
     category?: string;
+    errorCode?: string;
+    hasResults?: boolean;
     hasRouteDistance?: boolean;
     hasRouteDuration?: boolean;
     hasPhone?: boolean;
     hasWebsite?: boolean;
     keyword?: string;
+    keywordLength?: number;
+    radiusBucket?: string;
     radiusMeters?: number;
     remainingQuota?: number;
     resultCount?: number;
+    searchType?: string;
     source?: string;
   },
 ): void {

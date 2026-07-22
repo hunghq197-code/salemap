@@ -554,6 +554,80 @@ git commit -m "fix: simplify login redirect flow"
 git push origin main
 ```
 
+## 2026-07-22 Update - Google Discovery UX V2
+
+This phase upgrades `/app/discover` after the Google Maps MVP. The scope stayed inside Google Map Discovery: device location, better map/list UX, route map results, and "search this area".
+
+Implemented changes:
+
+- `hooks/useDeviceLocation.ts`
+  - Added a client-only hook for explicit GPS permission requests.
+  - Does not auto-read location before the user clicks the location button.
+  - Handles denied/timeout/unsupported states with friendly messages.
+- `lib/google-maps/load-google-maps.ts`
+  - Centralized Google Maps JavaScript loading on the client.
+  - Uses `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` only for map rendering.
+  - Fails gracefully if the browser key is missing.
+- `components/discovery/DiscoverTabs.tsx`
+  - Reworked `/app/discover` into a desktop two-column workflow: search/results on the left, large sticky map on the right.
+  - Added mobile `Danh sach` / `Ban do` toggle after search results exist.
+  - Split "Quanh toi" into two actions: request current device location, then scan.
+  - Added selected/hovered place state shared between map markers and result cards.
+  - Added "Tim lai khu vuc nay" for area searches after dragging the map.
+  - Sanitized map analytics payloads so exact lat/lng, full keyword, address, phone, email, and raw place data are not sent.
+- `components/discovery/MapPreview.tsx`
+  - Reuses the shared Google Maps loader.
+  - Adds marker click -> selected result card.
+  - Adds result card click/hover -> marker focus/highlight.
+  - Draws route polyline and route origin/destination markers.
+  - Shows a floating "Tim lai khu vuc nay" control for area map re-search.
+- `components/discovery/NearMeSearchForm.tsx`, `AreaSearchForm.tsx`, `RouteSearchForm.tsx`
+  - Updated labels, placeholders, radius/buffer options, and loading states for field-sales UX.
+- `components/discovery/SearchResultsList.tsx`, `PlaceResultCard.tsx`
+  - Added selected/hovered visual states.
+  - Kept lead save, duplicate/saved state, details loading, directions, call, and website actions.
+- `app/api/discovery/area/route.ts`
+  - Now accepts either `areaText` or a map `center`.
+  - If `center` is present, searches directly around that map center without geocoding again.
+- `app/api/discovery/route/route.ts`, `lib/providers/maps/types.ts`
+  - Route search response now includes route origin/destination coordinates for map markers.
+- `lib/validators/discovery.ts`
+  - Radius options now match V2: 500m, 1km, 2km, 3km, 5km.
+  - Area search validation supports `center` for search-this-area.
+- `app/api/discovery/map-provider-errors.ts`
+  - Friendly Google Maps key/quota/route-not-found messages.
+- `lib/providers/maps/google-maps.ts`
+  - Route sampling increased from 4 to 6 points while still deduping by `placeId`.
+
+Validation run after the change:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with 0 warnings and 0 errors.
+- Build passed.
+
+Manual testing still needs real env/auth:
+
+- Fill `.env.local` or Vercel env with Supabase + Google Maps keys.
+- Test `/app/discover` as a logged-in user.
+- Test browser geolocation allow/deny.
+- Test actual Google Places results, save lead, duplicate save, and route search.
+
+Suggested commit:
+
+```powershell
+git add app/api/discovery/area/route.ts app/api/discovery/map-provider-errors.ts app/api/discovery/route/route.ts app/app/discover/page.tsx components/discovery lib/analytics/client.ts lib/analytics/events.ts lib/providers/maps/google-maps.ts lib/providers/maps/types.ts lib/validators/discovery.ts hooks/useDeviceLocation.ts lib/google-maps/load-google-maps.ts CODEX_HANDOFF.md
+git commit -m "feat: upgrade google discovery ux"
+git push origin main
+```
+
 ## Notes For Future Codex Sessions
 
 - Prefer reading this file first, then run `git status --short --branch`.

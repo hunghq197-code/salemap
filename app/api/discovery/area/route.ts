@@ -8,7 +8,10 @@ import {
   isFeatureEnabled,
 } from "@/lib/data/feature-flags";
 import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
-import { searchAreaPlaces } from "@/lib/providers/maps/google-maps";
+import {
+  searchAreaPlaces,
+  searchNearbyPlaces,
+} from "@/lib/providers/maps/google-maps";
 import { areaSearchSchema } from "@/lib/validators/discovery";
 import type { DiscoveryPlaceResult } from "@/lib/providers/maps/types";
 import { getMapProviderApiError } from "../map-provider-errors";
@@ -85,7 +88,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { center, results } = await searchAreaPlaces(parsed.data);
+    const searchResult = parsed.data.center
+      ? {
+          center: parsed.data.center,
+          results: await searchNearbyPlaces({
+            keyword: parsed.data.keyword,
+            latitude: parsed.data.center.latitude,
+            longitude: parsed.data.center.longitude,
+            radiusMeters: parsed.data.radiusMeters,
+          }),
+        }
+      : await searchAreaPlaces({
+          areaText: parsed.data.areaText || "",
+          keyword: parsed.data.keyword,
+          radiusMeters: parsed.data.radiusMeters,
+        });
+    const { center, results } = searchResult;
     const usage = await consumeDailyQuota("area_search");
     await safeMarkChecklistItemCompleted("search_area");
     const savedPlaces = await getSavedPlaces(
@@ -94,7 +112,7 @@ export async function POST(request: Request) {
     );
 
     await supabase.from("map_searches").insert({
-      area_text: parsed.data.areaText,
+      area_text: parsed.data.areaText || null,
       center_lat: center.latitude,
       center_lng: center.longitude,
       keyword: parsed.data.keyword,

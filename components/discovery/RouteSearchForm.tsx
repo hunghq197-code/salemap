@@ -30,65 +30,73 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
     event.preventDefault();
     onSubmit({
       bufferMeters,
-      destinationText,
-      keyword,
-      originText,
+      destinationText: destinationText.trim(),
+      keyword: keyword.trim(),
+      originText: originText.trim(),
     });
   }
 
   return (
     <form
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
       onSubmit={handleSubmit}
     >
-      <div className="mb-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
-        SaleMap sẽ tìm các địa điểm phù hợp nằm gần tuyến đường bạn sắp đi.
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ocean">
+          Dọc tuyến
+        </p>
+        <h2 className="mt-2 text-xl font-bold text-ink">
+          Tìm khách dọc tuyến đường
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Nhập điểm đầu, điểm cuối và ngành khách cần tìm. SaleMap sẽ hiển thị các địa điểm phù hợp dọc tuyến.
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="mt-5 grid gap-4">
         <label className="block text-sm font-bold text-ink">
-          Điểm đi
+          Điểm đầu
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={200}
             minLength={2}
             onChange={(event) => setOriginText(event.target.value)}
-            placeholder="Ví dụ: Quận 1, TP.HCM"
+            placeholder="Điểm đầu, ví dụ: Quận 1, TP.HCM"
             required
             value={originText}
           />
         </label>
 
         <label className="block text-sm font-bold text-ink">
-          Điểm đến
+          Điểm cuối
           <input
             className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
             maxLength={200}
             minLength={2}
             onChange={(event) => setDestinationText(event.target.value)}
-            placeholder="Ví dụ: Quận 7, TP.HCM"
+            placeholder="Điểm cuối, ví dụ: Biên Hòa, Đồng Nai"
             required
             value={destinationText}
           />
         </label>
-      </div>
 
-      <label className="mt-4 block text-sm font-bold text-ink">
-        Từ khóa khách muốn tìm
-        <input
-          className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-          maxLength={100}
-          minLength={2}
-          onChange={(event) => setKeyword(event.target.value)}
-          placeholder="Ví dụ: nhà thuốc, quán ăn, spa, đại lý vật liệu xây dựng..."
-          required
-          value={keyword}
-        />
-      </label>
+        <label className="block text-sm font-bold text-ink">
+          Keyword cần tìm
+          <input
+            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
+            maxLength={100}
+            minLength={2}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Ví dụ: nhà thuốc, đại lý vật liệu xây dựng, quán ăn..."
+            required
+            value={keyword}
+          />
+        </label>
+      </div>
 
       <fieldset className="mt-4">
         <legend className="text-sm font-bold text-ink">Khoảng cách lệch tuyến</legend>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
           {routeBufferOptions.map((option) => (
             <label
               className={[
@@ -121,18 +129,21 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
         {loading ? (
           <>
             <Route aria-hidden="true" className="h-5 w-5 animate-pulse" />
-            Đang tìm khách dọc tuyến đường...
+            Đang tìm dọc tuyến...
           </>
         ) : (
           <>
             <Search aria-hidden="true" className="h-5 w-5" />
-            Tìm khách dọc tuyến
+            Tìm dọc tuyến
           </>
         )}
       </button>
 
       <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-slate-500">
-        <MapPinned aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-ocean" />
+        <MapPinned
+          aria-hidden="true"
+          className="mt-0.5 h-4 w-4 flex-none text-ocean"
+        />
         Nên nhập địa chỉ hoặc quận/huyện cụ thể để kết quả tuyến chính xác hơn.
       </p>
     </form>

@@ -27,16 +27,15 @@ export default async function DiscoverPage(props: DiscoverPageProps) {
     requestedTab === "route" && !routeSearchEnabled ? "near-me" : requestedTab;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-7xl">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
         Khám phá địa điểm
       </p>
       <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-        Tìm khách quanh bạn
+        Tìm khách bằng Google Maps
       </h1>
       <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-        Nhập bất kỳ từ khóa nào để tìm địa điểm thật trên Google Maps quanh vị trí hiện tại,
-        trong một khu vực hoặc dọc tuyến đường. Sau đó lưu địa điểm phù hợp thành lead để chăm sóc.
+        Quét khách quanh vị trí hiện tại, theo khu vực cụ thể hoặc dọc tuyến đường. Kết quả được hiển thị bằng marker trên bản đồ và có thể lưu thành lead để chăm sóc tiếp.
       </p>
 
       {mapDiscoveryEnabled ? (
