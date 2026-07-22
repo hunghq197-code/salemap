@@ -5,6 +5,7 @@ import {
   attachCadenceMetadataToTasks,
   syncCadenceProgressForTask,
 } from "@/lib/data/cadences";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import type { QueryLike } from "@/lib/leads/lead-filters";
 import type { TaskCadenceMetadata } from "@/lib/types/cadences";
 import type {
@@ -389,6 +390,7 @@ export async function createTask(input: CreateTaskInput) {
   const { supabase, userId } = await createAuthedSupabaseServerClient();
   const task = await createTaskForUser(supabase, userId, input);
   await trackUserActivity("reminder_created");
+  void safeMarkActivationStepForUser(supabase, userId, "created_first_task");
   return task;
 }
 
@@ -502,6 +504,7 @@ export async function completeTask(input: CompleteTaskInput) {
   });
   await syncCadenceProgressForTask(task.id).catch(() => null);
   await trackUserActivity("reminder_completed");
+  void safeMarkActivationStepForUser(supabase, userId, "completed_first_task");
 
   return {
     nextTask,

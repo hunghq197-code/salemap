@@ -75,7 +75,27 @@ export default async function PipelinePage() {
       </section>
 
       <section className="mt-6">
-        <PipelineBoard columns={columns} />
+        {summary.totalActiveLeads === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
+              <UsersRound aria-hidden="true" className="h-7 w-7" />
+            </div>
+            <h2 className="mt-5 text-xl font-bold text-ink">
+              Theo dõi khách theo từng giai đoạn bán hàng
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
+              Khi có lead, bạn có thể kéo khách qua các trạng thái: mới, đã liên hệ, quan tâm, đã báo giá, đã chốt.
+            </p>
+            <Link
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
+              href="/app/leads"
+            >
+              Xem danh sách lead
+            </Link>
+          </div>
+        ) : (
+          <PipelineBoard columns={columns} />
+        )}
       </section>
     </div>
   );

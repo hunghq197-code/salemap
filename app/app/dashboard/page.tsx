@@ -22,6 +22,7 @@ import { TodayTasksWidget } from "@/components/dashboard/TodayTasksWidget";
 import { FirstRunGuideCard } from "@/components/app/FirstRunGuideCard";
 import { BetaChecklistCard } from "@/components/beta/BetaChecklistCard";
 import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
+import { ActivationChecklist } from "@/components/onboarding/ActivationChecklist";
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
 import { Toast } from "@/components/ui/Toast";
@@ -34,6 +35,11 @@ import { getCadenceDashboardSummary } from "@/lib/data/cadences";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { getSavedViewsWithCounts } from "@/lib/data/lead-saved-views";
+import {
+  getActivationProgressWithChecklist,
+  hasDemoData,
+  safeMarkActivationStep,
+} from "@/lib/data/onboarding";
 import { getPinnedSalesGoals } from "@/lib/data/sales-goals";
 import { getCurrentSubscription } from "@/lib/data/subscriptions";
 import { getBetaRound2SurveyState } from "@/lib/data/surveys";
@@ -75,6 +81,7 @@ function StatCard({
 export default async function DashboardPage(props: DashboardPageProps) {
   const searchParams = await props.searchParams;
   const { userId } = await createAuthedSupabaseServerClient();
+  void safeMarkActivationStep("viewed_dashboard");
   const [
     data,
     taskCounts,
@@ -88,6 +95,8 @@ export default async function DashboardPage(props: DashboardPageProps) {
     leadViews,
     todaySales,
     pinnedGoals,
+    activation,
+    demoDataExists,
   ] = await Promise.all([
     getDashboardData(),
     getTaskCounts(),
@@ -101,6 +110,8 @@ export default async function DashboardPage(props: DashboardPageProps) {
     getSavedViewsWithCounts(),
     calculateSalesMetricsForUser(userId, "today"),
     getPinnedSalesGoals(),
+    getActivationProgressWithChecklist(),
+    hasDemoData(),
   ]);
   const coreActionsCompleted = [
     data.totalLeads > 0,
@@ -181,6 +192,14 @@ export default async function DashboardPage(props: DashboardPageProps) {
           items={betaChecklist.items}
           schemaReady={betaChecklist.schemaReady}
           total={betaChecklist.total}
+        />
+
+        <ActivationChecklist
+          completedCount={activation.completedCount}
+          hasDemoData={demoDataExists}
+          items={activation.checklist}
+          score={activation.score}
+          totalCount={activation.totalCount}
         />
 
         {betaSurveyEnabled ? (

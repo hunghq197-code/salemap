@@ -899,3 +899,25 @@ Deployment note:
 - Run `supabase/admin-security.sql` after the existing schema files.
 - Bootstrap the first admin with `BOOTSTRAP_ADMIN_EMAIL` and `npm run admin:bootstrap`.
 - Run `npm run security:scan` before pushing/deploying.
+
+## 2026-07-22 Update - User Onboarding + Activation Checklist + Demo Data MVP
+
+This phase focused on helping new users understand the SaleMap core loop: set up profile, find customers, save a lead, create follow-up tasks, apply a cadence, and return to Task Center.
+
+Implemented changes:
+
+- Added `supabase/onboarding-activation.sql` for `user_onboarding_profiles`, `user_activation_progress`, `onboarding_feedback`, and `is_demo` flags on demo-owned records.
+- Added server-side onboarding data helpers in `lib/data/onboarding.ts` and validators/constants in `lib/validators/onboarding.ts` and `lib/constants/onboarding.ts`.
+- Added onboarding APIs under `/api/onboarding/*`: profile, complete, skip, progress, progress mark, feedback, and demo data create/delete.
+- Rebuilt the onboarding form to use server APIs, 4 product-minded setup steps, demo data CTA, and skip flow.
+- Added `/app/onboarding` entry page for completed users to revisit setup.
+- Added `ActivationChecklist` on dashboard with score, next-step CTA, demo-data delete, and quick feedback form.
+- Added dismissible `FirstRunTip` to Discover, Leads, Tasks, and Cadences.
+- Improved empty states for Discover, Leads, Tasks, Cadences, and Pipeline.
+- Integrated activation marks into map search, save lead, manual lead create, task create/complete, reminder create/complete, cadence apply, import execute, and dashboard view.
+- Added admin activation score filter/list column and metadata-only Activation section on `/admin/users/[userId]`.
+
+Deployment note:
+
+- Run `supabase/onboarding-activation.sql` after the existing schema files. `SUPABASE_SQL_SETUP.md` lists it as step 26.
+- Demo data is marked with `is_demo = true` and delete only targets current-user demo rows.

@@ -1,5 +1,6 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import { assignTagsToLead, createTag } from "@/lib/data/tags";
 import type { TagRecord } from "@/lib/data/tags";
 import type { LeadFormInput } from "@/lib/validators/lead";
@@ -304,6 +305,7 @@ export async function createLead(input: LeadFormInput) {
 
   await assignTagsToLead(data.id as string, await resolveTagIds(input));
   await trackUserActivity("lead_created");
+  void safeMarkActivationStepForUser(supabase, userId, "saved_first_lead");
 
   return data.id as string;
 }

@@ -28,6 +28,8 @@ export type AdminUserRow = {
   accountStatus: string;
   adminRole: string;
   area: string;
+  activationScore: number;
+  activationStatus: string;
   createdAt?: string;
   email: string;
   feedbackCount: number;
@@ -67,7 +69,60 @@ type UserFeatureOverride = {
   updated_at?: string | null;
 };
 
+type AdminActivationProgressRow = {
+  activation_score?: number | null;
+  applied_first_cadence?: boolean | null;
+  applied_first_cadence_at?: string | null;
+  completed_first_task?: boolean | null;
+  completed_first_task_at?: string | null;
+  created_at?: string | null;
+  created_first_task?: boolean | null;
+  created_first_task_at?: string | null;
+  imported_leads?: boolean | null;
+  imported_leads_at?: string | null;
+  saved_first_lead?: boolean | null;
+  saved_first_lead_at?: string | null;
+  searched_map?: boolean | null;
+  searched_map_at?: string | null;
+  updated_at?: string | null;
+  user_id: string;
+  viewed_dashboard?: boolean | null;
+  viewed_dashboard_at?: string | null;
+};
+
+type AdminOnboardingProfileRow = {
+  completed_at?: string | null;
+  created_at?: string | null;
+  has_completed_onboarding?: boolean | null;
+  skipped_at?: string | null;
+  user_id: string;
+};
+
+export type AdminActivationDetail = {
+  activationScore: number;
+  appliedFirstCadence: boolean;
+  appliedFirstCadenceAt?: string | null;
+  completedAt?: string | null;
+  completedFirstTask: boolean;
+  completedFirstTaskAt?: string | null;
+  completedOnboarding: boolean;
+  createdAt?: string | null;
+  createdFirstTask: boolean;
+  createdFirstTaskAt?: string | null;
+  importedLeads: boolean;
+  importedLeadsAt?: string | null;
+  savedFirstLead: boolean;
+  savedFirstLeadAt?: string | null;
+  searchedMap: boolean;
+  searchedMapAt?: string | null;
+  skippedAt?: string | null;
+  updatedAt?: string | null;
+  viewedDashboard: boolean;
+  viewedDashboardAt?: string | null;
+};
+
 export type AdminUserDetail = AdminUserRow & {
+  activation: AdminActivationDetail;
   aiRequestCount: number;
   cadenceCount: number;
   featureOverride: UserFeatureOverride | null;
@@ -117,6 +172,7 @@ export async function getAdminUsers(params?: AdminSearchParams) {
   const role = getParam(params, "role") || "";
   const industry = getParam(params, "industry") || "";
   const onboarding = getParam(params, "onboarding") || "";
+  const activation = getParam(params, "activation") || "";
   const fromDate = getParam(params, "fromDate") || "";
   const toDate = getParam(params, "toDate") || "";
 
@@ -131,6 +187,8 @@ export async function getAdminUsers(params?: AdminSearchParams) {
     feedback,
     interests,
     adminRoles,
+    activationProgressRows,
+    onboardingProfileRows,
   ] = await Promise.all([
     listAuthUsers(),
     listProfiles(),
@@ -142,6 +200,14 @@ export async function getAdminUsers(params?: AdminSearchParams) {
     listUserIdRows("beta_feedback", "user_id"),
     listUserIdRows("upgrade_interests", "user_id"),
     listAdminRoleRows(),
+    listUserIdRows(
+      "user_activation_progress",
+      "user_id,activation_score,searched_map,saved_first_lead,created_first_task,applied_first_cadence,completed_first_task,imported_leads,viewed_dashboard,created_at,updated_at",
+    ),
+    listUserIdRows(
+      "user_onboarding_profiles",
+      "user_id,has_completed_onboarding,completed_at,skipped_at,created_at",
+    ),
   ]);
 
   const profileMap = toProfileMap(profiles);
@@ -157,14 +223,41 @@ export async function getAdminUsers(params?: AdminSearchParams) {
   const routeCounts = countRowsByUser(routes);
   const feedbackCounts = countRowsByUser(feedback);
   const interestCounts = countRowsByUser(interests);
+  const activationMap = new Map(
+    (activationProgressRows as AdminActivationProgressRow[]).map((row) => [
+      row.user_id,
+      row,
+    ]),
+  );
+  const onboardingProfileMap = new Map(
+    (onboardingProfileRows as AdminOnboardingProfileRow[]).map((row) => [
+      row.user_id,
+      row,
+    ]),
+  );
 
   const rows: AdminUserRow[] = users.map((user) => {
     const profile = profileMap.get(user.id);
+    const activationProgress = activationMap.get(user.id);
+    const onboardingProfile = onboardingProfileMap.get(user.id);
+    const activationScore = Number(activationProgress?.activation_score ?? 0);
+    const onboardingCompleted = Boolean(
+      profile?.onboarding_completed || onboardingProfile?.has_completed_onboarding,
+    );
 
     return {
       accountStatus: profile?.account_status || "active",
       adminRole: adminRoleMap.get(user.id) || "",
       area: [profile?.primary_city, profile?.primary_district].filter(Boolean).join(" - "),
+      activationScore,
+      activationStatus:
+        activationScore >= 100
+          ? "score_100"
+          : activationScore >= 60
+            ? "score_60"
+            : onboardingCompleted
+              ? "onboarded_not_activated"
+              : "not_onboarded",
       createdAt: user.created_at,
       email: user.email || "",
       feedbackCount: feedbackCounts.get(user.id) ?? 0,
@@ -174,7 +267,7 @@ export async function getAdminUsers(params?: AdminSearchParams) {
       leadCount: leadCounts.get(user.id) ?? 0,
       mapSearchCount: mapCounts.get(user.id) ?? 0,
       noteCount: noteCounts.get(user.id) ?? 0,
-      onboardingCompleted: Boolean(profile?.onboarding_completed),
+      onboardingCompleted,
       reminderCount: reminderCounts.get(user.id) ?? 0,
       roleType: profile?.role_type || "",
       routeSearchCount: routeCounts.get(user.id) ?? 0,
@@ -201,6 +294,25 @@ export async function getAdminUsers(params?: AdminSearchParams) {
     }
 
     if (onboarding === "false" && row.onboardingCompleted) {
+      return false;
+    }
+
+    if (activation === "not_onboarded" && row.onboardingCompleted) {
+      return false;
+    }
+
+    if (
+      activation === "onboarded_not_activated" &&
+      (!row.onboardingCompleted || row.activationScore >= 60)
+    ) {
+      return false;
+    }
+
+    if (activation === "score_60" && row.activationScore < 60) {
+      return false;
+    }
+
+    if (activation === "score_100" && row.activationScore !== 100) {
       return false;
     }
 
@@ -265,6 +377,35 @@ async function getMaybeSingle<T>(table: string, userId: string) {
   }
 
   return data as T;
+}
+
+function buildActivationDetail(
+  progress: AdminActivationProgressRow | null,
+  onboarding: AdminOnboardingProfileRow | null,
+  onboardingCompleted: boolean,
+): AdminActivationDetail {
+  return {
+    activationScore: Number(progress?.activation_score ?? 0),
+    appliedFirstCadence: Boolean(progress?.applied_first_cadence),
+    appliedFirstCadenceAt: progress?.applied_first_cadence_at ?? null,
+    completedAt: onboarding?.completed_at ?? null,
+    completedFirstTask: Boolean(progress?.completed_first_task),
+    completedFirstTaskAt: progress?.completed_first_task_at ?? null,
+    completedOnboarding: onboardingCompleted,
+    createdAt: progress?.created_at ?? onboarding?.created_at ?? null,
+    createdFirstTask: Boolean(progress?.created_first_task),
+    createdFirstTaskAt: progress?.created_first_task_at ?? null,
+    importedLeads: Boolean(progress?.imported_leads),
+    importedLeadsAt: progress?.imported_leads_at ?? null,
+    savedFirstLead: Boolean(progress?.saved_first_lead),
+    savedFirstLeadAt: progress?.saved_first_lead_at ?? null,
+    searchedMap: Boolean(progress?.searched_map),
+    searchedMapAt: progress?.searched_map_at ?? null,
+    skippedAt: onboarding?.skipped_at ?? null,
+    updatedAt: progress?.updated_at ?? null,
+    viewedDashboard: Boolean(progress?.viewed_dashboard),
+    viewedDashboardAt: progress?.viewed_dashboard_at ?? null,
+  };
 }
 
 async function getUsageSummary(userId: string) {
@@ -334,6 +475,8 @@ export async function getAdminUserDetail(
     quotaOverride,
     featureOverride,
     usageSummary,
+    activationProgress,
+    onboardingProgress,
   ] = await Promise.all([
     listAuthUsers(),
     listProfiles(),
@@ -357,6 +500,8 @@ export async function getAdminUserDetail(
     getMaybeSingle<UserQuotaOverride>("user_quota_overrides", userId),
     getMaybeSingle<UserFeatureOverride>("user_feature_overrides", userId),
     getUsageSummary(userId),
+    getMaybeSingle<AdminActivationProgressRow>("user_activation_progress", userId),
+    getMaybeSingle<AdminOnboardingProfileRow>("user_onboarding_profiles", userId),
   ]);
 
   const authUser = users.find((user) => user.id === userId);
@@ -367,6 +512,10 @@ export async function getAdminUserDetail(
 
   const profileMap = toProfileMap(profiles);
   const profile = profileMap.get(userId);
+  const onboardingCompleted = Boolean(
+    profile?.onboarding_completed || onboardingProgress?.has_completed_onboarding,
+  );
+  const activationScore = Number(activationProgress?.activation_score ?? 0);
   const adminRole = adminRoles.find((row) => row.user_id === userId && row.is_active);
   const ownRows = (rows: Array<{ user_id?: string | null; [key: string]: unknown }>) =>
     rows.filter((row) => row.user_id === userId);
@@ -402,6 +551,20 @@ export async function getAdminUserDetail(
 
   return {
     accountStatus: profile?.account_status || "active",
+    activation: buildActivationDetail(
+      activationProgress,
+      onboardingProgress,
+      onboardingCompleted,
+    ),
+    activationScore,
+    activationStatus:
+      activationScore >= 100
+        ? "score_100"
+        : activationScore >= 60
+          ? "score_60"
+          : onboardingCompleted
+            ? "onboarded_not_activated"
+            : "not_onboarded",
     adminRole: adminRole?.role || "",
     aiRequestCount: ownRows(aiRequests).length,
     area: [profile?.primary_city, profile?.primary_district].filter(Boolean).join(" - "),
@@ -422,7 +585,7 @@ export async function getAdminUserDetail(
       sumUsage(["near_me_search", "area_search"]),
     ),
     noteCount: ownRows(notes).length,
-    onboardingCompleted: Boolean(profile?.onboarding_completed),
+    onboardingCompleted,
     paymentRequestCount: ownRows(paymentRequests).length,
     quotaOverride,
     reminderCount: ownRows(reminders).length,

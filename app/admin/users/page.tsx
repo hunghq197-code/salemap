@@ -30,6 +30,7 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
       getParam(searchParams, "role") ||
       getParam(searchParams, "industry") ||
       getParam(searchParams, "onboarding") ||
+      getParam(searchParams, "activation") ||
       getParam(searchParams, "fromDate") ||
       getParam(searchParams, "toDate"),
   );
@@ -72,6 +73,15 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
               <option value="">Tất cả</option>
               <option value="true">Đã hoàn tất</option>
               <option value="false">Chưa hoàn tất</option>
+            </select>
+          </AdminField>
+          <AdminField label="Activation">
+            <select className={inputClass} defaultValue={getParam(searchParams, "activation") || ""} name="activation">
+              <option value="">Tất cả</option>
+              <option value="not_onboarded">Not onboarded</option>
+              <option value="onboarded_not_activated">Onboarded but not activated</option>
+              <option value="score_60">Activated score &gt;= 60</option>
+              <option value="score_100">Activated score = 100</option>
             </select>
           </AdminField>
           <AdminField label="Từ ngày">
@@ -137,6 +147,7 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
           "Ngành",
           "Khu vực",
           "Onboarding",
+          "Activation",
           "Admin?",
           "Lead",
           "Reminder",
@@ -157,6 +168,12 @@ export default async function AdminUsersPage(props: AdminUsersPageProps) {
             <td className="whitespace-nowrap px-4 py-3 text-slate-600">{user.area || "Chưa có"}</td>
             <td className="whitespace-nowrap px-4 py-3">
               <AdminStatusBadge value={user.onboardingCompleted ? "done" : "pending"} />
+            </td>
+            <td className="whitespace-nowrap px-4 py-3">
+              <AdminStatusBadge
+                tone={user.activationScore >= 100 ? "green" : user.activationScore >= 60 ? "blue" : "yellow"}
+                value={`${user.activationScore}/100`}
+              />
             </td>
             <td className="whitespace-nowrap px-4 py-3">
               <AdminStatusBadge value={user.isAdmin ? "admin" : "user"} />

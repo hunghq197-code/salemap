@@ -30,6 +30,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 23. `supabase/cadences.sql`
 24. `supabase/seed-cadence-templates.sql`
 25. `supabase/admin-security.sql`
+26. `supabase/onboarding-activation.sql`
 
 ## Khi Nào Cần Chạy Lại
 
@@ -39,6 +40,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 - Nếu app bắt đầu có nhiều lead/task/import và chuyển trang chậm, chạy file số 22 để bổ sung index hiệu năng.
 - Nếu trang `/app/cadences` trống hoặc dashboard báo thiếu bảng cadence, chạy file số 23 rồi file số 24.
 - Nếu `/admin` báo không đủ quyền hoặc thiếu bảng audit/security/quota override, chạy file số 25 rồi bootstrap super_admin theo `ADMIN_BOOTSTRAP.md`.
+- Nếu onboarding mới, activation checklist, demo data hoặc admin activation metadata chưa chạy, chạy file số 26.
 - Nếu thư viện mẫu trống do thiếu bảng, chạy file số 6 rồi file số 7.
 - Nếu quota/gói sử dụng không lưu được, chạy file số 13 và 14.
 - Nếu admin dashboard thiếu dữ liệu beta/public beta, chạy file số 8 đến 12.

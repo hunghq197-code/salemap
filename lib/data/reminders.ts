@@ -1,6 +1,7 @@
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
 import { createNotification } from "@/lib/data/notifications";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import { ACTIVE_TASK_STATUSES, COMPLETED_TASK_STATUSES } from "@/lib/constants/tasks";
 import type { ReminderFormInput, ReminderTab } from "@/lib/validators/reminder";
 
@@ -220,6 +221,7 @@ export async function createReminder(input: ReminderFormInput) {
     userId,
   });
   await trackUserActivity("reminder_created");
+  void safeMarkActivationStepForUser(supabase, userId, "created_first_task");
 
   return data.id as string;
 }
@@ -243,6 +245,7 @@ export async function completeReminder(reminderId: string) {
 
   await syncLeadNextFollowUp(reminder.lead_id);
   await trackUserActivity("reminder_completed");
+  void safeMarkActivationStepForUser(supabase, userId, "completed_first_task");
 }
 
 export async function snoozeReminder(reminderId: string, newRemindAt?: string) {

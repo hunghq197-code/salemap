@@ -2,6 +2,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import { safeMarkChecklistItemCompleted } from "@/lib/data/beta-checklist";
 import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
 import { savePlaceSchema } from "@/lib/validators/discovery";
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
 
   if (existingLead) {
     await markRouteStopSaved(supabase, user.id, input.routeStopId || undefined, existingLead.id);
+    void safeMarkActivationStepForUser(supabase, user.id, "saved_first_lead");
 
     return NextResponse.json({
       data: {
@@ -172,6 +174,7 @@ export async function POST(request: Request) {
     await safeMarkChecklistItemCompleted("create_first_lead");
     await trackUserActivity("lead_created");
     await trackUserActivity("map_place_saved");
+    void safeMarkActivationStepForUser(supabase, user.id, "saved_first_lead");
     await markRouteStopSaved(supabase, user.id, input.routeStopId || undefined, insertedLead.id);
 
     return NextResponse.json({

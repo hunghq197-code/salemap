@@ -42,6 +42,10 @@ function valueText(value: unknown) {
   return String(value);
 }
 
+function yesNo(value: boolean) {
+  return value ? "Có" : "Không";
+}
+
 export default async function AdminUserDetailPage(props: AdminUserDetailPageProps) {
   const { userId } = await props.params;
   const user = await getAdminUserDetail(userId);
@@ -151,6 +155,39 @@ export default async function AdminUserDetailPage(props: AdminUserDetailPageProp
             <p><strong>Onboarding:</strong> {user.onboardingCompleted ? "Đã hoàn tất" : "Chưa hoàn tất"}</p>
           </div>
         </article>
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-bold text-ink">Activation</h2>
+          <AdminStatusBadge
+            tone={user.activation.activationScore >= 100 ? "green" : user.activation.activationScore >= 60 ? "blue" : "yellow"}
+            value={`${user.activation.activationScore}/100`}
+          />
+        </div>
+        <AdminTable
+          empty={false}
+          headers={["Metadata", "Giá trị", "Thời điểm"]}
+        >
+          {[
+            ["Completed onboarding", yesNo(user.activation.completedOnboarding), user.activation.completedAt],
+            ["Skipped onboarding", yesNo(Boolean(user.activation.skippedAt)), user.activation.skippedAt],
+            ["searched_map", yesNo(user.activation.searchedMap), user.activation.searchedMapAt],
+            ["saved_first_lead", yesNo(user.activation.savedFirstLead), user.activation.savedFirstLeadAt],
+            ["created_first_task", yesNo(user.activation.createdFirstTask), user.activation.createdFirstTaskAt],
+            ["applied_first_cadence", yesNo(user.activation.appliedFirstCadence), user.activation.appliedFirstCadenceAt],
+            ["completed_first_task", yesNo(user.activation.completedFirstTask), user.activation.completedFirstTaskAt],
+            ["imported_leads", yesNo(user.activation.importedLeads), user.activation.importedLeadsAt],
+            ["viewed_dashboard", yesNo(user.activation.viewedDashboard), user.activation.viewedDashboardAt],
+            ["created_at", formatDate(user.activation.createdAt), user.activation.createdAt],
+          ].map(([label, value, date]) => (
+            <tr key={String(label)}>
+              <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{label}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{value}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(date)}</td>
+            </tr>
+          ))}
+        </AdminTable>
       </section>
 
       <section className="mt-8 grid gap-5 xl:grid-cols-2">

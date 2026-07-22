@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { isDuplicateStrategy } from "@/lib/constants/import";
 import { getImportJobById, updateImportJob } from "@/lib/data/import-jobs";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import { executeImportJob } from "@/lib/import/execute-import";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -64,6 +65,7 @@ export async function POST(request: Request, props: RouteContext) {
 
   try {
     const summary = await executeImportJob(job, duplicateStrategy);
+    void safeMarkActivationStepForUser(supabase, user.id, "imported_leads");
 
     return NextResponse.json({
       data: summary,

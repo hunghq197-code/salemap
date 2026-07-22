@@ -2,6 +2,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import {
   FEATURE_FLAG_DISABLED_MESSAGE,
   isFeatureEnabled,
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
       user_id: user.id,
     });
     await trackUserActivity("near_me_search_completed");
+    void safeMarkActivationStepForUser(supabase, user.id, "searched_map");
 
     const decoratedResults: DiscoveryPlaceResult[] = results.map((result) => {
       const savedLeadId = savedPlaces.get(result.placeId);

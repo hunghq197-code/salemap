@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { updateNotificationSettings } from "@/lib/data/notification-settings";
-import { createSampleDataForCurrentUser } from "@/lib/data/sample-data";
+import { createDemoDataForUser } from "@/lib/data/onboarding";
 
 export async function createSampleDataAction() {
   let toast: "sample_data_created" | "sample_data_skipped" = "sample_data_created";
@@ -14,7 +14,7 @@ export async function createSampleDataAction() {
   }
 
   try {
-    const result = await createSampleDataForCurrentUser();
+    const result = await createDemoDataForUser();
     toast = result.status === "skipped" ? "sample_data_skipped" : "sample_data_created";
     revalidatePath("/app/dashboard");
     revalidatePath("/app/leads");

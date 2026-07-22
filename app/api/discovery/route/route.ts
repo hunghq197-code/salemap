@@ -2,6 +2,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { guardMutationRequest } from "@/lib/security/request";
 import { trackUserActivity } from "@/lib/data/activity-tracking";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import { safeMarkChecklistItemCompleted } from "@/lib/data/beta-checklist";
 import {
   FEATURE_FLAG_DISABLED_MESSAGE,
@@ -172,6 +173,7 @@ export async function POST(request: Request) {
     const usage = await consumeDailyQuota("route_search");
     await safeMarkChecklistItemCompleted("search_route");
     await trackUserActivity("route_search_completed");
+    void safeMarkActivationStepForUser(supabase, user.id, "searched_map");
 
     const stopIdsByPlaceId = new Map(
       (insertedStops ?? []).map((stop) => [stop.place_id as string, stop.id as string]),

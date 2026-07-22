@@ -36,8 +36,10 @@ function getEmptyCopy(tab: TaskTab) {
   }
 
   return {
-    body: "Hãy tạo follow-up cho lead mới hoặc kiểm tra tab Chưa có lịch.",
-    title: "Hôm nay bạn chưa có việc cần làm.",
+    actionHref: "/app/tasks?tab=no_schedule",
+    actionLabel: "Tạo follow-up đầu tiên",
+    body: "Khi lưu lead, hãy tạo follow-up để không quên gọi lại, nhắn Zalo hoặc gửi báo giá cho khách.",
+    title: "Bạn chưa có việc cần làm",
   };
 }
 
@@ -53,7 +55,12 @@ export function TaskList({
 
     return (
       <div className="mt-5">
-        <EmptyState description={copy.body} title={copy.title} />
+        <EmptyState
+          actionHref={"actionHref" in copy ? copy.actionHref : undefined}
+          actionLabel={"actionLabel" in copy ? copy.actionLabel : undefined}
+          description={copy.body}
+          title={copy.title}
+        />
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import { ACTIVE_TASK_STATUSES, COMPLETED_TASK_STATUSES } from "@/lib/constants/tasks";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
+import { safeMarkActivationStepForUser } from "@/lib/data/onboarding";
 import type { TaskLeadSummary, TaskRecord } from "@/lib/data/tasks";
 import type {
   CadenceStep,
@@ -708,6 +709,7 @@ export async function applyCadenceToLead(input: ApplyCadenceToLeadInput) {
     },
     userId,
   });
+  void safeMarkActivationStepForUser(supabase, userId, "applied_first_cadence");
 
   return {
     createdTasksCount: steps.length,

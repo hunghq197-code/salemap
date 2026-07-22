@@ -1,6 +1,7 @@
 import { ArrowRight, Info, ListChecks, Plus } from "lucide-react";
 import Link from "next/link";
 import { CadenceTemplateActions } from "@/components/cadences/CadenceTemplateActions";
+import { FirstRunTip } from "@/components/onboarding/FirstRunTip";
 import {
   getCadenceCategoryLabel,
   getCadenceTaskTypeLabel,
@@ -39,6 +40,11 @@ export default async function CadencesPage() {
           Tạo quy trình
         </Link>
       </div>
+
+      <FirstRunTip
+        message="Quy trình chăm sóc giúp bạn tự động tạo lịch việc, nhưng không tự gửi tin nhắn. Bạn vẫn là người kiểm soát."
+        storageKey="salemap:first-run-tip:cadences"
+      />
 
       {!templateResult.schemaReady ? (
         <div className="mt-6 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">
@@ -125,17 +131,18 @@ export default async function CadencesPage() {
         </div>
       ) : (
         <section className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm">
-          <h2 className="text-xl font-bold text-ink">Chưa có quy trình chăm sóc</h2>
+          <h2 className="text-xl font-bold text-ink">
+            Dùng quy trình chăm sóc để không bỏ sót khách
+          </h2>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-600">
-            Chạy seed template hệ thống hoặc tạo quy trình đầu tiên cho cách sale
-            của bạn.
+            Chọn một mẫu chăm sóc, SaleMap sẽ tự tạo các việc cần làm theo lịch. Bạn chỉ cần mở mục Việc cần làm mỗi ngày.
           </p>
           <Link
             className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink"
-            href="/app/cadences/new"
+            href="/app/cadences"
           >
-            <Plus aria-hidden="true" className="h-5 w-5" />
-            Tạo quy trình
+            <ListChecks aria-hidden="true" className="h-5 w-5" />
+            Xem mẫu chăm sóc lead mới
           </Link>
         </section>
       )}

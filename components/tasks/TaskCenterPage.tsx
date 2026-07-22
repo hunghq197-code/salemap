@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics/client";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { TaskCounts } from "@/components/tasks/TaskCounts";
+import { FirstRunTip } from "@/components/onboarding/FirstRunTip";
 import {
   CreateTaskModal,
   type CreateTaskPayload,
@@ -232,6 +233,10 @@ export function TaskCenterPage({
       </div>
 
       <TaskCounts counts={counts} />
+      <FirstRunTip
+        message="Mỗi sáng chỉ cần mở Việc cần làm để biết hôm nay cần gọi ai, nhắn ai, theo dõi ai."
+        storageKey="salemap:first-run-tip:tasks"
+      />
       <TaskTabs activeTab={activeTab} counts={counts} />
 
       {error ? (

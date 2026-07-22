@@ -4,6 +4,7 @@ import { createLeadAction } from "@/app/app/leads/actions";
 import { BulkActionsForm } from "@/components/cleanup/BulkActionsForm";
 import { LeadCard } from "@/components/leads/LeadCard";
 import { LeadForm } from "@/components/leads/LeadForm";
+import { FirstRunTip } from "@/components/onboarding/FirstRunTip";
 import { CreateSavedViewForm } from "@/components/saved-views/CreateSavedViewForm";
 import { Toast } from "@/components/ui/Toast";
 import { LEAD_PRIORITY_OPTIONS } from "@/lib/constants/lead-priority";
@@ -139,6 +140,11 @@ export default async function LeadsPage(props: LeadsPageProps) {
           </Link>
         </div>
       </div>
+
+      <FirstRunTip
+        message="Lead mới lưu nên có follow-up ngay trong 24 giờ để tránh bị quên."
+        storageKey="salemap:first-run-tip:leads"
+      />
 
       {showCreateForm ? (
         <section className="mt-6">
@@ -434,23 +440,16 @@ export default async function LeadsPage(props: LeadsPageProps) {
             <UsersRound aria-hidden="true" className="h-7 w-7" />
           </div>
           <h2 className="mt-5 text-xl font-bold text-ink">
-            {hasFilters ? "Chưa có lead phù hợp." : "Bạn chưa có lead nào."}
+            {hasFilters ? "Chưa có lead phù hợp." : "Bạn chưa có lead nào"}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
             {hasFilters
               ? "Hãy xóa bộ lọc hiện tại hoặc thử từ khóa khác."
-              : "Hãy thêm lead đầu tiên để bắt đầu quản lý khách tiềm năng của bạn."}
+              : "Hãy tìm khách trên bản đồ hoặc import danh sách khách cũ để bắt đầu quản lý."}
           </p>
           <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-              href="/app/leads?create=1"
-            >
-              <Plus aria-hidden="true" className="h-5 w-5" />
-              Thêm lead thủ công
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
               href="/app/discover"
             >
               <MapPinned aria-hidden="true" className="h-5 w-5" />
@@ -461,7 +460,14 @@ export default async function LeadsPage(props: LeadsPageProps) {
               href="/app/import"
             >
               <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
-              Import từ Excel/CSV
+              Import lead
+            </Link>
+            <Link
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
+              href="/app/leads?create=1"
+            >
+              <Plus aria-hidden="true" className="h-5 w-5" />
+              Thêm lead thủ công
             </Link>
           </div>
         </section>
