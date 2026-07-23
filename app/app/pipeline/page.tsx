@@ -38,11 +38,11 @@ export default async function PipelinePage() {
             Pipeline
           </p>
           <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Pipeline ban hang
+            Pipeline bán hàng
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
             Theo dõi lead theo từng trạng thái chăm sóc. Bạn có thể đổi trạng thái trực tiếp trên
-            tung card de hoat dong tot ca desktop lan mobile.
+            từng thẻ, phù hợp trên cả desktop lẫn mobile.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -62,7 +62,7 @@ export default async function PipelinePage() {
             className="inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
             href="/app/leads?create=1"
           >
-            Them lead
+            Thêm lead
           </Link>
         </div>
       </div>

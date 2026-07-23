@@ -43,7 +43,7 @@ const FINAL_PAYMENT_STATUSES = new Set<PaymentStatus>([
 ]);
 
 function isBillingEnabled() {
-  return process.env.BILLING_ENABLED !== "false";
+  return process.env.BILLING_ENABLED === "true";
 }
 
 function uniqueValues<T extends string>(values: T[]) {
@@ -54,7 +54,7 @@ export function getAllowedBillingProviders(): PaymentProviderId[] {
   const raw = process.env.BILLING_ALLOWED_PROVIDERS?.trim();
   const values = raw
     ? raw.split(",").map((value) => value.trim()).filter(Boolean)
-    : ["manual_bank_transfer", "vietqr_manual", "payos"];
+    : ["manual_bank_transfer"];
   const allowed = values.filter((value): value is PaymentProviderId =>
     value === "manual_bank_transfer" || value === "vietqr_manual" || value === "payos",
   );
@@ -68,7 +68,7 @@ export function isBillingProviderEnabled(provider: PaymentProviderId) {
   }
 
   if (provider === "payos") {
-    return process.env.PAYOS_ENABLED === "true" || process.env.PAYMENT_PROVIDER === "payos";
+    return process.env.PAYOS_ENABLED === "true";
   }
 
   if (provider === "vietqr_manual") {

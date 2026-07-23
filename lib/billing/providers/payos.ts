@@ -17,7 +17,7 @@ import {
 } from "@/lib/providers/payments";
 
 function isPayOSEnabled() {
-  return process.env.PAYOS_ENABLED === "true" || process.env.PAYMENT_PROVIDER === "payos";
+  return process.env.PAYOS_ENABLED === "true";
 }
 
 function assertPayOSReady() {

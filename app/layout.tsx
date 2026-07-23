@@ -73,7 +73,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html data-scroll-behavior="smooth" lang="vi">
       <body>
         <LanguageProvider>
           <PostHogBootstrap />
