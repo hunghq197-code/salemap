@@ -8,7 +8,7 @@ import {
   trackBetaFeedbackOpened,
   trackBetaFeedbackSubmitted,
 } from "@/lib/analytics/client";
-import { FEEDBACK_TYPE_OPTIONS } from "@/lib/validators/beta-feedback";
+import { FEEDBACK_TYPE_OPTIONS } from "@/lib/constants/beta-feedback";
 
 function getDeviceType() {
   if (typeof window === "undefined") {

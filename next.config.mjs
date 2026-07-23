@@ -97,6 +97,9 @@ if (isProduction) {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
+  },
   images: {
     dangerouslyAllowSVG: false,
     remotePatterns: [],
