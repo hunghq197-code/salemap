@@ -63,6 +63,16 @@ function scanFile(filePath) {
   const content = readFileSync(filePath, "utf8");
   const relPath = relative(filePath);
   const clientFile = isClientFile(relPath, content);
+  const isApiRoute = /^app\/api\/.*\/route\.(ts|js)$/.test(relPath);
+  const hasMutationHandler =
+    /export\s+(?:async\s+)?function\s+(POST|PUT|PATCH|DELETE)\b/.test(content) ||
+    /export\s+const\s+(POST|PUT|PATCH|DELETE)\b/.test(content);
+  const isExternallyAuthenticatedRoute =
+    /^app\/api\/(cron|webhooks)\//.test(relPath);
+  const hasMutationGuard =
+    content.includes("guardMutationRequest") ||
+    (content.includes("enforceSameOrigin") && content.includes("rateLimit")) ||
+    content.includes("handleAdminApi");
 
   if (clientFile && /createSupabaseAdminClient|service_role|serviceRole/i.test(content)) {
     addFinding(
@@ -118,6 +128,56 @@ function scanFile(filePath) {
       filePath,
       "create-payment-accepts-amount",
       "Create payment API schema must not accept amount from client.",
+    );
+  }
+
+  if (
+    isApiRoute &&
+    hasMutationHandler &&
+    !isExternallyAuthenticatedRoute &&
+    !hasMutationGuard
+  ) {
+    addFinding(
+      filePath,
+      "mutation-route-missing-guard",
+      "Mutation API route must enforce same-origin and rate limiting.",
+    );
+  }
+
+  if (
+    relPath === "lib/admin/api-guard.ts" &&
+    !content.includes("enforceSameOrigin(request)")
+  ) {
+    addFinding(
+      filePath,
+      "admin-api-missing-origin-guard",
+      "Admin mutation gateway must enforce same-origin requests.",
+    );
+  }
+
+  if (
+    /^app\/api\/cron\/.*\/route\.(ts|js)$/.test(relPath) &&
+    hasMutationHandler &&
+    !content.includes("CRON_SECRET")
+  ) {
+    addFinding(
+      filePath,
+      "cron-route-missing-secret",
+      "Cron mutation route must authenticate with CRON_SECRET.",
+    );
+  }
+
+  if (
+    /^app\/api\/webhooks\/payos\/route\.(ts|js)$/.test(relPath) &&
+    (
+      !content.includes("InvalidPayOSWebhookSignatureError") ||
+      !content.includes("rateLimitByIp")
+    )
+  ) {
+    addFinding(
+      filePath,
+      "payos-webhook-missing-verification",
+      "payOS webhook must verify its signature and apply IP rate limiting.",
     );
   }
 

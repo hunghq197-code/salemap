@@ -4,6 +4,7 @@ import type { AdminContext } from "@/lib/admin/auth";
 import { requirePermission } from "@/lib/admin/auth";
 import { writeSecurityEvent } from "@/lib/admin/audit-log";
 import { rateLimitAdminAction, rateLimitResponse } from "@/lib/security/rate-limit";
+import { enforceSameOrigin } from "@/lib/security/request";
 import { adminApiError } from "@/lib/security/safe-error";
 
 type AdminApiHandler = (admin: AdminContext) => Promise<Response> | Response;
@@ -14,6 +15,14 @@ export async function handleAdminApi(
   handler: AdminApiHandler,
 ) {
   try {
+    if (!["GET", "HEAD", "OPTIONS"].includes(request.method.toUpperCase())) {
+      const originError = enforceSameOrigin(request);
+
+      if (originError) {
+        return originError;
+      }
+    }
+
     const admin = await requirePermission(permission);
     const limit = rateLimitAdminAction({ request, userId: admin.userId });
 

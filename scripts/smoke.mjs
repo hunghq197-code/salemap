@@ -207,6 +207,10 @@ const tests = [
     () => expectCrossOriginBlocked({ pathname: "/api/ai/generate", body: { prompt: "test" } }),
   ],
   [
+    "AI save-output API blocks cross-origin",
+    () => expectCrossOriginBlocked({ pathname: "/api/ai/save-output" }),
+  ],
+  [
     "discovery area API blocks cross-origin",
     () =>
       expectCrossOriginBlocked({
@@ -233,6 +237,17 @@ const tests = [
   [
     "lead import upload API blocks cross-origin",
     () => expectCrossOriginBlocked({ pathname: "/api/import/leads/upload" }),
+  ],
+  [
+    "lead import execute API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname: "/api/import/leads/00000000-0000-0000-0000-000000000000/execute",
+      }),
+  ],
+  [
+    "lead bulk action API blocks cross-origin",
+    () => expectCrossOriginBlocked({ pathname: "/api/leads/bulk-actions" }),
   ],
   [
     "lead note API blocks cross-origin",
@@ -285,6 +300,22 @@ const tests = [
   [
     "payment request API blocks cross-origin",
     () => expectCrossOriginBlocked({ pathname: "/api/payment-requests" }),
+  ],
+  [
+    "payment request update API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        method: "PATCH",
+        pathname: "/api/payment-requests/00000000-0000-0000-0000-000000000000",
+      }),
+  ],
+  [
+    "admin payment API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        pathname:
+          "/api/admin/payments/00000000-0000-0000-0000-000000000000/cancel",
+      }),
   ],
   [
     "billing create-payment API blocks cross-origin",
