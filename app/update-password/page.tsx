@@ -3,6 +3,11 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 
 export const metadata: Metadata = {
+  description: "Đặt mật khẩu mới cho tài khoản SaleMap.",
+  robots: {
+    follow: false,
+    index: false,
+  },
   title: "Đặt mật khẩu mới - SaleMap",
 };
 

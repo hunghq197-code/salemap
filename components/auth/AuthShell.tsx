@@ -48,7 +48,10 @@ export function AuthShell({
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#f5f8fb_46%,#eef8f4_100%)] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
         <div className="flex items-center justify-between gap-4">
-          <Link className="inline-flex items-center gap-2 text-xl font-bold text-ink" href="/">
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 text-xl font-bold text-ink"
+            href="/"
+          >
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white shadow-soft">
               <MapPinned aria-hidden="true" className="h-5 w-5" />
             </span>

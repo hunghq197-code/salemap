@@ -13,7 +13,10 @@ export function Footer() {
     <footer className="border-t border-slate-200 bg-white px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <Link className="inline-flex items-center gap-2 text-lg font-bold text-ink" href="/">
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 text-lg font-bold text-ink"
+            href="/"
+          >
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-white">
               <MapPinned aria-hidden="true" className="h-5 w-5" />
             </span>
@@ -32,7 +35,7 @@ export function Footer() {
         <nav aria-label="Footer links" className="grid gap-3 sm:grid-cols-2">
           {footer.links.map((link) => (
             <Link
-              className="text-sm font-medium text-slate-600 transition hover:text-ocean"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-slate-600 transition hover:text-ocean"
               href={link.href}
               key={link.label}
             >

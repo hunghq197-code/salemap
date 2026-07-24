@@ -169,6 +169,75 @@ async function expectText(pathname, expectedText) {
   assert(body.includes(expectedText), `${pathname} did not include "${expectedText}"`);
 }
 
+function findHtmlTag(html, tagName, attributeName, attributeValue) {
+  const tags = html.match(new RegExp(`<${tagName}\\b[^>]*>`, "gi")) ?? [];
+
+  return (
+    tags.find((tag) => {
+      const value = tag.match(new RegExp(`${attributeName}="([^"]*)"`, "i"))?.[1];
+      return value === attributeValue;
+    }) ?? null
+  );
+}
+
+function getHtmlAttribute(tag, attributeName) {
+  return tag?.match(new RegExp(`${attributeName}="([^"]*)"`, "i"))?.[1] ?? null;
+}
+
+async function expectCanonical(pathname, expectedPathname) {
+  const response = await fetchWithTimeout(pathname, {
+    headers: { Accept: "text/html" },
+  });
+  const html = await response.text();
+  const canonicalTag = findHtmlTag(html, "link", "rel", "canonical");
+  const canonical = getHtmlAttribute(canonicalTag, "href");
+
+  assert(response.status === 200, `${pathname} expected 200, got ${response.status}`);
+  assert(canonical, `${pathname} is missing canonical metadata`);
+  assert(
+    new URL(canonical).pathname === expectedPathname,
+    `${pathname} canonical expected ${expectedPathname}, got ${canonical}`,
+  );
+}
+
+async function expectNoIndex(pathname) {
+  const response = await fetchWithTimeout(pathname, {
+    headers: { Accept: "text/html" },
+  });
+  const html = await response.text();
+  const robotsTag = findHtmlTag(html, "meta", "name", "robots");
+  const robots = getHtmlAttribute(robotsTag, "content");
+  const canonicalTag = findHtmlTag(html, "link", "rel", "canonical");
+
+  assert(response.status === 200, `${pathname} expected 200, got ${response.status}`);
+  assert(robots?.includes("noindex"), `${pathname} is missing robots noindex`);
+  assert(!canonicalTag, `${pathname} should not publish canonical metadata`);
+}
+
+async function expectOpenGraphImage(pathname) {
+  const response = await fetchWithTimeout(pathname, {
+    headers: { Accept: "text/html" },
+  });
+  const html = await response.text();
+  const imageTag = findHtmlTag(html, "meta", "property", "og:image");
+  const imageUrl = getHtmlAttribute(imageTag, "content");
+
+  assert(response.status === 200, `${pathname} expected 200, got ${response.status}`);
+  assert(imageUrl, `${pathname} is missing og:image`);
+}
+
+async function expectOpenGraphImageRoute() {
+  const response = await fetchWithTimeout("/opengraph-image");
+  const body = await response.arrayBuffer();
+
+  assert(response.status === 200, `/opengraph-image expected 200, got ${response.status}`);
+  assert(
+    response.headers.get("content-type") === "image/png",
+    "/opengraph-image must return image/png",
+  );
+  assert(body.byteLength > 10_000, "/opengraph-image response is unexpectedly small");
+}
+
 async function expectCrossOriginBlocked({ body = {}, method = "POST", pathname }) {
   const response = await fetchWithTimeout(pathname, {
     body: JSON.stringify(body),
@@ -200,7 +269,34 @@ const tests = [
   ["status page renders", () => expectPage("/status", "SaleMap")],
   ["security headers are present", () => expectSecurityHeaders("/")],
   ["manifest renders", expectManifest],
-  ["robots.txt renders", () => expectText("/robots.txt", "User-Agent")],
+  ["home canonical is correct", () => expectCanonical("/", "/")],
+  ["privacy canonical is correct", () => expectCanonical("/chinh-sach-bao-mat", "/chinh-sach-bao-mat")],
+  ["terms canonical is correct", () => expectCanonical("/dieu-khoan-su-dung", "/dieu-khoan-su-dung")],
+  ["login page is noindex", () => expectNoIndex("/login")],
+  ["register page is noindex", () => expectNoIndex("/register")],
+  ["Open Graph image is published", () => expectOpenGraphImage("/")],
+  ["Open Graph image renders", expectOpenGraphImageRoute],
+  [
+    "robots.txt protects private routes",
+    async () => {
+      await expectText("/robots.txt", "Disallow: /app/");
+      await expectText("/robots.txt", "Disallow: /api/");
+    },
+  ],
+  [
+    "sitemap only includes indexable public pages",
+    async () => {
+      const response = await fetchWithTimeout("/sitemap.xml");
+      const body = await response.text();
+
+      assert(response.status === 200, `/sitemap.xml expected 200, got ${response.status}`);
+      assert(body.includes("/chinh-sach-bao-mat"), "sitemap is missing privacy policy");
+      assert(body.includes("/dieu-khoan-su-dung"), "sitemap is missing terms page");
+      assert(!body.includes("/login"), "sitemap must not include login");
+      assert(!body.includes("/cam-on"), "sitemap must not include thank-you page");
+      assert(!body.includes("/status"), "sitemap must not include internal status page");
+    },
+  ],
   ["offline fallback renders", () => expectText("/offline.html", "SaleMap")],
   [
     "AI generate API blocks cross-origin",

@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { ThankYouTracker } from "@/components/analytics/ThankYouTracker";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+
+export const metadata: Metadata = {
+  description: "Xác nhận SaleMap đã nhận thông tin đăng ký của bạn.",
+  robots: {
+    follow: false,
+    index: false,
+  },
+  title: "Đăng ký thành công - SaleMap",
+};
 
 export default function ThankYouPage() {
   return (

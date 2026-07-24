@@ -7,6 +7,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
+  robots: {
+    follow: false,
+    index: false,
+  },
   title: "Onboarding - SaleMap",
 };
 

@@ -6,6 +6,11 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
+  description: "Thông tin trạng thái tính năng và kênh hỗ trợ của SaleMap.",
+  robots: {
+    follow: false,
+    index: false,
+  },
   title: "Trạng thái SaleMap",
 };
 

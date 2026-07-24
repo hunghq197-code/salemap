@@ -3,6 +3,11 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export const metadata: Metadata = {
+  description: "Khôi phục mật khẩu tài khoản SaleMap.",
+  robots: {
+    follow: false,
+    index: false,
+  },
   title: "Khôi phục mật khẩu - SaleMap",
 };
 

@@ -230,7 +230,7 @@ export function PolicyContent({ kind }: { kind: PolicyKind }) {
         <section className="bg-cloud px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="mx-auto max-w-4xl">
             <Link
-              className="inline-flex items-center gap-2 text-sm font-semibold text-ocean transition hover:text-ink"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ocean transition hover:text-ink"
               href="/"
             >
               <ArrowLeft aria-hidden="true" className="h-4 w-4" />

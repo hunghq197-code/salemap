@@ -18,7 +18,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 shadow-[0_12px_32px_rgba(16,32,51,0.06)] backdrop-blur-xl">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
         <Link
-          className="inline-flex items-center gap-2.5 text-xl font-bold text-ink"
+          className="inline-flex min-h-11 items-center gap-2.5 text-xl font-bold text-ink"
           href="/"
           onClick={() => setIsOpen(false)}
         >

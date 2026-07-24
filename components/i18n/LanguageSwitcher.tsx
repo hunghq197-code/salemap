@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
           aria-label={ariaLabels[item]}
           aria-pressed={locale === item}
           className={[
-            "min-h-8 rounded-md px-2.5 transition",
+            "min-h-11 min-w-11 rounded-md px-2.5 transition",
             locale === item
               ? "bg-ink text-white"
               : "text-slate-500 hover:bg-cloud hover:text-ink",

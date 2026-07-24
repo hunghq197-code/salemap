@@ -3,6 +3,11 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export const metadata: Metadata = {
+  description: "Tạo tài khoản SaleMap để bắt đầu tìm khách, lưu lead và theo dõi follow-up.",
+  robots: {
+    follow: false,
+    index: false,
+  },
   title: "Đăng ký tài khoản - SaleMap",
 };
 

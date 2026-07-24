@@ -13,9 +13,6 @@ const seoTitle = "SaleMap";
 const seoDescription =
   "Công cụ cá nhân giúp dân sale tìm khách, lưu lead và nhắc follow-up.";
 export const metadata: Metadata = {
-  alternates: {
-    canonical: siteUrl,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -48,11 +45,10 @@ export const metadata: Metadata = {
     siteName: "SaleMap",
     title: seoTitle,
     type: "website",
-    url: siteUrl,
   },
   title: seoTitle,
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     description: seoDescription,
     title: seoTitle,
   },
