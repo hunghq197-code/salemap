@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 type BadgeTone =
   | "accent"
   | "danger"
+  | "default"
   | "neutral"
+  | "outline"
   | "primary"
   | "success"
   | "warning";
@@ -17,7 +19,9 @@ type BadgeProps = {
 const toneClasses: Record<BadgeTone, string> = {
   accent: "border-accent/20 bg-accent-soft text-cyan-700",
   danger: "border-danger/20 bg-danger-soft text-danger",
+  default: "border-border-soft bg-surface-muted text-text-primary",
   neutral: "border-border-soft bg-surface-muted text-text-secondary",
+  outline: "border-border-strong bg-transparent text-text-secondary",
   primary: "border-primary/20 bg-primary-soft text-primary",
   success: "border-success/20 bg-success-soft text-emerald-700",
   warning: "border-warning/25 bg-warning-soft text-amber-700",

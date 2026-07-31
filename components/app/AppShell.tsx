@@ -12,6 +12,7 @@ import {
   ListTodo,
   MapPinned,
   MessageSquareHeart,
+  MoreHorizontal,
   Search,
   Settings,
   UsersRound,
@@ -28,8 +29,10 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { NetworkStatusBanner } from "@/components/pwa/NetworkStatusBanner";
 import { OfflineUserProvider } from "@/components/pwa/OfflineUserProvider";
 import { Badge } from "@/components/ui/Badge";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   appNavGroups,
+  mobileMoreNavItems,
   mobileNavItems,
   type AppNavIconKey,
   type AppNavItem,
@@ -137,33 +140,86 @@ function AppNavLink({
 }
 
 function MobileBottomNav({ pathname }: { pathname: string }) {
-  return (
-    <nav
-      aria-label="Mobile bottom navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-soft bg-surface/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.09)] backdrop-blur lg:hidden"
-    >
-      <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
-        {mobileNavItems.map((item) => {
-          const Icon = iconMap[item.icon];
-          const active = isActivePath(pathname, item.href);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = mobileMoreNavItems.some((item) => isActivePath(pathname, item.href));
 
-          return (
-            <Link
-              className={[
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-control px-1 text-[11px] font-bold transition duration-150",
-                active ? "bg-primary-soft text-primary" : "text-text-muted hover:text-primary",
+  return (
+    <>
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-soft bg-surface/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.09)] backdrop-blur lg:hidden"
+      >
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+          {mobileNavItems.map((item) => {
+            const Icon = iconMap[item.icon];
+            const active = isActivePath(pathname, item.href);
+
+            return (
+              <Link
+                className={[
+                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-control px-1 text-[11px] font-bold transition duration-150",
+                  active ? "bg-primary-soft text-primary" : "text-text-muted hover:text-primary",
+                ].join(" ")}
+                href={item.href}
+                key={item.href}
+                prefetch={getPrefetchForRoute(item.href)}
+              >
+                <Icon aria-hidden="true" className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
+            className={[
+              "flex min-h-14 flex-col items-center justify-center gap-1 rounded-control px-1 text-[11px] font-bold transition duration-150",
+              moreActive || moreOpen
+                ? "bg-primary-soft text-primary"
+                : "text-text-muted hover:text-primary",
+            ].join(" ")}
+            onClick={() => setMoreOpen(true)}
+            type="button"
+          >
+            <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
+            <span>Thêm</span>
+          </button>
+        </div>
+      </nav>
+      <BottomSheet
+        description="Truy cập nhanh các khu vực còn lại trong SaleMap."
+        onOpenChange={setMoreOpen}
+        open={moreOpen}
+        title="Thêm"
+      >
+        <div className="grid gap-2">
+          {mobileMoreNavItems.map((item) => {
+            const Icon = iconMap[item.icon];
+            const active = isActivePath(pathname, item.href);
+
+            return (
+              <Link
+                className={[
+                  "flex min-h-12 items-center gap-3 rounded-control px-3 py-2 text-sm font-bold transition duration-150",
+                  active
+                    ? "bg-primary-soft text-primary"
+                    : "text-text-secondary hover:bg-primary-soft hover:text-primary",
               ].join(" ")}
-              href={item.href}
-              key={item.href}
-              prefetch={getPrefetchForRoute(item.href)}
-            >
-              <Icon aria-hidden="true" className="h-5 w-5" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                href={item.href}
+                key={item.href}
+                onClick={() => setMoreOpen(false)}
+                prefetch={getPrefetchForRoute(item.href)}
+              >
+                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-surface-muted text-current">
+                  <Icon aria-hidden="true" className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </BottomSheet>
+    </>
   );
 }
 

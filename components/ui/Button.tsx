@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 type ButtonVariant =
   | "accent"
@@ -55,7 +55,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "min-h-12 px-6 py-3 text-base",
 };
 
-function joinClasses(...classes: Array<string | undefined>) {
+function joinClasses(...classes: Array<string | undefined | false>) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -96,13 +96,23 @@ export function Button({
   );
 
   if (href) {
+    const linkDisabled = disabled || loading;
+    const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+      if (linkDisabled) {
+        event.preventDefault();
+        return;
+      }
+
+      onClick?.();
+    };
+
     return (
       <Link
-        aria-disabled={disabled || loading}
-        className={classes}
+        aria-disabled={linkDisabled}
+        className={joinClasses(classes, linkDisabled && "pointer-events-none opacity-60")}
         href={href}
-        onClick={disabled || loading ? undefined : onClick}
-        tabIndex={disabled || loading ? -1 : undefined}
+        onClick={handleClick}
+        tabIndex={linkDisabled ? -1 : undefined}
       >
         {content}
       </Link>

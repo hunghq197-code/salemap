@@ -58,7 +58,16 @@ export const mobileNavItems: AppNavItem[] = [
   { href: "/app/discover", icon: "discover", label: "Tìm khách" },
   { href: "/app/tasks", icon: "tasks", label: "Việc" },
   { href: "/app/leads", icon: "leads", label: "Lead" },
-  { href: "/app/settings", icon: "settings", label: "Thêm" },
+];
+
+export const mobileMoreNavItems: AppNavItem[] = [
+  { href: "/app/pipeline", icon: "pipeline", label: "Pipeline" },
+  { href: "/app/cadences", icon: "cadences", label: "Quy trình chăm sóc" },
+  { href: "/app/import", icon: "import", label: "Import dữ liệu" },
+  { href: "/app/analytics", icon: "analytics", label: "Phân tích" },
+  { href: "/app/billing", icon: "billing", label: "Gói dịch vụ" },
+  { href: "/app/settings", icon: "settings", label: "Cài đặt" },
+  { href: "/app/feedback", icon: "feedback", label: "Góp ý / Trợ giúp" },
 ];
 
 export type AdminNavIconKey =
