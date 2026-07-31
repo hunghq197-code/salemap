@@ -93,24 +93,31 @@ export function TodayTasksWidget({ counts, tasks }: TodayTasksWidgetProps) {
   }
 
   return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="mt-4 rounded-card border border-border-soft bg-surface p-4 shadow-card sm:mt-6 sm:p-5 lg:mt-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
+          <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-control bg-primary-soft text-primary sm:flex">
             <ListTodo aria-hidden="true" className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="text-xl font-bold text-ink">
+            <h2 className="text-lg font-bold text-text-primary sm:text-xl">
               Việc cần làm hôm nay
             </h2>
-            <p className="mt-2 text-base leading-7 text-slate-600">
-              {counts.today} task hôm nay · {counts.overdue} quá hạn ·{" "}
-              {counts.leadsWithoutTasks} lead chưa có lịch
-            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex min-h-7 items-center rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+                {counts.today} hôm nay
+              </span>
+              <span className="inline-flex min-h-7 items-center rounded-full border border-danger/20 bg-danger-soft px-3 py-1 text-xs font-bold text-danger">
+                {counts.overdue} quá hạn
+              </span>
+              <span className="inline-flex min-h-7 items-center rounded-full border border-border-soft bg-surface-muted px-3 py-1 text-xs font-bold text-text-secondary">
+                {counts.leadsWithoutTasks} lead chưa có lịch
+              </span>
+            </div>
           </div>
         </div>
         <Link
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-ocean"
+          className="inline-flex min-h-10 items-center justify-center rounded-control bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-ocean sm:min-h-11"
           href="/app/tasks"
         >
           Xem việc cần làm
@@ -118,34 +125,36 @@ export function TodayTasksWidget({ counts, tasks }: TodayTasksWidgetProps) {
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+        <div className="mt-4 rounded-control border border-rose-200 bg-rose-50 p-3 text-sm font-semibold leading-6 text-rose-700 sm:p-4">
           {error}
         </div>
       ) : null}
 
       {tasks.length > 0 ? (
-        <div className="mt-5 space-y-3">
+        <div className="mt-4 space-y-3 sm:mt-5">
           {tasks.slice(0, 3).map((task) => {
             const lead = getLead(task.leads);
 
             return (
               <article
-                className="rounded-lg border border-slate-200 bg-cloud/60 p-4"
+                className="rounded-card border border-border-soft bg-surface-muted/70 p-3 sm:p-4"
                 key={task.id}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
+                <div className="flex flex-col gap-3 min-[390px]:flex-row min-[390px]:items-center min-[390px]:justify-between sm:items-start">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap gap-2">
                       <TaskTypeBadge type={task.task_type} />
                       <TaskPriorityBadge priority={task.priority} />
                     </div>
-                    <p className="mt-3 font-bold text-ink">{task.title}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-600">
+                    <p className="mt-3 line-clamp-2 font-bold text-text-primary">
+                      {task.title}
+                    </p>
+                    <p className="mt-1 truncate text-xs font-semibold text-text-secondary sm:text-sm">
                       {lead?.name || "Lead"} · {formatTime(task.remind_at)}
                     </p>
                   </div>
                   <button
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-mint px-3 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+                    className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-control bg-success px-3 py-2 text-sm font-bold text-white hover:bg-emerald-600 sm:min-h-11"
                     onClick={() => setSelectedTask(task)}
                     type="button"
                   >
@@ -158,12 +167,12 @@ export function TodayTasksWidget({ counts, tasks }: TodayTasksWidgetProps) {
           })}
         </div>
       ) : (
-        <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-cloud/70 p-5">
-          <p className="text-base leading-7 text-slate-600">
+        <div className="mt-4 rounded-card border border-dashed border-border-strong bg-surface-muted p-4 sm:mt-5 sm:p-5">
+          <p className="text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
             Không có việc nào hôm nay. Hãy tạo follow-up cho lead mới.
           </p>
           <Link
-            className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink"
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-control bg-success px-4 py-2 text-sm font-bold text-white sm:min-h-11"
             href="/app/tasks?tab=no_schedule"
           >
             Xem lead chưa có lịch

@@ -15,6 +15,7 @@ import {
   Sparkles,
   Target,
   UsersRound,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardTracker } from "@/components/app/DashboardTracker";
@@ -26,7 +27,6 @@ import { ActivationChecklist } from "@/components/onboarding/ActivationChecklist
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
 import { Badge } from "@/components/ui/Badge";
-import { StatCard } from "@/components/ui/StatCard";
 import { Toast } from "@/components/ui/Toast";
 import { getCadenceStatusLabel } from "@/lib/constants/cadences";
 import { DASHBOARD_QUOTA_ACTIONS } from "@/lib/constants/quota";
@@ -56,6 +56,59 @@ type DashboardPageProps = {
 
 function getString(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+type DashboardMetricTone = "danger" | "primary" | "success" | "warning";
+
+type DashboardMetricCardProps = {
+  description?: string;
+  icon: LucideIcon;
+  label: string;
+  tone?: DashboardMetricTone;
+  value: number;
+};
+
+const dashboardMetricToneClasses: Record<DashboardMetricTone, string> = {
+  danger: "bg-danger-soft text-danger",
+  primary: "bg-primary-soft text-primary",
+  success: "bg-success-soft text-emerald-700",
+  warning: "bg-warning-soft text-amber-700",
+};
+
+function DashboardMetricCard({
+  description,
+  icon: Icon,
+  label,
+  tone = "primary",
+  value,
+}: DashboardMetricCardProps) {
+  return (
+    <article className="rounded-card border border-border-soft bg-surface p-3 shadow-card sm:min-h-[154px] sm:p-5 lg:p-6">
+      <div className="flex items-start justify-between gap-2 sm:gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-bold leading-5 text-text-secondary sm:text-sm">
+            {label}
+          </p>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary sm:mt-3 sm:text-3xl">
+            {value}
+          </p>
+        </div>
+        <span
+          className={[
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-control sm:h-11 sm:w-11",
+            dashboardMetricToneClasses[tone],
+          ].join(" ")}
+        >
+          <Icon aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
+        </span>
+      </div>
+      {description ? (
+        <p className="mt-3 hidden text-sm leading-6 text-text-secondary sm:block">
+          {description}
+        </p>
+      ) : null}
+    </article>
+  );
 }
 
 export default async function DashboardPage(props: DashboardPageProps) {
@@ -108,21 +161,21 @@ export default async function DashboardPage(props: DashboardPageProps) {
       <DashboardTracker />
       <Toast code={getString(searchParams?.toast)} />
       <div className="mx-auto max-w-7xl">
-        <section className="relative overflow-hidden rounded-shell bg-sidebar p-5 text-white shadow-floating sm:p-7 lg:p-8">
+        <section className="relative overflow-hidden rounded-[18px] bg-sidebar p-4 text-white shadow-floating sm:rounded-shell sm:p-7 lg:p-8">
           <div
             aria-hidden="true"
-            className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:38px_38px]"
+            className="absolute inset-0 hidden opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:38px_38px] sm:block"
           />
-          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div>
               <Badge tone="accent">Tổng quan hôm nay</Badge>
-              <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
+              <h1 className="mt-3 text-2xl font-bold leading-tight sm:mt-4 sm:text-4xl">
                 Xin chào, {data.fullName || "bạn"}
               </h1>
-              <p className="mt-3 max-w-3xl text-base leading-7 text-slate-300">
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:mt-3 sm:text-base sm:leading-7">
                 {focusCopy}
               </p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
                 <Badge tone={taskCounts.overdue > 0 ? "danger" : "success"}>
                   {taskCounts.overdue} quá hạn
                 </Badge>
@@ -130,47 +183,47 @@ export default async function DashboardPage(props: DashboardPageProps) {
                 <Badge tone="warning">{quota.items.length} hạn mức đang theo dõi</Badge>
               </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-3">
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-3 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
                 href="/app/discover"
               >
-                <Search aria-hidden="true" className="h-5 w-5" />
+                <Search aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
                 Tìm khách mới
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-white/15 bg-white/10 px-5 py-3 text-base font-bold text-white transition hover:bg-white/15"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-white/15 sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
                 href="/app/leads?create=1"
               >
-                <Plus aria-hidden="true" className="h-5 w-5" />
+                <Plus aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
                 Thêm lead
               </Link>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
+        <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 xl:grid-cols-4">
+          <DashboardMetricCard
             description="Toàn bộ khách hàng tiềm năng trong workspace."
             icon={UsersRound}
             label="Lead đang quản lý"
             value={data.totalLeads}
           />
-          <StatCard
+          <DashboardMetricCard
             description="Các việc cần chăm sóc trong ngày."
             icon={Bell}
             label="Việc hôm nay"
             tone="warning"
             value={taskCounts.today}
           />
-          <StatCard
+          <DashboardMetricCard
             description="Ưu tiên xử lý trước khi mở rộng tìm kiếm."
             icon={Clock3}
             label="Việc quá hạn"
             tone={taskCounts.overdue > 0 ? "danger" : "success"}
             value={taskCounts.overdue}
           />
-          <StatCard
+          <DashboardMetricCard
             description="Lead mới phát sinh trong tuần này."
             icon={CalendarPlus}
             label="Lead mới tuần này"
@@ -181,32 +234,32 @@ export default async function DashboardPage(props: DashboardPageProps) {
 
         <TodayTasksWidget counts={taskCounts} tasks={todayTasks.items} />
 
-        <section className="mt-6 rounded-lg border border-ocean/20 bg-white p-5 shadow-sm">
+        <section className="mt-4 rounded-card border border-border-soft bg-surface p-4 shadow-card sm:mt-6 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
+              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean sm:flex">
                 <Sparkles aria-hidden="true" className="h-6 w-6" />
               </span>
               <div>
-                <h2 className="text-xl font-bold text-ink">Chào mừng bạn đến với SaleMap</h2>
-                <p className="mt-2 max-w-3xl text-base leading-7 text-slate-600">
+                <h2 className="text-base font-bold text-ink sm:text-xl">Chào mừng bạn đến với SaleMap</h2>
+                <p className="mt-2 hidden max-w-3xl text-base leading-7 text-slate-600 sm:block">
                   Góp ý của bạn sẽ giúp sản phẩm sát hơn với công việc sale thực tế.
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-3">
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-ink px-5 py-3 text-base font-bold text-white transition hover:bg-ocean"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control bg-ink px-3 py-2 text-sm font-bold text-white transition hover:bg-ocean sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
                 href="/app/huong-dan"
               >
-                <BookOpenText aria-hidden="true" className="h-5 w-5" />
+                <BookOpenText aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
                 Xem hướng dẫn
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm transition hover:border-ocean"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control border border-border-soft bg-white px-3 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-ocean sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
                 href="/app/feedback"
               >
-                <MessageSquareHeart aria-hidden="true" className="h-5 w-5" />
+                <MessageSquareHeart aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
                 Gửi góp ý
               </Link>
             </div>
@@ -271,9 +324,9 @@ export default async function DashboardPage(props: DashboardPageProps) {
             </div>
           ) : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <StatCard icon={ListChecks} label="Đang chạy" value={cadenceSummary.activeCount} />
-            <StatCard icon={PauseCircle} label="Tạm dừng" value={cadenceSummary.pausedCount} />
-            <StatCard icon={CheckCircle2} label="Hoàn thành tháng này" value={cadenceSummary.completedThisMonth} />
+            <DashboardMetricCard icon={ListChecks} label="Đang chạy" value={cadenceSummary.activeCount} />
+            <DashboardMetricCard icon={PauseCircle} label="Tạm dừng" value={cadenceSummary.pausedCount} />
+            <DashboardMetricCard icon={CheckCircle2} label="Hoàn thành tháng này" value={cadenceSummary.completedThisMonth} />
           </div>
           {cadenceSummary.recent.length > 0 ? (
             <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -326,10 +379,10 @@ export default async function DashboardPage(props: DashboardPageProps) {
             </div>
           ) : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard icon={UsersRound} label="Lead mới hôm nay" value={todaySales.metrics.leads_created} />
-            <StatCard icon={Bell} label="Follow-up cần làm" value={taskCounts.today} />
-            <StatCard icon={CheckCircle2} label="Follow-up hoàn thành" value={todaySales.metrics.followups_completed} />
-            <StatCard icon={BarChart3} label="Lead đã chốt" value={todaySales.metrics.leads_won} />
+            <DashboardMetricCard icon={UsersRound} label="Lead mới hôm nay" value={todaySales.metrics.leads_created} />
+            <DashboardMetricCard icon={Bell} label="Follow-up cần làm" value={taskCounts.today} />
+            <DashboardMetricCard icon={CheckCircle2} label="Follow-up hoàn thành" value={todaySales.metrics.followups_completed} />
+            <DashboardMetricCard icon={BarChart3} label="Lead đã chốt" value={todaySales.metrics.leads_won} />
           </div>
         </section>
 
