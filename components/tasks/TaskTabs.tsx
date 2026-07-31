@@ -18,7 +18,7 @@ function getTabCount(tab: TaskTab, counts: TaskCounts) {
 export function TaskTabs({ activeTab, counts }: TaskTabsProps) {
   return (
     <div className="mt-6 overflow-x-auto">
-      <div className="flex min-w-max gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200">
+      <div className="flex min-w-max gap-2 rounded-card border border-border-soft bg-surface p-1.5 shadow-card">
         {TASK_TABS.map((tab) => {
           const isActive = activeTab === tab.value;
           const count = getTabCount(tab.value, counts);
@@ -26,10 +26,10 @@ export function TaskTabs({ activeTab, counts }: TaskTabsProps) {
           return (
             <Link
               className={[
-                "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition",
+                "inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 py-2 text-sm font-bold transition duration-150",
                 isActive
-                  ? "bg-ink text-white"
-                  : "text-slate-600 hover:bg-cloud hover:text-ink",
+                  ? "bg-primary text-white shadow-soft"
+                  : "text-text-secondary hover:bg-primary-soft hover:text-primary",
               ].join(" ")}
               href={`/app/tasks?tab=${tab.value}`}
               key={tab.value}
@@ -38,7 +38,7 @@ export function TaskTabs({ activeTab, counts }: TaskTabsProps) {
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-xs",
-                  isActive ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500",
+                  isActive ? "bg-white/15 text-white" : "bg-surface-muted text-text-muted",
                 ].join(" ")}
               >
                 {count}

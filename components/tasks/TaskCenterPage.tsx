@@ -22,6 +22,8 @@ import {
   SnoozeTaskModal,
   type SnoozeTaskPayload,
 } from "@/components/tasks/SnoozeTaskModal";
+import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TaskTabs } from "@/components/tasks/TaskTabs";
 import type { TaskTab } from "@/lib/constants/tasks";
@@ -208,29 +210,31 @@ export function TaskCenterPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-            Task center
-          </p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Việc cần làm
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Theo dõi các cuộc gọi, tin nhắn, follow-up và lịch chăm sóc khách
-            hàng của bạn.
-          </p>
-        </div>
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        actions={
         <button
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft hover:bg-primary-hover"
           onClick={() => setCreateLeadId("")}
           type="button"
         >
           <CalendarPlus aria-hidden="true" className="h-5 w-5" />
           Tạo việc cần làm
         </button>
-      </div>
+        }
+        description={`Theo dõi cuộc gọi, tin nhắn, follow-up và lịch chăm sóc khách hàng. Hôm nay có ${counts.today} việc, ${counts.overdue} việc quá hạn.`}
+        eyebrow="Task center"
+        fullBleed
+        title="Việc cần làm"
+      >
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge tone="warning">{counts.today} hôm nay</Badge>
+          <Badge tone={counts.overdue > 0 ? "danger" : "success"}>
+            {counts.overdue} quá hạn
+          </Badge>
+          <Badge tone="primary">{counts.upcoming} sắp tới</Badge>
+        </div>
+      </PageHeader>
 
       <TaskCounts counts={counts} />
       <FirstRunTip

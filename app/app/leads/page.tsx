@@ -6,6 +6,8 @@ import { LeadCard } from "@/components/leads/LeadCard";
 import { LeadForm } from "@/components/leads/LeadForm";
 import { FirstRunTip } from "@/components/onboarding/FirstRunTip";
 import { CreateSavedViewForm } from "@/components/saved-views/CreateSavedViewForm";
+import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Toast } from "@/components/ui/Toast";
 import { LEAD_PRIORITY_OPTIONS } from "@/lib/constants/lead-priority";
 import { LEAD_STATUS_OPTIONS } from "@/lib/constants/lead-status";
@@ -83,47 +85,37 @@ export default async function LeadsPage(props: LeadsPageProps) {
   const totalPages = Math.max(1, Math.ceil(leadResult.total / leadResult.limit));
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-7xl">
       <Toast code={toastCode} />
 
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-            Lead
-          </p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Lead cá nhân
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-            Lead là danh sách khách tiềm năng của riêng bạn. Bạn có thể thêm thủ công hoặc lưu từ kết quả tìm kiếm bản đồ.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+      <PageHeader
+        actions={
+          <>
           {leadResult.total > 0 ? (
             <>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
                 href="/app/import"
               >
                 <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
                 Import dữ liệu
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
                 href="/app/export"
               >
                 <Download aria-hidden="true" className="h-5 w-5" />
                 Xuất dữ liệu
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
                 href="/app/leads/cleanup"
               >
                 <Sparkles aria-hidden="true" className="h-5 w-5" />
                 Dọn dữ liệu
               </Link>
               <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
                 href="/app/analytics"
               >
                 <BarChart3 aria-hidden="true" className="h-5 w-5" />
@@ -132,14 +124,25 @@ export default async function LeadsPage(props: LeadsPageProps) {
             </>
           ) : null}
           <Link
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-soft hover:bg-primary-hover"
             href="/app/leads?create=1"
           >
             <Plus aria-hidden="true" className="h-5 w-5" />
             Thêm lead
           </Link>
+          </>
+        }
+        description="Lead là danh sách khách tiềm năng của riêng bạn. Bạn có thể thêm thủ công hoặc lưu trực tiếp từ kết quả tìm kiếm bản đồ."
+        eyebrow="Lead"
+        fullBleed
+        title="Lead cá nhân"
+      >
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge tone="primary">{leadResult.total} lead</Badge>
+          {hasFilters ? <Badge tone="warning">Đang lọc</Badge> : null}
+          <Badge tone="neutral">20 lead mỗi trang</Badge>
         </div>
-      </div>
+      </PageHeader>
 
       <FirstRunTip
         message="Lead mới lưu nên có follow-up ngay trong 24 giờ để tránh bị quên."
@@ -165,7 +168,7 @@ export default async function LeadsPage(props: LeadsPageProps) {
       ) : null}
 
       <form
-        className="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+        className="mt-6 rounded-card border border-border-soft bg-surface p-4 shadow-card"
         method="get"
       >
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
@@ -254,8 +257,8 @@ export default async function LeadsPage(props: LeadsPageProps) {
             </Link>
           </div>
         </div>
-        <details className="mt-4 rounded-lg border border-slate-200 bg-cloud/50 p-4">
-          <summary className="cursor-pointer text-sm font-bold text-ink">
+        <details className="mt-4 rounded-card border border-border-soft bg-surface-muted p-4">
+          <summary className="cursor-pointer text-sm font-bold text-text-primary">
             Bộ lọc nâng cao
           </summary>
           <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -380,12 +383,12 @@ export default async function LeadsPage(props: LeadsPageProps) {
       </form>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-bold text-slate-500">Tóm tắt bộ lọc</p>
+        <div className="rounded-card border border-border-soft bg-surface p-4 shadow-sm">
+          <p className="text-sm font-bold text-text-muted">Tóm tắt bộ lọc</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {filterSummary.map((item) => (
               <span
-                className="inline-flex min-h-8 items-center rounded-full bg-cloud px-3 py-1 text-xs font-bold text-slate-600"
+                className="inline-flex min-h-8 items-center rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
                 key={item}
               >
                 {item}

@@ -350,7 +350,7 @@ export function MapPreview({
         geodesic: true,
         map,
         path,
-        strokeColor: "#006d8f",
+        strokeColor: "#2563eb",
         strokeOpacity: 0.9,
         strokeWeight: 5,
       });
@@ -424,24 +424,24 @@ export function MapPreview({
   }, [mapReady, selectedPlaceId]);
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+    <section className="overflow-hidden rounded-shell border border-border-soft bg-surface shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft px-4 py-3">
         <div className="flex items-center gap-2">
-          <MapPinned aria-hidden="true" className="h-5 w-5 text-ocean" />
-          <h2 className="text-base font-bold text-ink">
+          <MapPinned aria-hidden="true" className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-bold text-text-primary">
             {mode === "route" ? "Bản đồ tuyến và địa điểm" : "Bản đồ kết quả"}
           </h2>
         </div>
-        <span className="text-sm font-semibold text-slate-500">
+        <span className="text-sm font-semibold text-text-muted">
           {markerData.length} địa điểm có tọa độ
         </span>
       </div>
 
-      <div className="relative min-h-[320px] w-full sm:min-h-[420px] lg:min-h-[620px]">
-        <div className="absolute inset-0 bg-cloud" ref={containerRef} />
+      <div className="relative min-h-[420px] w-full sm:min-h-[520px] lg:min-h-[calc(100vh-150px)]">
+        <div className="absolute inset-0 bg-background-subtle" ref={containerRef} />
         {searchThisAreaVisible && viewportCenter && onSearchThisArea ? (
           <button
-            className="absolute left-1/2 top-4 z-10 inline-flex min-h-10 -translate-x-1/2 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-ocean disabled:cursor-not-allowed disabled:opacity-70"
+            className="absolute left-1/2 top-4 z-10 inline-flex min-h-10 -translate-x-1/2 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
             disabled={searchThisAreaLoading}
             onClick={() => onSearchThisArea(viewportCenter)}
             type="button"
@@ -457,18 +457,18 @@ export function MapPreview({
           </button>
         ) : null}
         {!mapReady && !error ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-cloud/95 px-4 text-center text-sm font-semibold text-slate-600">
+          <div className="absolute inset-0 flex items-center justify-center bg-background-subtle/95 px-4 text-center text-sm font-semibold text-text-secondary">
             Đang tải bản đồ...
           </div>
         ) : null}
         {error ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-cloud px-5 text-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-background-subtle px-5 text-center">
             <div className="max-w-lg">
               <AlertTriangle
                 aria-hidden="true"
                 className="mx-auto h-8 w-8 text-amber-600"
               />
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">
+              <p className="mt-3 text-sm font-semibold leading-6 text-text-secondary">
                 {error}
               </p>
             </div>

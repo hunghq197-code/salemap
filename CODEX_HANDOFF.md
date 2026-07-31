@@ -1004,3 +1004,63 @@ Still needed before live testing:
   - optional `VIETQR_BANK_BIN`
   - payOS vars only when enabling payOS.
 - Run `npm run build` before commit/push if not already done in the active session.
+
+## 2026-07-31 Update - SaleMap UI/UX Redesign Foundation Sprint 1
+
+This phase started the "Modern Technology SaaS Design System" redesign without changing database schema, API contracts, auth, Supabase queries, Google Maps logic, billing logic, admin guards, feature flags, quota, or security scan rules.
+
+Implemented changes:
+
+- Added design tokens in `tailwind.config.ts` and `app/globals.css`.
+  - New light theme palette: background/surface/sidebar/text/primary/accent/success/warning/danger/border tokens.
+  - Existing `ink/ocean/mint/cloud` aliases now map to the new token system so older screens keep working while inheriting the new direction.
+  - Added card/control/shell radius tokens, subtle shadow tokens, global focus-visible, and reduced-motion support.
+- Added reusable design-system primitives:
+  - `components/ui/Badge.tsx`
+  - `components/ui/Card.tsx`
+  - `components/ui/PageHeader.tsx`
+  - `components/ui/SearchInput.tsx`
+  - `components/ui/StatCard.tsx`
+  - Expanded `components/ui/Button.tsx` with variants `primary`, `secondary`, `outline`, `ghost`, `danger`, `success`, `link`, and legacy-compatible `accent`, plus loading state.
+  - Updated `EmptyState` and `ErrorState` to use the new Card/button style.
+- Added `lib/design-system/navigation.ts`.
+  - Defines grouped user app IA: Làm việc, Công cụ, Tài khoản.
+  - Defines 5-item mobile nav: Tổng quan, Tìm khách, Việc, Lead, Thêm.
+  - Defines concise admin nav without duplicate/nonexistent menu entries.
+- Rebuilt shell/layout layer:
+  - `components/app/AppShell.tsx`: dark navy desktop sidebar, grouped nav, active indicator, collapse support, sticky topbar, quick map search CTA, notification/language controls, plan/environment badges, mobile header, 5-item bottom nav.
+  - `app/app/layout.tsx`: fetches plan name with a short timeout so the plan badge does not slow navigation.
+  - `components/admin/AdminShell.tsx`: separate admin console shell with dark operations sidebar, environment/role badges, compact admin mobile nav, app-return action, and unchanged admin sign-out logic.
+  - `components/auth/AuthShell.tsx`: redesigned login/register wrapper with SaleMap map/radar/route visual language.
+- Redesigned primary user routes/components at UI layer:
+  - `/app/dashboard`: new dark hero, clear daily focus copy, KPI cards moved near top, Today's Tasks surfaced earlier.
+  - `/app/discover`: wider map workspace, modern header, higher map canvas, updated tabs/mobile list-map toggle, route polyline color aligned to primary token.
+  - `/app/leads`: new PageHeader, compact action cluster, filter surface, lead count/filter badges.
+  - `LeadCard`: modern card surface, clearer actions, metadata and note block styling.
+  - `/app/tasks`: new PageHeader with today/overdue/upcoming summary badges.
+  - `TaskCounts`, `TaskTabs`, `TaskCard`: design-system stat cards/tabs and overdue state that uses border/badge emphasis instead of a full red card.
+
+Validation run:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run build
+npm run smoke
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with 0 warnings and 0 errors.
+- Security scan passed.
+- Production build passed.
+- Smoke test passed: 26/26 checks.
+
+Remaining UI TODO for later phases:
+
+- Finish page-by-page redesign for `/app/leads/[leadId]`, `/app/pipeline`, `/app/cadences`, `/app/analytics`, `/app/billing`, `/app/settings`.
+- Finish admin page-level redesign for dense tables/pages under `/admin/*`; this sprint redesigned the admin shell only.
+- Add or standardize remaining form/table/drawer/modal primitives when touching those pages.
+- Perform visual responsive QA on real/browser viewports after starting the app locally, especially 360x800, 390x844, 768x1024, 1366x768, and 1440x900.

@@ -764,7 +764,7 @@ export function DiscoverTabs({
 
   return (
     <div className="mt-6">
-      <div className="grid grid-cols-3 gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200">
+      <div className="grid grid-cols-3 gap-2 rounded-card border border-border-soft bg-surface p-1.5 shadow-card">
         {[
           { label: "Quanh tôi", value: "near-me" },
           { label: "Theo khu vực", value: "area" },
@@ -775,12 +775,12 @@ export function DiscoverTabs({
           return (
             <button
               className={[
-                "min-h-11 rounded-lg px-2 py-2 text-sm font-bold transition",
+                "min-h-11 rounded-control px-2 py-2 text-sm font-bold transition duration-150",
                 tab.disabled
                   ? "cursor-not-allowed text-slate-400"
                   : isActive
-                    ? "bg-ink text-white"
-                    : "text-slate-600 hover:bg-cloud hover:text-ink",
+                    ? "bg-primary text-white shadow-soft"
+                    : "text-text-secondary hover:bg-primary-soft hover:text-primary",
               ].join(" ")}
               disabled={tab.disabled}
               key={tab.value}
@@ -794,11 +794,11 @@ export function DiscoverTabs({
       </div>
 
       {searchState ? (
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200 lg:hidden">
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-card border border-border-soft bg-surface p-1.5 shadow-sm lg:hidden">
           <button
             className={[
-              "min-h-10 rounded-lg text-sm font-bold",
-              mobileView === "list" ? "bg-ink text-white" : "text-slate-600",
+              "min-h-10 rounded-control text-sm font-bold",
+              mobileView === "list" ? "bg-primary text-white" : "text-text-secondary",
             ].join(" ")}
             onClick={() => setMobileView("list")}
             type="button"
@@ -807,8 +807,8 @@ export function DiscoverTabs({
           </button>
           <button
             className={[
-              "min-h-10 rounded-lg text-sm font-bold",
-              mobileView === "map" ? "bg-ink text-white" : "text-slate-600",
+              "min-h-10 rounded-control text-sm font-bold",
+              mobileView === "map" ? "bg-primary text-white" : "text-text-secondary",
             ].join(" ")}
             onClick={() => setMobileView("map")}
             type="button"
@@ -818,7 +818,7 @@ export function DiscoverTabs({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] lg:items-start">
         <section
           className={[
             "space-y-5",
@@ -830,7 +830,7 @@ export function DiscoverTabs({
           <LocationPermissionNotice message={notice} />
 
           {error ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+            <div className="rounded-card border border-danger/20 bg-danger-soft p-4 text-sm font-semibold leading-6 text-danger">
               {error}
             </div>
           ) : null}
@@ -846,26 +846,26 @@ export function DiscoverTabs({
           ) : null}
 
           {successMessage ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-700">
+            <div className="rounded-card border border-success/20 bg-success-soft p-4 text-sm font-semibold leading-6 text-emerald-700">
               <p>{successMessage}</p>
               {followUpLead ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+                    className="inline-flex min-h-10 items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-hover"
                     onClick={() => setCadenceModalOpen(true)}
                     type="button"
                   >
                     Áp dụng quy trình
                   </button>
                   <button
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700"
+                    className="inline-flex min-h-10 items-center justify-center rounded-control border border-success/25 bg-surface px-4 py-2 text-sm font-bold text-emerald-700"
                     onClick={() => setFollowUpModalOpen(true)}
                     type="button"
                   >
                     Tạo follow-up
                   </button>
                   <button
-                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700"
+                    className="inline-flex min-h-10 items-center justify-center rounded-control border border-success/25 bg-surface px-4 py-2 text-sm font-bold text-emerald-700"
                     onClick={() => {
                       setFollowUpLead(null);
                       setFollowUpModalOpen(false);
@@ -912,7 +912,7 @@ export function DiscoverTabs({
 
         <section
           className={[
-            "lg:sticky lg:top-24",
+            "lg:sticky lg:top-[92px]",
             searchState && mobileView === "list" ? "hidden lg:block" : "",
           ].join(" ")}
         >

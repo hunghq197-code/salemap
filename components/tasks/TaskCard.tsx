@@ -45,6 +45,10 @@ function isCompleted(status?: string | null) {
   return status === "completed" || status === "done";
 }
 
+function isOverdue(value?: string | null) {
+  return Boolean(value && new Date(value).getTime() < Date.now());
+}
+
 export function TaskCard({
   onCancel,
   onComplete,
@@ -53,34 +57,45 @@ export function TaskCard({
 }: TaskCardProps) {
   const lead = getLead(task.leads);
   const done = isCompleted(task.status);
+  const overdue = !done && task.status !== "cancelled" && isOverdue(task.remind_at);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-ocean/60">
+    <article
+      className={[
+        "rounded-card border bg-surface p-4 shadow-card transition duration-150 hover:shadow-floating",
+        overdue ? "border-danger/35" : "border-border-soft hover:border-primary/40",
+      ].join(" ")}
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <TaskTypeBadge type={task.task_type} />
             <TaskPriorityBadge priority={task.priority} />
-            <span className="inline-flex min-h-7 items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+            <span className="inline-flex min-h-7 items-center rounded-full border border-border-soft bg-surface-muted px-3 py-1 text-xs font-bold text-text-secondary">
               {getTaskStatusLabel(task.status)}
             </span>
             {task.cadence ? (
-              <span className="inline-flex min-h-7 items-center gap-1 rounded-full border border-ocean/20 bg-ocean/10 px-3 py-1 text-xs font-bold text-ocean">
+              <span className="inline-flex min-h-7 items-center gap-1 rounded-full border border-primary/20 bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
                 <ListChecks aria-hidden="true" className="h-3.5 w-3.5" />
                 Từ quy trình
               </span>
             ) : null}
+            {overdue ? (
+              <span className="inline-flex min-h-7 items-center rounded-full border border-danger/20 bg-danger-soft px-3 py-1 text-xs font-bold text-danger">
+                Cần xử lý trước
+              </span>
+            ) : null}
           </div>
 
-          <h2 className="mt-3 text-lg font-bold leading-7 text-ink">
+          <h2 className="mt-3 text-lg font-bold leading-7 text-text-primary">
             {task.title}
           </h2>
 
           {lead ? (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm leading-6 text-slate-600">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm leading-6 text-text-secondary">
               <span>Lead:</span>
               <Link
-                className="font-bold text-ocean hover:text-ink"
+                className="font-bold text-primary hover:text-text-primary"
                 href={`/app/leads/${lead.id}`}
               >
                 {lead.name}
@@ -90,26 +105,31 @@ export function TaskCard({
             </div>
           ) : null}
 
-          <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-600">
-            <CalendarClock aria-hidden="true" className="h-4 w-4 text-ocean" />
+          <p
+            className={[
+              "mt-3 flex items-center gap-2 text-sm font-semibold",
+              overdue ? "text-danger" : "text-text-secondary",
+            ].join(" ")}
+          >
+            <CalendarClock aria-hidden="true" className="h-4 w-4" />
             {formatDateTime(task.remind_at)}
           </p>
 
           {task.description ? (
-            <p className="mt-3 text-sm leading-7 text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-text-secondary">
               {task.description}
             </p>
           ) : null}
 
           {task.cadence ? (
-            <p className="mt-3 rounded-lg border border-ocean/15 bg-ocean/5 px-3 py-2 text-sm font-semibold leading-6 text-ocean">
+            <p className="mt-3 rounded-control border border-primary/15 bg-primary-soft px-3 py-2 text-sm font-semibold leading-6 text-primary">
               {task.cadence.templateName} · Bước {task.cadence.stepOrder}/
               {task.cadence.totalSteps || "?"}
             </p>
           ) : null}
 
           {task.last_note_summary ? (
-            <p className="mt-3 rounded-lg bg-cloud px-3 py-2 text-sm leading-6 text-slate-600">
+            <p className="mt-3 rounded-control bg-surface-muted px-3 py-2 text-sm leading-6 text-text-secondary">
               Ghi chú gần nhất: {task.last_note_summary}
             </p>
           ) : null}
@@ -119,7 +139,7 @@ export function TaskCard({
           <QuickTaskActions phone={lead?.phone} />
           {lead ? (
             <Link
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
               href={`/app/leads/${lead.id}`}
             >
               <ExternalLink aria-hidden="true" className="h-4 w-4" />
@@ -129,7 +149,7 @@ export function TaskCard({
           {!done && task.status !== "cancelled" ? (
             <>
               <button
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
                 onClick={() => onSnooze(task)}
                 type="button"
               >
@@ -137,7 +157,7 @@ export function TaskCard({
                 Dời lịch
               </button>
               <button
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-100"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-danger/20 bg-danger-soft px-3 py-2 text-sm font-bold text-danger hover:bg-red-100"
                 onClick={() => onCancel(task)}
                 type="button"
               >
@@ -145,7 +165,7 @@ export function TaskCard({
                 Hủy
               </button>
               <button
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-mint px-3 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-success px-3 py-2 text-sm font-bold text-white hover:bg-emerald-600"
                 onClick={() => onComplete(task)}
                 type="button"
               >

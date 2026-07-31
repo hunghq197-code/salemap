@@ -25,6 +25,8 @@ import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
 import { ActivationChecklist } from "@/components/onboarding/ActivationChecklist";
 import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
+import { Badge } from "@/components/ui/Badge";
+import { StatCard } from "@/components/ui/StatCard";
 import { Toast } from "@/components/ui/Toast";
 import { getCadenceStatusLabel } from "@/lib/constants/cadences";
 import { DASHBOARD_QUOTA_ACTIONS } from "@/lib/constants/quota";
@@ -54,28 +56,6 @@ type DashboardPageProps = {
 
 function getString(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-}: {
-  icon: typeof UsersRound;
-  label: string;
-  value: number;
-}) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-bold text-slate-500">{label}</p>
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-          <Icon aria-hidden="true" className="h-5 w-5" />
-        </span>
-      </div>
-      <p className="mt-4 text-3xl font-bold text-ink">{value}</p>
-    </article>
-  );
 }
 
 export default async function DashboardPage(props: DashboardPageProps) {
@@ -118,41 +98,88 @@ export default async function DashboardPage(props: DashboardPageProps) {
     data.totalNotes > 0,
     data.totalRemindersCreated > 0,
   ].filter(Boolean).length;
+  const focusCopy =
+    taskCounts.overdue > 0
+      ? `Hôm nay bạn có ${taskCounts.today} việc cần làm và ${taskCounts.overdue} việc quá hạn cần xử lý trước.`
+      : `Hôm nay bạn có ${taskCounts.today} việc cần làm. Mở danh sách để chăm sóc đúng nhịp.`;
 
   return (
     <>
       <DashboardTracker />
       <Toast code={getString(searchParams?.toast)} />
-      <div className="mx-auto max-w-6xl">
-        <section className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-              Dashboard
-            </p>
-            <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-              Xin chào, {data.fullName || "bạn"}
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Theo dõi lead cá nhân, việc cần gọi lại và các cơ hội mới trong một màn hình gọn.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3]"
-              href="/app/discover"
-            >
-              <Search aria-hidden="true" className="h-5 w-5" />
-              Tìm khách mới
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm transition hover:border-ocean"
-              href="/app/leads?create=1"
-            >
-              <Plus aria-hidden="true" className="h-5 w-5" />
-              Thêm lead
-            </Link>
+      <div className="mx-auto max-w-7xl">
+        <section className="relative overflow-hidden rounded-shell bg-sidebar p-5 text-white shadow-floating sm:p-7 lg:p-8">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:38px_38px]"
+          />
+          <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div>
+              <Badge tone="accent">Tổng quan hôm nay</Badge>
+              <h1 className="mt-4 text-3xl font-bold leading-tight sm:text-4xl">
+                Xin chào, {data.fullName || "bạn"}
+              </h1>
+              <p className="mt-3 max-w-3xl text-base leading-7 text-slate-300">
+                {focusCopy}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Badge tone={taskCounts.overdue > 0 ? "danger" : "success"}>
+                  {taskCounts.overdue} quá hạn
+                </Badge>
+                <Badge tone="primary">{data.totalLeads} lead đang quản lý</Badge>
+                <Badge tone="warning">{quota.items.length} hạn mức đang theo dõi</Badge>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
+                href="/app/discover"
+              >
+                <Search aria-hidden="true" className="h-5 w-5" />
+                Tìm khách mới
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-white/15 bg-white/10 px-5 py-3 text-base font-bold text-white transition hover:bg-white/15"
+                href="/app/leads?create=1"
+              >
+                <Plus aria-hidden="true" className="h-5 w-5" />
+                Thêm lead
+              </Link>
+            </div>
           </div>
         </section>
+
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            description="Toàn bộ khách hàng tiềm năng trong workspace."
+            icon={UsersRound}
+            label="Lead đang quản lý"
+            value={data.totalLeads}
+          />
+          <StatCard
+            description="Các việc cần chăm sóc trong ngày."
+            icon={Bell}
+            label="Việc hôm nay"
+            tone="warning"
+            value={taskCounts.today}
+          />
+          <StatCard
+            description="Ưu tiên xử lý trước khi mở rộng tìm kiếm."
+            icon={Clock3}
+            label="Việc quá hạn"
+            tone={taskCounts.overdue > 0 ? "danger" : "success"}
+            value={taskCounts.overdue}
+          />
+          <StatCard
+            description="Lead mới phát sinh trong tuần này."
+            icon={CalendarPlus}
+            label="Lead mới tuần này"
+            tone="success"
+            value={data.newLeadsThisWeek}
+          />
+        </section>
+
+        <TodayTasksWidget counts={taskCounts} tasks={todayTasks.items} />
 
         <section className="mt-6 rounded-lg border border-ocean/20 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -220,13 +247,6 @@ export default async function DashboardPage(props: DashboardPageProps) {
             }}
           />
         ) : null}
-
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard icon={UsersRound} label="Tổng lead" value={data.totalLeads} />
-          <StatCard icon={Bell} label="Follow-up hôm nay" value={taskCounts.today} />
-          <StatCard icon={Clock3} label="Quá hạn" value={taskCounts.overdue} />
-          <StatCard icon={CalendarPlus} label="Lead mới tuần này" value={data.newLeadsThisWeek} />
-        </section>
 
         <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -460,8 +480,6 @@ export default async function DashboardPage(props: DashboardPageProps) {
             </Link>
           </div>
         </section>
-
-        <TodayTasksWidget counts={taskCounts} tasks={todayTasks.items} />
 
         <section className="mt-8">
           <article>

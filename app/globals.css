@@ -22,6 +22,33 @@
 
 :root {
   color-scheme: light;
+  --color-background: 245 247 251;
+  --color-background-subtle: 238 242 247;
+  --color-surface: 255 255 255;
+  --color-surface-elevated: 255 255 255;
+  --color-surface-muted: 248 250 252;
+  --color-sidebar: 7 17 31;
+  --color-sidebar-secondary: 11 23 40;
+  --color-sidebar-hover: 19 34 56;
+  --color-sidebar-text: 148 163 184;
+  --color-sidebar-text-active: 255 255 255;
+  --color-text-primary: 15 23 42;
+  --color-text-secondary: 71 85 105;
+  --color-text-muted: 148 163 184;
+  --color-primary: 37 99 235;
+  --color-primary-hover: 29 78 216;
+  --color-primary-soft: 239 246 255;
+  --color-accent: 6 182 212;
+  --color-accent-soft: 236 254 255;
+  --color-success: 16 185 129;
+  --color-success-soft: 236 253 245;
+  --color-warning: 245 158 11;
+  --color-warning-soft: 255 251 235;
+  --color-danger: 239 68 68;
+  --color-danger-soft: 254 242 242;
+  --color-border: 226 232 240;
+  --color-border-strong: 203 213 225;
+  --focus-ring: rgba(37, 99, 235, 0.25);
 }
 
 html {
@@ -30,12 +57,26 @@ html {
 }
 
 body {
-  background: linear-gradient(180deg, #f8fbff 0%, #f5f8fb 48%, #eef8f4 100%);
-  color: #102033;
+  background:
+    radial-gradient(circle at top left, rgba(6, 182, 212, 0.08), transparent 32rem),
+    linear-gradient(180deg, rgb(var(--color-background)) 0%, rgb(var(--color-background-subtle)) 100%);
+  color: rgb(var(--color-text-primary));
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 @keyframes salemap-route-progress {
@@ -71,5 +112,16 @@ textarea {
 }
 
 ::selection {
-  background: rgba(34, 197, 139, 0.22);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

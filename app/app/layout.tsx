@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { trackUserActivityForUser } from "@/lib/data/activity-tracking";
+import { getCurrentSubscription } from "@/lib/data/subscriptions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,12 @@ async function getUnreadNotificationCountForUser(
   return count ?? 0;
 }
 
+async function getCurrentPlanName() {
+  const result = await getCurrentSubscription();
+
+  return result.plan.name || result.subscription.plan_name || "Free";
+}
+
 export default async function ProductAppLayout({
   children,
 }: Readonly<{
@@ -71,14 +78,15 @@ export default async function ProductAppLayout({
   }
 
   void trackUserActivityForUser(user.id, "session_started");
-  const unreadNotificationCount = await withTimeout(
-    getUnreadNotificationCountForUser(supabase, user.id),
-    0,
-  );
+  const [unreadNotificationCount, planName] = await Promise.all([
+    withTimeout(getUnreadNotificationCountForUser(supabase, user.id), 0),
+    withTimeout(getCurrentPlanName(), "Free"),
+  ]);
 
   return (
     <AppShell
       fullName={profile.full_name || user.email?.split("@")[0] || "Bạn"}
+      planName={planName}
       unreadNotificationCount={unreadNotificationCount}
       userId={user.id}
     >

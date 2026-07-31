@@ -61,11 +61,11 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
   const directionsHref = getDirectionsHref(lead);
 
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-ocean">
+    <article className="rounded-card border border-border-soft bg-surface p-4 shadow-card transition duration-150 hover:border-primary/40 hover:shadow-floating">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
           {selectable ? (
-            <label className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-cloud">
+            <label className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-border-soft bg-surface-muted">
               <input
                 aria-label={`Chọn lead ${lead.name}`}
                 className="h-5 w-5"
@@ -77,7 +77,7 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
           ) : null}
           <div className="min-w-0">
             <Link
-              className="text-lg font-bold leading-7 text-ink hover:text-ocean"
+              className="text-lg font-bold leading-7 text-text-primary hover:text-primary"
               href={`/app/leads/${lead.id}`}
             >
               {lead.name}
@@ -96,7 +96,7 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
         <div className="flex flex-wrap gap-2">
           {lead.phone ? (
             <a
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
               href={`tel:${lead.phone}`}
             >
               <Phone aria-hidden="true" className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
           ) : null}
           {directionsHref ? (
             <a
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
               href={directionsHref}
               rel="noreferrer"
               target="_blank"
@@ -116,7 +116,7 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
           ) : null}
           {lead.google_maps_url ? (
             <a
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
               href={lead.google_maps_url}
               rel="noreferrer"
               target="_blank"
@@ -126,14 +126,14 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
             </a>
           ) : null}
           <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary hover:border-primary/40 hover:text-primary"
             href={`/app/leads/${lead.id}#add-note`}
           >
             <MessageSquarePlus aria-hidden="true" className="h-4 w-4" />
             Thêm ghi chú
           </Link>
           <Link
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-ocean"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-hover"
             href={`/app/leads/${lead.id}`}
           >
             Xem chi tiết
@@ -141,27 +141,27 @@ export function LeadCard({ lead, selectable = false }: LeadCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-3 text-sm text-text-secondary sm:grid-cols-2 lg:grid-cols-4">
         <p className="flex items-start gap-2 leading-6">
-          <Phone aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-ocean" />
+          <Phone aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-primary" />
           <span>{lead.phone || "Chưa có số điện thoại"}</span>
         </p>
         <p className="flex items-start gap-2 leading-6">
-          <MapPin aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-ocean" />
+          <MapPin aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-primary" />
           <span>{lead.address || "Chưa có địa chỉ"}</span>
         </p>
         <p className="flex items-start gap-2 leading-6">
-          <CalendarClock aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-ocean" />
+          <CalendarClock aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-primary" />
           <span>Follow-up: {formatDateTime(lead.next_follow_up_at)}</span>
         </p>
         <p className="flex items-start gap-2 leading-6">
-          <CalendarClock aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-ocean" />
+          <CalendarClock aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-primary" />
           <span>Ngày tạo: {formatDate(lead.created_at)}</span>
         </p>
       </div>
 
-      <p className="mt-4 flex items-start gap-2 text-sm leading-7 text-slate-600">
-        <StickyNote aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-ocean" />
+      <p className="mt-4 flex items-start gap-2 rounded-card bg-surface-muted px-3 py-2 text-sm leading-7 text-text-secondary">
+        <StickyNote aria-hidden="true" className="mt-1 h-4 w-4 flex-none text-primary" />
         <span>{lead.note_summary || "Chưa có ghi chú gần nhất."}</span>
       </p>
 

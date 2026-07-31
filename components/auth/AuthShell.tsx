@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircle2, MapPinned } from "lucide-react";
+import { CheckCircle2, MapPinned, Radar, Route, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { Badge } from "@/components/ui/Badge";
 
 type AuthScreen = "login" | "register";
 
@@ -45,14 +46,14 @@ export function AuthShell({
     description ?? (isLogin ? authCopy.loginDescription : authCopy.registerDescription);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#f5f8fb_46%,#eef8f4_100%)] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 py-6 text-text-primary sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
         <div className="flex items-center justify-between gap-4">
           <Link
-            className="inline-flex min-h-11 items-center gap-2 text-xl font-bold text-ink"
+            className="inline-flex min-h-11 items-center gap-2 text-xl font-bold text-text-primary"
             href="/"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-ink text-white shadow-soft">
+            <span className="flex h-10 w-10 items-center justify-center rounded-control bg-sidebar text-white shadow-soft">
               <MapPinned aria-hidden="true" className="h-5 w-5" />
             </span>
             SaleMap
@@ -60,28 +61,54 @@ export function AuthShell({
           <LanguageSwitcher />
         </div>
 
-        <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.92fr_1.08fr] lg:py-10">
-          <section className="rounded-lg border border-slate-200/80 bg-white/70 p-5 shadow-[0_20px_60px_rgba(16,32,51,0.08)] backdrop-blur sm:p-7">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-              {resolvedEyebrow}
-            </p>
-            <h1 className="mt-3 max-w-2xl text-3xl font-bold leading-tight text-ink sm:text-5xl">
-              {resolvedTitle}
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
-              {resolvedDescription}
-            </p>
-            <div className="mt-7 space-y-3">
-              {fallbackHighlights[locale].map((item) => (
-                <div className="flex gap-3 text-sm font-semibold leading-6 text-slate-700" key={item}>
-                  <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none text-mint" />
-                  <span>{item}</span>
-                </div>
-              ))}
+        <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[0.94fr_1.06fr] lg:py-10">
+          <section className="relative overflow-hidden rounded-shell bg-sidebar p-6 text-white shadow-floating sm:p-8">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:36px_36px]"
+            />
+            <div className="relative">
+              <Badge tone="accent">{resolvedEyebrow}</Badge>
+              <h1 className="mt-4 max-w-2xl text-3xl font-bold leading-tight sm:text-5xl">
+                {resolvedTitle}
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
+                {resolvedDescription}
+              </p>
+              <div className="mt-7 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                {[
+                  { icon: Radar, label: "Quét khu vực" },
+                  { icon: Route, label: "Theo tuyến đi" },
+                  { icon: ShieldCheck, label: "Dữ liệu riêng" },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      className="rounded-card border border-white/10 bg-white/5 p-3"
+                      key={item.label}
+                    >
+                      <Icon aria-hidden="true" className="h-5 w-5 text-accent" />
+                      <p className="mt-2 text-sm font-bold text-white">{item.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-7 space-y-3">
+                {fallbackHighlights[locale].map((item) => (
+                  <div
+                    className="flex gap-3 text-sm font-semibold leading-6 text-slate-200"
+                    key={item}
+                  >
+                    <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 flex-none text-success" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(16,32,51,0.10)] sm:p-7">
+          <section className="rounded-shell border border-border-soft bg-surface p-5 shadow-floating sm:p-7">
             {children}
           </section>
         </div>
