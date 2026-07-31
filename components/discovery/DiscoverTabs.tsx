@@ -3,8 +3,11 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { AreaSearchForm } from "@/components/discovery/AreaSearchForm";
+import { DiscoveryEmptyState } from "@/components/discovery/DiscoveryEmptyState";
+import { DiscoverySearchTabs } from "@/components/discovery/DiscoverySearchTabs";
 import { LocationPermissionNotice } from "@/components/discovery/LocationPermissionNotice";
 import { NearMeSearchForm } from "@/components/discovery/NearMeSearchForm";
+import { PlaceDetailPanel } from "@/components/discovery/PlaceDetailPanel";
 import { QuotaBar } from "@/components/discovery/QuotaBar";
 import {
   RouteSearchForm,
@@ -109,6 +112,7 @@ type PlaceDetailsResponse = ApiError & {
 };
 
 type DiscoverTabsProps = {
+  initialKeyword?: string;
   initialTab?: ActiveTab;
   routeSearchEnabled?: boolean;
 };
@@ -217,6 +221,7 @@ function scrollPlaceCardIntoView(placeId: string) {
 }
 
 export function DiscoverTabs({
+  initialKeyword = "",
   initialTab = "near-me",
   routeSearchEnabled = true,
 }: DiscoverTabsProps) {
@@ -261,6 +266,9 @@ export function DiscoverTabs({
     : null;
   const isRouteResult = searchState?.source === "route_search";
   const mapCenter = searchState?.center ?? locationCenter;
+  const selectedPlace = selectedPlaceId
+    ? searchState?.results.find((place) => place.placeId === selectedPlaceId) ?? null
+    : null;
   const showSearchThisArea =
     activeTab === "area" &&
     searchState?.source === "map_area" &&
@@ -727,6 +735,7 @@ export function DiscoverTabs({
     activeTab === "near-me" ? (
       <NearMeSearchForm
         hasLocation={hasLocation}
+        initialKeyword={initialKeyword}
         loading={loading}
         locationAccuracyMeters={deviceLocation.accuracy}
         locationError={deviceLocation.error}
@@ -735,63 +744,46 @@ export function DiscoverTabs({
         onSubmit={handleNearMeSearch}
       />
     ) : activeTab === "area" ? (
-      <AreaSearchForm loading={loading} onSubmit={handleAreaSearch} />
-    ) : (
-      <RouteSearchForm loading={loading} onSubmit={handleRouteSearch} />
-    );
-
-  const map =
-    searchState || hasLocation ? (
-      <MapPreview
-        center={mapCenter}
-        hoveredPlaceId={hoveredPlaceId}
-        mode={isRouteResult ? "route" : "places"}
-        onMarkerClick={(placeId) => handleSelectPlace(placeId, "marker")}
-        onSearchThisArea={handleSearchThisArea}
-        onViewportCenterChange={handleViewportCenterChange}
-        results={searchState?.results ?? []}
-        routeDestination={searchState?.route?.destination}
-        routeOrigin={searchState?.route?.origin}
-        routePolyline={searchState?.route?.polyline}
-        searchThisAreaLoading={loading}
-        searchThisAreaVisible={showSearchThisArea}
-        selectedPlaceId={selectedPlaceId}
-        showCenterMarker={searchState?.source === "map_near_me" || (!searchState && hasLocation)}
+      <AreaSearchForm
+        initialKeyword={initialKeyword}
+        loading={loading}
+        onSubmit={handleAreaSearch}
       />
     ) : (
-      <MapSkeleton />
+      <RouteSearchForm
+        initialKeyword={initialKeyword}
+        loading={loading}
+        onSubmit={handleRouteSearch}
+      />
     );
+
+  const map = (
+    <MapPreview
+      center={mapCenter}
+      hoveredPlaceId={hoveredPlaceId}
+      mode={isRouteResult ? "route" : "places"}
+      onMarkerClick={(placeId) => handleSelectPlace(placeId, "marker")}
+      onSearchThisArea={handleSearchThisArea}
+      onShowList={searchState ? () => setMobileView("list") : undefined}
+      onViewportCenterChange={handleViewportCenterChange}
+      results={searchState?.results ?? []}
+      routeDestination={searchState?.route?.destination}
+      routeOrigin={searchState?.route?.origin}
+      routePolyline={searchState?.route?.polyline}
+      searchThisAreaLoading={loading}
+      searchThisAreaVisible={showSearchThisArea}
+      selectedPlaceId={selectedPlaceId}
+      showCenterMarker={searchState?.source === "map_near_me" || (!searchState && hasLocation)}
+    />
+  );
 
   return (
     <div className="mt-6">
-      <div className="grid grid-cols-3 gap-2 rounded-card border border-border-soft bg-surface p-1.5 shadow-card">
-        {[
-          { label: "Quanh tôi", value: "near-me" },
-          { label: "Theo khu vực", value: "area" },
-          { disabled: !routeSearchEnabled, label: "Dọc tuyến", value: "route" },
-        ].map((tab) => {
-          const isActive = activeTab === tab.value;
-
-          return (
-            <button
-              className={[
-                "min-h-11 rounded-control px-2 py-2 text-sm font-bold transition duration-150",
-                tab.disabled
-                  ? "cursor-not-allowed text-slate-400"
-                  : isActive
-                    ? "bg-primary text-white shadow-soft"
-                    : "text-text-secondary hover:bg-primary-soft hover:text-primary",
-              ].join(" ")}
-              disabled={tab.disabled}
-              key={tab.value}
-              onClick={() => handleTabChange(tab.value as ActiveTab)}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      <DiscoverySearchTabs
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        routeSearchEnabled={routeSearchEnabled}
+      />
 
       {searchState ? (
         <div className="mt-4 grid grid-cols-2 gap-2 rounded-card border border-border-soft bg-surface p-1.5 shadow-sm lg:hidden">
@@ -818,10 +810,10 @@ export function DiscoverTabs({
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] lg:items-start">
         <section
           className={[
-            "space-y-5",
+            "space-y-5 lg:max-h-[calc(100vh-130px)] lg:overflow-y-auto lg:pr-1",
             searchState && mobileView === "map" ? "hidden lg:block" : "",
           ].join(" ")}
         >
@@ -907,16 +899,28 @@ export function DiscoverTabs({
                 source={searchState.source}
               />
             </>
-          ) : null}
+          ) : (
+            <DiscoveryEmptyState />
+          )}
         </section>
 
         <section
           className={[
-            "lg:sticky lg:top-[92px]",
+            "relative lg:sticky lg:top-[92px]",
             searchState && mobileView === "list" ? "hidden lg:block" : "",
           ].join(" ")}
         >
           {map}
+          {selectedPlace && searchState ? (
+            <PlaceDetailPanel
+              detailsLoading={loadingDetailsPlaceId === selectedPlace.placeId}
+              onClose={() => setSelectedPlaceId(null)}
+              onLoadDetails={(place) => void loadPlaceDetails(place)}
+              onSave={handleSavePlace}
+              place={selectedPlace}
+              saving={savingPlaceId === selectedPlace.placeId}
+            />
+          ) : null}
         </section>
       </div>
 

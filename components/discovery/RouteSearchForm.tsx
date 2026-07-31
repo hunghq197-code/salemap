@@ -29,14 +29,19 @@ export type RouteSearchFormInput =
     };
 
 type RouteSearchFormProps = {
+  initialKeyword?: string;
   loading: boolean;
   onSubmit: (input: RouteSearchFormInput) => void;
 };
 
-export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
+export function RouteSearchForm({
+  initialKeyword = "",
+  loading,
+  onSubmit,
+}: RouteSearchFormProps) {
   const [bufferMeters, setBufferMeters] = useState(500);
   const [destinationText, setDestinationText] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [keyword, setKeyword] = useState(initialKeyword);
   const [originText, setOriginText] = useState("");
   const [searchMode, setSearchMode] = useState<RouteSearchMode>("street");
   const [streetText, setStreetText] = useState("");
@@ -72,23 +77,22 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
 
   return (
     <form
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5"
       onSubmit={handleSubmit}
     >
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ocean">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
           Dọc tuyến
         </p>
-        <h2 className="mt-2 text-xl font-bold text-ink">
+        <h2 className="mt-2 text-xl font-bold text-text-primary">
           Tìm khách theo tuyến sale sẽ đi
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Nhập tên đường hoặc khu vực cụ thể. SaleMap sẽ dựng tuyến ước tính,
-          hiển thị độ dài trên bản đồ và quét khách hàng nằm gần tuyến đó.
+        <p className="mt-2 text-sm leading-6 text-text-secondary">
+          Nhập tên đường hoặc khu vực cụ thể. SaleMap sẽ dựng tuyến ước tính, hiển thị độ dài trên bản đồ và quét khách hàng nằm gần tuyến đó.
         </p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg bg-cloud p-1">
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-control bg-surface-muted p-1">
         {[
           { label: "Theo tên đường", value: "street" },
           { label: "Điểm đầu/cuối", value: "point_to_point" },
@@ -98,10 +102,10 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           return (
             <button
               className={[
-                "min-h-10 rounded-lg px-3 py-2 text-sm font-bold transition",
+                "min-h-10 rounded-control px-3 py-2 text-sm font-bold transition",
                 isActive
-                  ? "bg-ink text-white"
-                  : "text-slate-600 hover:bg-white hover:text-ink",
+                  ? "bg-sidebar text-white"
+                  : "text-text-secondary hover:bg-surface hover:text-text-primary",
               ].join(" ")}
               key={mode.value}
               onClick={() => setSearchMode(mode.value as RouteSearchMode)}
@@ -113,9 +117,8 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
         })}
       </div>
 
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">
-        Ví dụ tốt: Đường Hiền Vương, Phú Thạnh hoặc Nguyễn Trãi, Quận 5. Nếu
-        kết quả chưa đúng tuyến, hãy chọn một gợi ý Google Maps cụ thể hơn.
+      <div className="mt-4 rounded-control border border-warning/25 bg-warning-soft px-4 py-3 text-sm font-semibold leading-6 text-amber-700">
+        Ví dụ tốt: Đường Hiền Vương, Phú Thạnh hoặc Nguyễn Trãi, Quận 5. Nếu kết quả chưa đúng tuyến, hãy chọn một gợi ý Google Maps cụ thể hơn.
       </div>
 
       <div className="mt-5 grid gap-4">
@@ -144,10 +147,10 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
           </>
         )}
 
-        <label className="block text-sm font-bold text-ink">
+        <label className="block text-sm font-bold text-text-primary">
           Ngành khách cần tìm dọc tuyến này
           <input
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
+            className="mt-2 min-h-12 w-full rounded-control border border-border-soft bg-surface px-3 py-2 text-base text-text-primary outline-none transition placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
             maxLength={100}
             minLength={2}
             onChange={(event) => setKeyword(event.target.value)}
@@ -159,15 +162,15 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
       </div>
 
       <fieldset className="mt-4">
-        <legend className="text-sm font-bold text-ink">Độ lệch khỏi tuyến</legend>
+        <legend className="text-sm font-bold text-text-primary">Độ lệch khỏi tuyến</legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
           {routeBufferOptions.map((option) => (
             <label
               className={[
-                "flex min-h-11 cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm font-bold transition",
+                "flex min-h-11 cursor-pointer items-center justify-center rounded-control border px-3 py-2 text-sm font-bold transition",
                 bufferMeters === option.value
-                  ? "border-ocean bg-ocean text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-ocean",
+                  ? "border-primary bg-primary text-white"
+                  : "border-border-soft bg-surface text-text-secondary hover:border-primary/40",
               ].join(" ")}
               key={option.value}
             >
@@ -183,14 +186,14 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
             </label>
           ))}
         </div>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          500m giúp kết quả bám sát mặt đường. Tăng lên 1-3km khi tuyến có hẻm,
-          đường song hành hoặc nhiều điểm bán nằm sâu hai bên đường.
+        <p className="mt-2 text-sm leading-6 text-text-muted">
+          500m giúp kết quả bám sát mặt đường. Tăng lên 1-3km khi tuyến có hẻm, đường song hành hoặc nhiều điểm bán nằm sâu hai bên đường.
         </p>
       </fieldset>
 
       <button
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3] disabled:cursor-not-allowed disabled:opacity-70"
+        aria-busy={loading || undefined}
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
         disabled={loading}
         type="submit"
       >
@@ -207,13 +210,12 @@ export function RouteSearchForm({ loading, onSubmit }: RouteSearchFormProps) {
         )}
       </button>
 
-      <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-slate-500">
+      <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-text-muted">
         <MapPinned
           aria-hidden="true"
-          className="mt-0.5 h-4 w-4 flex-none text-ocean"
+          className="mt-0.5 h-4 w-4 flex-none text-primary"
         />
-        Khi không rõ điểm cuối, chỉ cần nhập tên đường rồi chọn gợi ý gần đúng
-        nhất. Chế độ điểm đầu/cuối dùng cho tuyến giao hàng đã biết chính xác.
+        Khi không rõ điểm cuối, chỉ cần nhập tên đường rồi chọn gợi ý gần đúng nhất. Chế độ điểm đầu/cuối dùng cho tuyến giao hàng đã biết chính xác.
       </p>
     </form>
   );

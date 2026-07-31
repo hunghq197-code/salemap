@@ -3,11 +3,12 @@ import { trackUserActivity } from "@/lib/data/activity-tracking";
 import { ACTIVE_TASK_STATUSES } from "@/lib/constants/tasks";
 import type { ReminderRecord } from "@/lib/data/reminders";
 
-type DashboardRecentLead = {
+export type DashboardRecentLead = {
   address: string | null;
   category: string | null;
   id: string;
   name: string;
+  phone: string | null;
   status: string | null;
 };
 
@@ -85,7 +86,7 @@ export async function getDashboardData() {
       .is("deleted_at", null),
     supabase
       .from("leads")
-      .select("id,name,status,category,address")
+      .select("id,name,status,category,address,phone")
       .eq("user_id", userId)
       .eq("is_archived", false)
       .is("deleted_at", null)

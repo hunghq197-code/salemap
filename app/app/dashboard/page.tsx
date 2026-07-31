@@ -1,52 +1,34 @@
-import {
-  BarChart3,
-  Bell,
-  BookOpenText,
-  CalendarPlus,
-  CheckCircle2,
-  Clock3,
-  ListChecks,
-  MapPinned,
-  MessageSquareHeart,
-  PauseCircle,
-  Plus,
-  Route,
-  Search,
-  Sparkles,
-  Target,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { DashboardTracker } from "@/components/app/DashboardTracker";
-import { TodayTasksWidget } from "@/components/dashboard/TodayTasksWidget";
-import { FirstRunGuideCard } from "@/components/app/FirstRunGuideCard";
 import { BetaChecklistCard } from "@/components/beta/BetaChecklistCard";
-import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardStatGrid } from "@/components/dashboard/DashboardStatGrid";
+import { LeadsRequiringAttention } from "@/components/dashboard/LeadsRequiringAttention";
+import { QuickDiscoveryCard } from "@/components/dashboard/QuickDiscoveryCard";
+import { QuotaSummary } from "@/components/dashboard/QuotaSummary";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { TodayTasks } from "@/components/dashboard/TodayTasks";
 import { ActivationChecklist } from "@/components/onboarding/ActivationChecklist";
-import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
 import { BetaSurveyModal } from "@/components/surveys/BetaSurveyModal";
-import { Badge } from "@/components/ui/Badge";
 import { Toast } from "@/components/ui/Toast";
-import { getCadenceStatusLabel } from "@/lib/constants/cadences";
+import { DashboardTracker } from "@/components/app/DashboardTracker";
+import { FirstRunGuideCard } from "@/components/app/FirstRunGuideCard";
+import { BETA_CHECKLIST_ITEMS, type BetaChecklistKey } from "@/lib/constants/beta-checklist";
 import { DASHBOARD_QUOTA_ACTIONS } from "@/lib/constants/quota";
-import { calculateSalesMetricsForUser } from "@/lib/analytics/sales-analytics";
 import { createAuthedSupabaseServerClient } from "@/lib/data/auth";
 import { getBetaChecklistProgress } from "@/lib/data/beta-checklist";
-import { getCadenceDashboardSummary } from "@/lib/data/cadences";
-import { getDashboardData } from "@/lib/data/dashboard";
-import { isFeatureEnabled } from "@/lib/data/feature-flags";
-import { getSavedViewsWithCounts } from "@/lib/data/lead-saved-views";
+import {
+  getDashboardData,
+  type DashboardRecentLead,
+} from "@/lib/data/dashboard";
 import {
   getActivationProgressWithChecklist,
   hasDemoData,
   safeMarkActivationStep,
 } from "@/lib/data/onboarding";
-import { getPinnedSalesGoals } from "@/lib/data/sales-goals";
 import { getCurrentSubscription } from "@/lib/data/subscriptions";
 import { getBetaRound2SurveyState } from "@/lib/data/surveys";
-import { getTaskCounts, getTodayTasks } from "@/lib/data/tasks";
+import { getTaskCounts, getTodayTasks, type TaskCounts } from "@/lib/data/tasks";
 import { getDailyUsageSnapshot } from "@/lib/data/usage";
+import { isFeatureEnabled } from "@/lib/data/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -54,233 +36,214 @@ type DashboardPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
+const fallbackTaskCounts: TaskCounts = {
+  completedToday: 0,
+  leadsWithoutTasks: 0,
+  overdue: 0,
+  today: 0,
+  upcoming: 0,
+};
+
+const fallbackDashboardData: Awaited<ReturnType<typeof getDashboardData>> = {
+  fullName: undefined,
+  newLeadsThisWeek: 0,
+  overdueReminders: 0,
+  recentLeads: [] as DashboardRecentLead[],
+  todayReminderItems: [],
+  todayReminders: 0,
+  totalLeads: 0,
+  totalNotes: 0,
+  totalRemindersCreated: 0,
+};
+
+const fallbackTodayTasks: Awaited<ReturnType<typeof getTodayTasks>> = {
+  items: [],
+  limit: 7,
+  page: 1,
+  total: 0,
+};
+
+const fallbackBetaChecklist = {
+  completed: new Set<BetaChecklistKey>(),
+  done: 0,
+  items: BETA_CHECKLIST_ITEMS,
+  progress: [],
+  schemaReady: false,
+  total: BETA_CHECKLIST_ITEMS.length,
+};
+
+type DashboardActivation = Omit<
+  Awaited<ReturnType<typeof getActivationProgressWithChecklist>>,
+  "progress"
+>;
+
+const fallbackActivation: DashboardActivation = {
+  checklist: [],
+  completedCount: 0,
+  score: 0,
+  totalCount: 0,
+};
+
+const fallbackSurveyState: Awaited<ReturnType<typeof getBetaRound2SurveyState>> = {
+  eligible: false,
+  hasSubmitted: false,
+  leadCount: 0,
+};
+
 function getString(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-type DashboardMetricTone = "danger" | "primary" | "success" | "warning";
+async function withWidgetFallback<T>(promise: Promise<T>, fallback: T) {
+  const [result] = await Promise.allSettled([promise]);
 
-type DashboardMetricCardProps = {
-  description?: string;
-  icon: LucideIcon;
-  label: string;
-  tone?: DashboardMetricTone;
-  value: number;
-};
-
-const dashboardMetricToneClasses: Record<DashboardMetricTone, string> = {
-  danger: "bg-danger-soft text-danger",
-  primary: "bg-primary-soft text-primary",
-  success: "bg-success-soft text-emerald-700",
-  warning: "bg-warning-soft text-amber-700",
-};
-
-function DashboardMetricCard({
-  description,
-  icon: Icon,
-  label,
-  tone = "primary",
-  value,
-}: DashboardMetricCardProps) {
-  return (
-    <article className="rounded-card border border-border-soft bg-surface p-3 shadow-card sm:min-h-[154px] sm:p-5 lg:p-6">
-      <div className="flex items-start justify-between gap-2 sm:gap-4">
-        <div className="min-w-0">
-          <p className="text-xs font-bold leading-5 text-text-secondary sm:text-sm">
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary sm:mt-3 sm:text-3xl">
-            {value}
-          </p>
-        </div>
-        <span
-          className={[
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-control sm:h-11 sm:w-11",
-            dashboardMetricToneClasses[tone],
-          ].join(" ")}
-        >
-          <Icon aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
-        </span>
-      </div>
-      {description ? (
-        <p className="mt-3 hidden text-sm leading-6 text-text-secondary sm:block">
-          {description}
-        </p>
-      ) : null}
-    </article>
-  );
+  return result.status === "fulfilled" ? result.value : fallback;
 }
 
 export default async function DashboardPage(props: DashboardPageProps) {
   const searchParams = await props.searchParams;
-  const { userId } = await createAuthedSupabaseServerClient();
+  await createAuthedSupabaseServerClient();
   void safeMarkActivationStep("viewed_dashboard");
+
   const [
     data,
     taskCounts,
-    cadenceSummary,
     todayTasks,
     betaChecklist,
     quota,
     surveyState,
     betaSurveyEnabled,
-    subscriptionResult,
-    leadViews,
-    todaySales,
-    pinnedGoals,
+    planName,
     activation,
     demoDataExists,
   ] = await Promise.all([
-    getDashboardData(),
-    getTaskCounts(),
-    getCadenceDashboardSummary(),
-    getTodayTasks(),
-    getBetaChecklistProgress(),
-    getDailyUsageSnapshot(DASHBOARD_QUOTA_ACTIONS),
-    getBetaRound2SurveyState(),
-    isFeatureEnabled("beta_survey"),
-    getCurrentSubscription(),
-    getSavedViewsWithCounts(),
-    calculateSalesMetricsForUser(userId, "today"),
-    getPinnedSalesGoals(),
-    getActivationProgressWithChecklist(),
-    hasDemoData(),
+    withWidgetFallback(getDashboardData(), fallbackDashboardData),
+    withWidgetFallback(getTaskCounts(), fallbackTaskCounts),
+    withWidgetFallback(getTodayTasks(), fallbackTodayTasks),
+    withWidgetFallback(getBetaChecklistProgress(), fallbackBetaChecklist),
+    withWidgetFallback(
+      getDailyUsageSnapshot(DASHBOARD_QUOTA_ACTIONS),
+      {
+        items: [],
+        schemaReady: false,
+      },
+    ),
+    withWidgetFallback(getBetaRound2SurveyState(), fallbackSurveyState),
+    withWidgetFallback(isFeatureEnabled("beta_survey"), false),
+    withWidgetFallback(getCurrentSubscription().then((result) => result.plan.name), "Free"),
+    withWidgetFallback(
+      getActivationProgressWithChecklist().then(
+        ({ checklist, completedCount, score, totalCount }) => ({
+          checklist,
+          completedCount,
+          score,
+          totalCount,
+        }),
+      ),
+      fallbackActivation,
+    ),
+    withWidgetFallback(hasDemoData(), false),
   ]);
+
   const coreActionsCompleted = [
     data.totalLeads > 0,
     data.totalNotes > 0,
     data.totalRemindersCreated > 0,
   ].filter(Boolean).length;
-  const focusCopy =
-    taskCounts.overdue > 0
-      ? `Hôm nay bạn có ${taskCounts.today} việc cần làm và ${taskCounts.overdue} việc quá hạn cần xử lý trước.`
-      : `Hôm nay bạn có ${taskCounts.today} việc cần làm. Mở danh sách để chăm sóc đúng nhịp.`;
 
   return (
     <>
       <DashboardTracker />
       <Toast code={getString(searchParams?.toast)} />
+
       <div className="mx-auto max-w-7xl">
-        <section className="relative overflow-hidden rounded-[18px] bg-sidebar p-4 text-white shadow-floating sm:rounded-shell sm:p-7 lg:p-8">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 hidden opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:38px_38px] sm:block"
+        <DashboardHeader fullName={data.fullName} taskCounts={taskCounts} />
+
+        <div className="mt-5 hidden lg:block">
+          <DashboardStatGrid
+            newLeadsThisWeek={data.newLeadsThisWeek}
+            taskCounts={taskCounts}
+            totalLeads={data.totalLeads}
           />
-          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-            <div>
-              <Badge tone="accent">Tổng quan hôm nay</Badge>
-              <h1 className="mt-3 text-2xl font-bold leading-tight sm:mt-4 sm:text-4xl">
-                Xin chào, {data.fullName || "bạn"}
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:mt-3 sm:text-base sm:leading-7">
-                {focusCopy}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
-                <Badge tone={taskCounts.overdue > 0 ? "danger" : "success"}>
-                  {taskCounts.overdue} quá hạn
-                </Badge>
-                <Badge tone="primary">{data.totalLeads} lead đang quản lý</Badge>
-                <Badge tone="warning">{quota.items.length} hạn mức đang theo dõi</Badge>
-              </div>
+        </div>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] lg:items-start">
+          <main className="grid gap-5">
+            <TodayTasks counts={taskCounts} tasks={todayTasks.items} />
+            <div className="lg:hidden">
+              <DashboardStatGrid
+                newLeadsThisWeek={data.newLeadsThisWeek}
+                taskCounts={taskCounts}
+                totalLeads={data.totalLeads}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-3">
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-3 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
-                href="/app/discover"
-              >
-                <Search aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
-                Tìm khách mới
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-white/15 sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
-                href="/app/leads?create=1"
-              >
-                <Plus aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
-                Thêm lead
-              </Link>
+            <LeadsRequiringAttention
+              recentLeads={data.recentLeads}
+              tasks={todayTasks.items}
+            />
+            <div className="lg:hidden">
+              <QuickDiscoveryCard />
             </div>
-          </div>
-        </section>
-
-        <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4 xl:grid-cols-4">
-          <DashboardMetricCard
-            description="Toàn bộ khách hàng tiềm năng trong workspace."
-            icon={UsersRound}
-            label="Lead đang quản lý"
-            value={data.totalLeads}
-          />
-          <DashboardMetricCard
-            description="Các việc cần chăm sóc trong ngày."
-            icon={Bell}
-            label="Việc hôm nay"
-            tone="warning"
-            value={taskCounts.today}
-          />
-          <DashboardMetricCard
-            description="Ưu tiên xử lý trước khi mở rộng tìm kiếm."
-            icon={Clock3}
-            label="Việc quá hạn"
-            tone={taskCounts.overdue > 0 ? "danger" : "success"}
-            value={taskCounts.overdue}
-          />
-          <DashboardMetricCard
-            description="Lead mới phát sinh trong tuần này."
-            icon={CalendarPlus}
-            label="Lead mới tuần này"
-            tone="success"
-            value={data.newLeadsThisWeek}
-          />
-        </section>
-
-        <TodayTasksWidget counts={taskCounts} tasks={todayTasks.items} />
-
-        <section className="mt-4 rounded-card border border-border-soft bg-surface p-4 shadow-card sm:mt-6 sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex gap-4">
-              <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean sm:flex">
-                <Sparkles aria-hidden="true" className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-base font-bold text-ink sm:text-xl">Chào mừng bạn đến với SaleMap</h2>
-                <p className="mt-2 hidden max-w-3xl text-base leading-7 text-slate-600 sm:block">
-                  Góp ý của bạn sẽ giúp sản phẩm sát hơn với công việc sale thực tế.
-                </p>
-              </div>
+            <div className="lg:hidden">
+              <ActivationChecklist
+                completedCount={activation.completedCount}
+                hasDemoData={demoDataExists}
+                items={activation.checklist}
+                score={activation.score}
+                totalCount={activation.totalCount}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-3">
-              <Link
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control bg-ink px-3 py-2 text-sm font-bold text-white transition hover:bg-ocean sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
-                href="/app/huong-dan"
-              >
-                <BookOpenText aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
-                Xem hướng dẫn
-              </Link>
-              <Link
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-control border border-border-soft bg-white px-3 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-ocean sm:min-h-12 sm:px-5 sm:py-3 sm:text-base"
-                href="/app/feedback"
-              >
-                <MessageSquareHeart aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" />
-                Gửi góp ý
-              </Link>
+            <div className="lg:hidden">
+              <QuotaSummary
+                items={quota.items}
+                planName={planName}
+                schemaReady={quota.schemaReady}
+              />
             </div>
-          </div>
-        </section>
+            <RecentActivity
+              recentLeads={data.recentLeads}
+              tasks={todayTasks.items}
+            />
+          </main>
 
-        <BetaChecklistCard
-          completed={betaChecklist.completed}
-          done={betaChecklist.done}
-          items={betaChecklist.items}
-          schemaReady={betaChecklist.schemaReady}
-          total={betaChecklist.total}
-        />
-
-        <ActivationChecklist
-          completedCount={activation.completedCount}
-          hasDemoData={demoDataExists}
-          items={activation.checklist}
-          score={activation.score}
-          totalCount={activation.totalCount}
-        />
+          <aside className="grid gap-5 lg:sticky lg:top-[92px]">
+            <div className="hidden lg:block">
+              <QuickDiscoveryCard />
+            </div>
+            <div className="hidden lg:block">
+              <ActivationChecklist
+                completedCount={activation.completedCount}
+                hasDemoData={demoDataExists}
+                items={activation.checklist}
+                score={activation.score}
+                totalCount={activation.totalCount}
+              />
+            </div>
+            <div className="hidden lg:block">
+              <QuotaSummary
+                items={quota.items}
+                planName={planName}
+                schemaReady={quota.schemaReady}
+              />
+            </div>
+            <BetaChecklistCard
+              completed={betaChecklist.completed}
+              done={betaChecklist.done}
+              items={betaChecklist.items}
+              schemaReady={betaChecklist.schemaReady}
+              total={betaChecklist.total}
+            />
+            {coreActionsCompleted < 3 ? (
+              <FirstRunGuideCard
+                completed={{
+                  hasLead: data.totalLeads > 0,
+                  hasNote: data.totalNotes > 0,
+                  hasReminder: data.totalRemindersCreated > 0,
+                }}
+              />
+            ) : null}
+          </aside>
+        </div>
 
         {betaSurveyEnabled ? (
           <BetaSurveyModal
@@ -290,292 +253,6 @@ export default async function DashboardPage(props: DashboardPageProps) {
             hasSubmitted={surveyState.hasSubmitted}
           />
         ) : null}
-
-        {coreActionsCompleted < 3 ? (
-          <FirstRunGuideCard
-            completed={{
-              hasLead: data.totalLeads > 0,
-              hasNote: data.totalNotes > 0,
-              hasReminder: data.totalRemindersCreated > 0,
-            }}
-          />
-        ) : null}
-
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-                <ListChecks aria-hidden="true" className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-xl font-bold text-ink">Quy trình chăm sóc</h2>
-                <p className="mt-2 text-base leading-7 text-slate-600">
-                  Theo dõi các nhịp chăm sóc lead đang chạy và việc đã hoàn thành.
-                </p>
-              </div>
-            </div>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/cadences">
-              Mở quy trình
-            </Link>
-          </div>
-          {!cadenceSummary.schemaReady ? (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
-              Chưa thấy bảng cadence. Chạy `supabase/cadences.sql` và seed template để bật widget này.
-            </div>
-          ) : null}
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <DashboardMetricCard icon={ListChecks} label="Đang chạy" value={cadenceSummary.activeCount} />
-            <DashboardMetricCard icon={PauseCircle} label="Tạm dừng" value={cadenceSummary.pausedCount} />
-            <DashboardMetricCard icon={CheckCircle2} label="Hoàn thành tháng này" value={cadenceSummary.completedThisMonth} />
-          </div>
-          {cadenceSummary.recent.length > 0 ? (
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {cadenceSummary.recent.map((item) => (
-                <Link
-                  className="rounded-lg border border-slate-200 bg-cloud/60 p-4 hover:border-ocean hover:bg-white"
-                  href="/app/cadences"
-                  key={item.id}
-                >
-                  <p className="truncate text-sm font-bold text-ink">{item.templateName}</p>
-                  <p className="mt-2 text-xs font-semibold text-slate-500">
-                    {item.completedSteps}/{item.totalSteps} bước ·{" "}
-                    {getCadenceStatusLabel(item.status)}
-                  </p>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-mint"
-                      style={{
-                        width: `${
-                          item.totalSteps
-                            ? Math.round((item.completedSteps / item.totalSteps) * 100)
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-ink">Hiệu suất hôm nay</h2>
-              <p className="mt-2 text-base leading-7 text-slate-600">
-                Nhịp làm việc cá nhân trong ngày: lead mới, follow-up và cơ hội đã chốt.
-              </p>
-            </div>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/analytics">
-              Xem hiệu suất
-            </Link>
-          </div>
-          {todaySales.metrics.leads_created === 0 &&
-          todaySales.metrics.followups_created === 0 &&
-          todaySales.metrics.followups_completed === 0 ? (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
-              Hôm nay bạn chưa tạo lead hoặc follow-up nào. Bắt đầu bằng việc thêm lead hoặc mở danh sách cần follow-up.
-            </div>
-          ) : null}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <DashboardMetricCard icon={UsersRound} label="Lead mới hôm nay" value={todaySales.metrics.leads_created} />
-            <DashboardMetricCard icon={Bell} label="Follow-up cần làm" value={taskCounts.today} />
-            <DashboardMetricCard icon={CheckCircle2} label="Follow-up hoàn thành" value={todaySales.metrics.followups_completed} />
-            <DashboardMetricCard icon={BarChart3} label="Lead đã chốt" value={todaySales.metrics.leads_won} />
-          </div>
-        </section>
-
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-ink">Mục tiêu đang theo dõi</h2>
-              <p className="mt-2 text-base leading-7 text-slate-600">
-                Các mục tiêu đã ghim để bạn biết hôm nay cần đẩy thêm điểm nào.
-              </p>
-            </div>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/analytics/goals">
-              Xem mục tiêu
-            </Link>
-          </div>
-          {pinnedGoals.items.length > 0 ? (
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {pinnedGoals.items.slice(0, 3).map((goal) => (
-                <Link
-                  className="rounded-lg border border-slate-200 bg-cloud/60 p-4 hover:border-ocean hover:bg-white"
-                  href="/app/analytics/goals"
-                  key={goal.id}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-                      <Target aria-hidden="true" className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-ink">{goal.name}</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500">
-                        {goal.progress.currentValue}/{goal.target_value} · {goal.progress.progressPercent}%
-                      </p>
-                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                        <div
-                          className="h-full rounded-full bg-mint"
-                          style={{ width: `${goal.progress.progressPercent}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-cloud/70 p-5">
-              <p className="text-base leading-7 text-slate-600">
-                Đặt mục tiêu đầu tiên để theo dõi tiến độ làm việc mỗi ngày.
-              </p>
-              <Link
-                className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink"
-                href="/app/analytics/goals/new"
-              >
-                Tạo mục tiêu
-              </Link>
-            </div>
-          )}
-        </section>
-
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-ink">Góc nhìn nhanh</h2>
-              <p className="mt-2 text-base leading-7 text-slate-600">
-                Mở nhanh các nhóm lead cần chăm sóc hôm nay.
-              </p>
-            </div>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/leads/views">
-              Quản lý góc nhìn
-            </Link>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {(leadViews.filter((view) => view.is_pinned).length > 0
-              ? leadViews.filter((view) => view.is_pinned)
-              : leadViews.slice(0, 4)
-            )
-              .slice(0, 4)
-              .map((view) => (
-                <Link
-                  className="rounded-lg border border-slate-200 bg-cloud/60 p-4 transition hover:border-ocean hover:bg-white"
-                  href={`/app/leads/views/${view.id}`}
-                  key={view.id}
-                >
-                  <p className="text-sm font-bold text-slate-500">{view.name}</p>
-                  <p className="mt-3 text-3xl font-bold text-ink">{view.count}</p>
-                  <p className="mt-2 text-xs font-semibold text-slate-500">
-                    {view.filterSummary.slice(0, 2).join(" - ")}
-                  </p>
-                </Link>
-              ))}
-          </div>
-        </section>
-
-        <div className="mt-8">
-          <QuotaUsageCard
-            items={quota.items}
-            planName={subscriptionResult.plan.name}
-            schemaReady={quota.schemaReady}
-            sourcePage="dashboard"
-          />
-        </div>
-
-        <section className="mt-8 rounded-lg border border-ocean/20 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-ocean/10 text-ocean">
-                <MapPinned aria-hidden="true" className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-xl font-bold text-ink">
-                  Bắt đầu tìm khách bằng bản đồ
-                </h2>
-                <p className="mt-2 text-base leading-7 text-slate-600">
-                  Tìm khách quanh bạn hoặc theo khu vực, sau đó lưu vào lead cá nhân.
-                </p>
-              </div>
-            </div>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-ink px-5 py-3 text-base font-bold text-white transition hover:bg-ocean"
-              href="/app/discover"
-            >
-              <Search aria-hidden="true" className="h-5 w-5" />
-              Tìm khách mới
-            </Link>
-          </div>
-        </section>
-
-        <section className="mt-8 rounded-lg border border-mint/30 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-                <Route aria-hidden="true" className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-xl font-bold text-ink">
-                  Tìm khách dọc tuyến
-                </h2>
-                <p className="mt-2 text-base leading-7 text-slate-600">
-                  Nhập tuyến đường hôm nay và tìm các khách tiềm năng có thể ghé thêm.
-                </p>
-              </div>
-            </div>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3]"
-              href="/app/discover?tab=route"
-            >
-              <Route aria-hidden="true" className="h-5 w-5" />
-              Tìm dọc tuyến
-            </Link>
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <article>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-xl font-bold text-ink">Lead mới lưu gần đây</h2>
-              <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/leads">
-                Mở danh sách
-              </Link>
-            </div>
-            {data.recentLeads.length > 0 ? (
-              <div className="space-y-3">
-                {data.recentLeads.map((lead) => (
-                  <Link
-                    className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-ocean"
-                    href={`/app/leads/${lead.id}`}
-                    key={lead.id}
-                  >
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="font-bold text-ink">{lead.name}</p>
-                      <LeadStatusBadge status={lead.status} />
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {lead.category || lead.address || "Chưa có phân loại/khu vực"}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-600 shadow-sm">
-                <p className="font-bold text-ink">Bạn chưa có lead nào.</p>
-                <p className="mt-2">
-                  Hãy thêm lead đầu tiên để bắt đầu theo dõi khách tiềm năng.
-                </p>
-                <Link
-                  className="mt-4 inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink"
-                  href="/app/leads?create=1"
-                >
-                  Thêm lead đầu tiên
-                </Link>
-              </div>
-            )}
-          </article>
-        </section>
       </div>
     </>
   );

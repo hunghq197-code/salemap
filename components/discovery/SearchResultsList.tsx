@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchX } from "lucide-react";
 import { PlaceResultCard } from "@/components/discovery/PlaceResultCard";
 import type {
   DiscoveryPlaceResult,
@@ -34,15 +35,16 @@ export function SearchResultsList({
   if (results.length === 0) {
     const hint =
       source === "route_search"
-        ? "Hãy thử chọn một gợi ý tuyến đường khác, tăng độ lệch khỏi tuyến hoặc đổi keyword."
-        : "Hãy thử keyword khác, tăng bán kính hoặc đổi khu vực.";
+        ? "Thử chọn một gợi ý tuyến đường khác, tăng độ lệch khỏi tuyến hoặc đổi keyword."
+        : "Thử keyword rộng hơn, tăng bán kính hoặc chọn khu vực khác.";
 
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-        <h2 className="text-xl font-bold text-ink">
-          Không tìm thấy địa điểm phù hợp.
+      <section className="rounded-card border border-dashed border-border-strong bg-surface p-6 text-center shadow-card">
+        <SearchX aria-hidden="true" className="mx-auto h-8 w-8 text-text-muted" />
+        <h2 className="mt-3 text-xl font-bold text-text-primary">
+          Chưa tìm thấy kết quả phù hợp
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-secondary">
           {hint}
         </p>
       </section>
@@ -50,22 +52,31 @@ export function SearchResultsList({
   }
 
   return (
-    <div className="space-y-4">
-      {results.map((place) => (
-        <PlaceResultCard
-          detailsLoading={loadingDetailsPlaceId === place.placeId}
-          hovered={hoveredPlaceId === place.placeId}
-          key={place.placeId}
-          onHover={onHoverPlace}
-          onLoadDetails={onLoadDetails}
-          onSave={onSave}
-          onSelect={onSelectPlace}
-          place={place}
-          saving={savingPlaceId === place.placeId}
-          selected={selectedPlaceId === place.placeId}
-          source={source}
-        />
-      ))}
-    </div>
+    <section className="rounded-card border border-border-soft bg-surface p-3 shadow-card">
+      <div className="mb-3 flex items-center justify-between gap-3 px-1">
+        <h2 className="text-sm font-bold text-text-primary">
+          Danh sách kết quả
+        </h2>
+        <span className="text-xs font-bold text-text-muted">{results.length} địa điểm</span>
+      </div>
+      <div className="grid gap-3">
+        {results.map((place, index) => (
+          <PlaceResultCard
+            detailsLoading={loadingDetailsPlaceId === place.placeId}
+            hovered={hoveredPlaceId === place.placeId}
+            index={index + 1}
+            key={place.placeId}
+            onHover={onHoverPlace}
+            onLoadDetails={onLoadDetails}
+            onSave={onSave}
+            onSelect={onSelectPlace}
+            place={place}
+            saving={savingPlaceId === place.placeId}
+            selected={selectedPlaceId === place.placeId}
+            source={source}
+          />
+        ))}
+      </div>
+    </section>
   );
 }

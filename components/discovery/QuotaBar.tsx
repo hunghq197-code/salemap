@@ -12,10 +12,12 @@ export function QuotaBar({ count, quota }: QuotaBarProps) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-card border border-border-soft bg-surface p-4 shadow-card">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-base font-bold text-ink">Tìm thấy {count} khách phù hợp</p>
-        <p className="text-sm font-bold text-ocean">
+        <p className="text-base font-bold text-text-primary">
+          Tìm thấy {count} khách phù hợp
+        </p>
+        <p className="text-sm font-bold text-primary">
           Còn {quota.remaining}/{quota.limit} lượt tìm hôm nay
         </p>
       </div>

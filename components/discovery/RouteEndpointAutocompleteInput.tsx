@@ -157,16 +157,16 @@ export function RouteEndpointAutocompleteInput({
   }
 
   return (
-    <label className="relative block text-sm font-bold text-ink">
+    <label className="relative block text-sm font-bold text-text-primary">
       {label}
       <div className="relative mt-2">
         <MapPinned
           aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
         />
         <input
           autoComplete="off"
-          className="min-h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-11 pr-10 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
+          className="min-h-12 w-full rounded-control border border-border-soft bg-surface py-2 pl-11 pr-10 text-base text-text-primary outline-none transition placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
           maxLength={200}
           minLength={2}
           onBlur={() => {
@@ -181,25 +181,25 @@ export function RouteEndpointAutocompleteInput({
         {loading ? (
           <LoaderCircle
             aria-hidden="true"
-            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400"
+            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-text-muted"
           />
         ) : null}
       </div>
       {focused && suggestions.length > 0 ? (
-        <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-card border border-border-soft bg-surface shadow-floating">
           {suggestions.map((suggestion) => (
             <button
-              className="block w-full border-b border-slate-100 px-3 py-3 text-left transition last:border-b-0 hover:bg-cloud"
+              className="block w-full border-b border-border-soft px-3 py-3 text-left transition last:border-b-0 hover:bg-primary-soft"
               key={suggestion.id}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleSelectSuggestion(suggestion)}
               type="button"
             >
-              <span className="block text-sm font-bold text-ink">
+              <span className="block text-sm font-bold text-text-primary">
                 {suggestion.mainText}
               </span>
               {suggestion.secondaryText ? (
-                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                <span className="mt-1 block text-xs font-semibold text-text-muted">
                   {suggestion.secondaryText}
                 </span>
               ) : null}

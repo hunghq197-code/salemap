@@ -18,8 +18,8 @@ export function FeatureDisabledNotice({ flagKey }: FeatureDisabledNoticeProps) {
   }, [flagKey]);
 
   return (
-    <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-6 text-center shadow-sm">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-white text-amber-700">
+    <section className="mt-6 rounded-card border border-warning/25 bg-warning-soft p-6 text-center shadow-card">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-control bg-surface text-amber-700">
         <LockKeyhole aria-hidden="true" className="h-7 w-7" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-ink">Tính năng chưa mở cho bạn</h2>
@@ -28,13 +28,13 @@ export function FeatureDisabledNotice({ flagKey }: FeatureDisabledNoticeProps) {
       </p>
       <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
         <Link
-          className="inline-flex min-h-12 items-center justify-center rounded-lg bg-ink px-5 py-3 text-base font-bold text-white transition hover:bg-ocean"
+          className="inline-flex min-h-12 items-center justify-center rounded-control bg-sidebar px-5 py-3 text-base font-bold text-white transition hover:bg-primary"
           href="/app/dashboard"
         >
           Quay lại dashboard
         </Link>
         <Link
-          className="inline-flex min-h-12 items-center justify-center rounded-lg border border-amber-300 bg-white px-5 py-3 text-base font-bold text-ink transition hover:border-amber-500"
+          className="inline-flex min-h-12 items-center justify-center rounded-control border border-warning/30 bg-surface px-5 py-3 text-base font-bold text-text-primary transition hover:border-warning"
           href="/app/feedback"
         >
           Gửi góp ý

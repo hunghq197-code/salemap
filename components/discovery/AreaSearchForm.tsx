@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { RouteEndpointAutocompleteInput } from "@/components/discovery/RouteEndpointAutocompleteInput";
 
 type AreaSearchFormProps = {
+  initialKeyword?: string;
   loading: boolean;
   onSubmit: (input: {
     areaText: string;
@@ -21,7 +22,11 @@ const radiusOptions = [
   { label: "5km", value: 5000 },
 ] as const;
 
-export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
+export function AreaSearchForm({
+  initialKeyword = "",
+  loading,
+  onSubmit,
+}: AreaSearchFormProps) {
   const [areaText, setAreaText] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -37,14 +42,14 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
 
   return (
     <form
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+      className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5"
       onSubmit={handleSubmit}
     >
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-ocean">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
           Theo khu vực
         </p>
-        <h2 className="mt-2 text-xl font-bold text-ink">
+        <h2 className="mt-2 text-xl font-bold text-text-primary">
           Tìm khách theo khu vực
         </h2>
       </div>
@@ -57,16 +62,17 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
           value={areaText}
         />
 
-        <label className="text-sm font-bold text-ink">
+        <label className="text-sm font-bold text-text-primary">
           Keyword cần tìm
           <div className="relative mt-2">
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
             />
             <input
               autoComplete="off"
-              className="min-h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-11 pr-3 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
+              className="min-h-12 w-full rounded-control border border-border-soft bg-surface py-2 pl-11 pr-3 text-base text-text-primary outline-none transition placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+              defaultValue={initialKeyword}
               maxLength={100}
               minLength={2}
               name="keyword"
@@ -76,10 +82,10 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
           </div>
         </label>
 
-        <label className="text-sm font-bold text-ink">
+        <label className="text-sm font-bold text-text-primary">
           Bán kính
           <select
-            className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
+            className="mt-2 min-h-12 w-full rounded-control border border-border-soft bg-surface px-3 py-2 text-base text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             defaultValue={2000}
             name="radiusMeters"
           >
@@ -93,7 +99,8 @@ export function AreaSearchForm({ loading, onSubmit }: AreaSearchFormProps) {
       </div>
 
       <button
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft transition hover:bg-[#5de0b3] disabled:cursor-not-allowed disabled:opacity-70"
+        aria-busy={loading || undefined}
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
         disabled={loading}
         type="submit"
       >

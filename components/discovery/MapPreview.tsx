@@ -1,10 +1,9 @@
 "use client";
 
-import { AlertTriangle, MapPinned, RotateCw } from "lucide-react";
+import { AlertTriangle, MapPinned } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MapToolbar } from "@/components/discovery/MapToolbar";
 import {
-  GOOGLE_MAPS_AUTH_ERROR_MESSAGE,
-  GoogleMapsAuthError,
   loadGoogleMaps,
   setGoogleMapsAuthFailureHandler,
 } from "@/lib/google-maps/load-google-maps";
@@ -31,6 +30,7 @@ type MapPreviewProps = {
   mode?: "places" | "route";
   onMarkerClick?: (placeId: string) => void;
   onSearchThisArea?: (center: MapPoint) => void;
+  onShowList?: () => void;
   onViewportCenterChange?: (center: MapPoint) => void;
   results: DiscoveryPlaceResult[];
   routeDestination?: RouteEndpoint | null;
@@ -44,11 +44,15 @@ type MapPreviewProps = {
 
 type MarkerData = {
   address?: string;
+  isSaved?: boolean;
   latitude: number;
   longitude: number;
   name: string;
   placeId: string;
 };
+
+const safeMapErrorMessage =
+  "Không thể tải bản đồ. Vui lòng kiểm tra kết nối và thử lại.";
 
 function buildInfoWindowContent(place: MarkerData) {
   const wrapper = document.createElement("div");
@@ -75,13 +79,15 @@ function toLatLngLiteral(point?: RouteEndpoint | null) {
   return { lat: point.latitude, lng: point.longitude };
 }
 
-function getPlaceMarkerIcon(variant: "default" | "hovered" | "selected") {
+function getPlaceMarkerIcon(variant: "default" | "hovered" | "saved" | "selected") {
   const fillColor =
     variant === "selected"
       ? "#0f172a"
-      : variant === "hovered"
-        ? "#16a34a"
-        : "#0284c7";
+      : variant === "saved"
+        ? "#10b981"
+        : variant === "hovered"
+          ? "#16a34a"
+          : "#0284c7";
 
   return {
     fillColor,
@@ -99,6 +105,7 @@ export function MapPreview({
   mode = "places",
   onMarkerClick,
   onSearchThisArea,
+  onShowList,
   onViewportCenterChange,
   results,
   routeDestination,
@@ -113,6 +120,7 @@ export function MapPreview({
   const centerMarkerRef = useRef<google.maps.Marker | null>(null);
   const endpointMarkersRef = useRef<google.maps.Marker[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const lastBoundsRef = useRef<google.maps.LatLngBounds | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
   const initialCenterRef = useRef(center);
@@ -132,6 +140,7 @@ export function MapPreview({
           ? [
               {
                 address: place.address,
+                isSaved: place.isSaved,
                 latitude: place.latitude,
                 longitude: place.longitude,
                 name: place.name,
@@ -167,7 +176,7 @@ export function MapPreview({
           if (!active) return;
 
           setMapReady(false);
-          setError(GOOGLE_MAPS_AUTH_ERROR_MESSAGE);
+          setError(safeMapErrorMessage);
         });
         await loadGoogleMaps();
 
@@ -212,15 +221,9 @@ export function MapPreview({
           route: "/app/discover",
           routeGroup: "discover",
         });
-      } catch (mapError) {
+      } catch {
         if (active) {
-          setError(
-            mapError instanceof GoogleMapsAuthError
-              ? GOOGLE_MAPS_AUTH_ERROR_MESSAGE
-              : mapError instanceof Error
-              ? mapError.message
-              : "Không thể tải bản đồ Google. Hãy kiểm tra browser key hoặc thử tải lại trang.",
-          );
+          setError(safeMapErrorMessage);
         }
       }
     }
@@ -238,6 +241,7 @@ export function MapPreview({
       endpointMarkersRef.current = [];
       routeRef.current?.setMap(null);
       routeRef.current = null;
+      lastBoundsRef.current = null;
       infoWindowRef.current?.close();
       infoWindowRef.current = null;
       mapRef.current = null;
@@ -322,7 +326,7 @@ export function MapPreview({
     markerData.forEach((place, index) => {
       const position = { lat: place.latitude, lng: place.longitude };
       const marker = new google.maps.Marker({
-        icon: getPlaceMarkerIcon("default"),
+        icon: getPlaceMarkerIcon(place.isSaved ? "saved" : "default"),
         label: {
           color: "#ffffff",
           fontSize: "12px",
@@ -362,6 +366,7 @@ export function MapPreview({
     }
 
     if (!bounds.isEmpty()) {
+      lastBoundsRef.current = bounds;
       map.fitBounds(bounds, 44);
 
       if (markerData.length === 1 && !routePolyline) {
@@ -371,6 +376,8 @@ export function MapPreview({
           }
         });
       }
+    } else {
+      lastBoundsRef.current = null;
     }
   }, [
     center,
@@ -389,19 +396,22 @@ export function MapPreview({
     }
 
     markersRef.current.forEach((marker, placeId) => {
+      const markerPlace = markerData.find((item) => item.placeId === placeId);
       const variant =
         selectedPlaceId === placeId
           ? "selected"
           : hoveredPlaceId === placeId
             ? "hovered"
-            : "default";
+            : markerPlace?.isSaved
+              ? "saved"
+              : "default";
 
       marker.setIcon(getPlaceMarkerIcon(variant));
       marker.setZIndex(
         variant === "selected" ? 1200 : variant === "hovered" ? 1100 : 100,
       );
     });
-  }, [hoveredPlaceId, mapReady, selectedPlaceId]);
+  }, [hoveredPlaceId, mapReady, markerData, selectedPlaceId]);
 
   useEffect(() => {
     if (!mapReady || !selectedPlaceId) {
@@ -423,6 +433,24 @@ export function MapPreview({
     }
   }, [mapReady, selectedPlaceId]);
 
+  function fitMapToContent() {
+    const map = mapRef.current;
+    const bounds = lastBoundsRef.current;
+
+    if (!map || !bounds || bounds.isEmpty()) return;
+
+    map.fitBounds(bounds, 44);
+  }
+
+  function recenterMap() {
+    const map = mapRef.current;
+
+    if (!map || !center) return;
+
+    map.panTo({ lat: center.latitude, lng: center.longitude });
+    if ((map.getZoom() ?? 0) < 14) map.setZoom(14);
+  }
+
   return (
     <section className="overflow-hidden rounded-shell border border-border-soft bg-surface shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft px-4 py-3">
@@ -437,25 +465,21 @@ export function MapPreview({
         </span>
       </div>
 
-      <div className="relative min-h-[420px] w-full sm:min-h-[520px] lg:min-h-[calc(100vh-150px)]">
+      <div className="relative min-h-[440px] w-full sm:min-h-[560px] lg:min-h-[calc(100vh-150px)]">
         <div className="absolute inset-0 bg-background-subtle" ref={containerRef} />
-        {searchThisAreaVisible && viewportCenter && onSearchThisArea ? (
-          <button
-            className="absolute left-1/2 top-4 z-10 inline-flex min-h-10 -translate-x-1/2 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
-            disabled={searchThisAreaLoading}
-            onClick={() => onSearchThisArea(viewportCenter)}
-            type="button"
-          >
-            <RotateCw
-              aria-hidden="true"
-              className={[
-                "h-4 w-4",
-                searchThisAreaLoading ? "animate-spin" : "",
-              ].join(" ")}
-            />
-            {searchThisAreaLoading ? "Đang tìm..." : "Tìm lại khu vực này"}
-          </button>
-        ) : null}
+        <MapToolbar
+          canRecenter={Boolean(center)}
+          onFitResults={fitMapToContent}
+          onRecenter={recenterMap}
+          onSearchThisArea={
+            searchThisAreaVisible && viewportCenter && onSearchThisArea
+              ? () => onSearchThisArea(viewportCenter)
+              : undefined
+          }
+          onShowList={onShowList}
+          searchThisAreaLoading={searchThisAreaLoading}
+          searchThisAreaVisible={searchThisAreaVisible}
+        />
         {!mapReady && !error ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background-subtle/95 px-4 text-center text-sm font-semibold text-text-secondary">
             Đang tải bản đồ...
