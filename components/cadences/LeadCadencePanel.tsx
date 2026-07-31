@@ -11,10 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApplyCadenceModal } from "@/components/cadences/ApplyCadenceModal";
-import {
-  getCadenceStatusLabel,
-  getCadenceTaskTypeLabel,
-} from "@/lib/constants/cadences";
+import { CadenceBadge, CadenceProgress } from "@/components/cadences/CadencePresentation";
+import { getCadenceTaskTypeLabel } from "@/lib/constants/cadences";
 import type { LeadRecord } from "@/lib/data/leads";
 import type { TaskLeadSummary } from "@/lib/data/tasks";
 import type { LeadCadence } from "@/lib/types/cadences";
@@ -72,10 +70,6 @@ export function LeadCadencePanel({
   const [applyOpen, setApplyOpen] = useState(false);
   const [error, setError] = useState("");
   const [submittingAction, setSubmittingAction] = useState("");
-  const progress =
-    activeCadence && activeCadence.totalSteps > 0
-      ? Math.round((activeCadence.completedSteps / activeCadence.totalSteps) * 100)
-      : 0;
 
   async function mutate(action: "pause" | "resume" | "cancel" | "complete") {
     if (!activeCadence) {
@@ -152,9 +146,9 @@ export function LeadCadencePanel({
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
                 Trạng thái
               </p>
-              <p className="mt-2 text-base font-bold text-ink">
-                {getCadenceStatusLabel(activeCadence.status)}
-              </p>
+              <div className="mt-2">
+                <CadenceBadge status={activeCadence.status} />
+              </div>
             </div>
             <div className="rounded-lg bg-cloud px-4 py-3">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
@@ -174,10 +168,11 @@ export function LeadCadencePanel({
             </div>
           </div>
 
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full bg-mint"
-              style={{ width: `${progress}%` }}
+          <div className="mt-4">
+            <CadenceProgress
+              completedSteps={activeCadence.completedSteps}
+              status={activeCadence.status}
+              totalSteps={activeCadence.totalSteps}
             />
           </div>
 

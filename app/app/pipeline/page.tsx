@@ -1,100 +1,211 @@
-import { BarChart3, Bell, CheckCircle2, UsersRound } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  TrendingDown,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { PipelineBoard } from "@/components/pipeline/PipelineBoard";
-import { getPipelineColumnsWithLeads } from "@/lib/data/lead-pipeline";
+import {
+  PipelineFilterBar,
+  type PipelineFilterValues,
+} from "@/components/pipeline/PipelineFilterBar";
+import { PipelineHeaderActions } from "@/components/pipeline/PipelineHeaderActions";
+import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { LEAD_STATUS_OPTIONS } from "@/lib/constants/lead-status";
+import {
+  getPipelineColumnsWithLeads,
+  type PipelineCadenceFilter,
+  type PipelineSort,
+} from "@/lib/data/lead-pipeline";
+import { getTags } from "@/lib/data/tags";
+import { deserializeLeadFilters } from "@/lib/leads/lead-filters";
 
 export const dynamic = "force-dynamic";
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof UsersRound;
-  label: string;
-  value: number;
-}) {
-  return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-slate-500">{label}</p>
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-          <Icon aria-hidden="true" className="h-5 w-5" />
-        </span>
-      </div>
-      <p className="mt-3 text-3xl font-bold text-ink">{value}</p>
-    </article>
-  );
+type PipelinePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+const followUpValues = ["future", "overdue", "this_week", "today", "today_or_overdue"] as const;
+const cadenceValues = ["active", "none", "paused"] as const;
+const sortValues = ["follow_up", "name", "position", "updated"] as const;
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getString(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function PipelinePage() {
-  const { columns, summary } = await getPipelineColumnsWithLeads({ limitPerColumn: 50 });
+function getSafeEnum<T extends readonly string[]>(
+  value: string | undefined,
+  allowed: T,
+  fallback = "",
+) {
+  return value && allowed.includes(value) ? value : fallback;
+}
+
+function getSafeSource(value?: string) {
+  const clean = value?.trim() ?? "";
+
+  return /^[a-z0-9_-]{1,48}$/i.test(clean) ? clean : "";
+}
+
+function getActiveFilterCount(values: PipelineFilterValues) {
+  return [
+    values.stage,
+    values.source,
+    values.followUp,
+    values.cadence,
+    values.tagId,
+    values.sort !== "position" ? values.sort : "",
+  ].filter(Boolean).length;
+}
+
+function buildSubtitle(summary: Awaited<ReturnType<typeof getPipelineColumnsWithLeads>>["summary"]) {
+  const parts = [
+    `${summary.totalActiveLeads} lead đang mở`,
+    `${summary.followUpCount} lead ở stage hẹn lại`,
+  ];
+
+  if (summary.overdueFollowUpCount > 0) {
+    parts.push(`${summary.overdueFollowUpCount} follow-up quá hạn`);
+  }
+
+  return `${parts.join(" · ")}. Dữ liệu lấy từ pipeline hiện tại, không dùng giá trị doanh thu giả.`;
+}
+
+export default async function PipelinePage(props: PipelinePageProps) {
+  const searchParams = (await props.searchParams) ?? {};
+  const stage = getSafeEnum(
+    getString(searchParams.stage),
+    LEAD_STATUS_OPTIONS.map((status) => status.value),
+  );
+  const source = getSafeSource(getString(searchParams.source));
+  const followUp = getSafeEnum(getString(searchParams.followUp), followUpValues);
+  const cadence = getSafeEnum(getString(searchParams.cadence), cadenceValues);
+  const tagId = uuidPattern.test(getString(searchParams.tagId) ?? "")
+    ? (getString(searchParams.tagId) ?? "")
+    : "";
+  const sort = getSafeEnum(getString(searchParams.sort), sortValues, "position") as PipelineSort;
+  const filterValues: PipelineFilterValues = {
+    cadence,
+    followUp,
+    sort,
+    source,
+    stage,
+    tagId,
+  };
+  const filters = deserializeLeadFilters({
+    followUp: followUp || undefined,
+    source: source || undefined,
+    tagIds: tagId || undefined,
+  });
+  const activeFilterCount = getActiveFilterCount(filterValues);
+  const [{ columns, summary }, tags] = await Promise.all([
+    getPipelineColumnsWithLeads({
+      cadenceFilter: (cadence || undefined) as PipelineCadenceFilter | undefined,
+      filters,
+      limitPerColumn: 40,
+      sort,
+    }),
+    getTags(),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1600px]">
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-            Pipeline
-          </p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Pipeline bán hàng
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Theo dõi lead theo từng trạng thái chăm sóc. Bạn có thể đổi trạng thái trực tiếp trên
-            từng thẻ, phù hợp trên cả desktop lẫn mobile.
-          </p>
+      <PageHeader
+        actions={<PipelineHeaderActions />}
+        description={buildSubtitle(summary)}
+        eyebrow="Pipeline"
+        fullBleed
+        title="Pipeline bán hàng"
+      >
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge tone="primary">{summary.visibleLeadCount} lead trong pipeline</Badge>
+          {summary.overdueFollowUpCount > 0 ? (
+            <Badge tone="danger">{summary.overdueFollowUpCount} quá hạn</Badge>
+          ) : null}
+          {activeFilterCount > 0 ? <Badge tone="warning">Đang lọc</Badge> : null}
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
-            href="/app/analytics"
-          >
-            Xem analytics pipeline
-          </Link>
-          <Link
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
-            href="/app/leads/views"
-          >
-            Mở góc nhìn lead
-          </Link>
-          <Link
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-            href="/app/leads?create=1"
-          >
-            Thêm lead
-          </Link>
-        </div>
-      </div>
+      </PageHeader>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={UsersRound} label="Tổng lead đang mở" value={summary.totalActiveLeads} />
-        <SummaryCard icon={Bell} label="Cần follow-up" value={summary.followUpCount} />
-        <SummaryCard icon={CheckCircle2} label="Đã chốt" value={summary.wonCount} />
-        <SummaryCard icon={BarChart3} label="Đã mất / không phù hợp" value={summary.lostCount} />
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+        <StatCard
+          description="Không tính lead đã chốt, đã mất hoặc không phù hợp."
+          icon={UsersRound}
+          label="Lead đang mở"
+          tone="primary"
+          value={summary.totalActiveLeads}
+        />
+        <StatCard
+          description="Lead đang ở stage hẹn lại."
+          icon={Bell}
+          label="Cần follow-up"
+          tone="warning"
+          value={summary.followUpCount}
+        />
+        <StatCard
+          description="Follow-up đã qua hạn trong các stage đang mở."
+          icon={AlertTriangle}
+          label="Quá hạn"
+          tone="danger"
+          value={summary.overdueFollowUpCount}
+        />
+        <StatCard
+          description="Lead đã chuyển sang kết quả thành công."
+          icon={CheckCircle2}
+          label="Đã chốt"
+          tone="success"
+          value={summary.wonCount}
+        />
+        <StatCard
+          description="Bao gồm đã mất và không phù hợp."
+          icon={TrendingDown}
+          label="Mất / không phù hợp"
+          tone="neutral"
+          value={summary.lostCount}
+        />
       </section>
 
+      <PipelineFilterBar
+        activeFilterCount={activeFilterCount}
+        tags={tags}
+        values={filterValues}
+      />
+
       <section className="mt-6">
-        {summary.totalActiveLeads === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
+        {summary.visibleLeadCount === 0 ? (
+          <div className="rounded-card border border-dashed border-border-soft bg-surface p-6 text-center shadow-card sm:p-8">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-control bg-primary-soft text-primary">
               <UsersRound aria-hidden="true" className="h-7 w-7" />
             </div>
-            <h2 className="mt-5 text-xl font-bold text-ink">
-              Theo dõi khách theo từng giai đoạn bán hàng
+            <h2 className="mt-5 text-xl font-bold text-text-primary">
+              Chưa có lead phù hợp trong pipeline
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-              Khi có lead, bạn có thể kéo khách qua các trạng thái: mới, đã liên hệ, quan tâm, đã báo giá, đã chốt.
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-text-secondary">
+              Hãy thêm lead mới hoặc bỏ bớt bộ lọc để xem các stage đang có dữ liệu.
             </p>
-            <Link
-              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-              href="/app/leads"
-            >
-              Xem danh sách lead
-            </Link>
+            <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
+                href="/app/leads?create=1"
+              >
+                Thêm lead
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-control border border-border-soft bg-surface px-5 py-3 text-base font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                href="/app/pipeline"
+              >
+                Xóa bộ lọc
+              </Link>
+            </div>
           </div>
         ) : (
-          <PipelineBoard columns={columns} />
+          <PipelineBoard columns={columns} key={stage || "all"} selectedStage={stage} />
         )}
       </section>
     </div>

@@ -356,9 +356,20 @@ export async function getCadenceTemplates(params: {
 export async function getCadenceTemplateById(templateId: string) {
   const { supabase, userId } = await createAuthedSupabaseServerClient();
   const result = await getVisibleTemplateWithSteps(supabase, userId, templateId);
+  const { count, error } = await supabase
+    .from("lead_cadences")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("cadence_template_id", templateId)
+    .in("status", ["active", "paused"]);
+
+  if (error && !isMissingCadenceSchema(error)) {
+    throw new Error(error.message);
+  }
 
   return {
     ...result.template,
+    activeLeadsCount: count ?? result.template.activeLeadsCount ?? 0,
     steps: result.steps,
     stepsCount: result.steps.length,
   };

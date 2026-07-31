@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Plus, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -104,6 +104,22 @@ export function CadenceTemplateForm({
     setSteps((current) =>
       current.length > 1 ? current.filter((step) => step.clientId !== clientId) : current,
     );
+  }
+
+  function moveStep(clientId: string, direction: -1 | 1) {
+    setSteps((current) => {
+      const index = current.findIndex((step) => step.clientId === clientId);
+      const targetIndex = index + direction;
+
+      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) {
+        return current;
+      }
+
+      const next = [...current];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+
+      return next;
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -246,15 +262,35 @@ export function CadenceTemplateForm({
                     {step.title || "Chưa đặt tên"}
                   </h3>
                 </div>
-                <button
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-200 bg-white text-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
-                  disabled={steps.length <= 1}
-                  onClick={() => removeStep(step.clientId)}
-                  type="button"
-                >
-                  <Trash2 aria-hidden="true" className="h-4 w-4" />
-                  <span className="sr-only">Xóa bước</span>
-                </button>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-control border border-border-soft bg-white text-text-secondary transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={index === 0}
+                    onClick={() => moveStep(step.clientId, -1)}
+                    type="button"
+                  >
+                    <ArrowUp aria-hidden="true" className="h-4 w-4" />
+                    <span className="sr-only">Đưa bước lên</span>
+                  </button>
+                  <button
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-control border border-border-soft bg-white text-text-secondary transition hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={index === steps.length - 1}
+                    onClick={() => moveStep(step.clientId, 1)}
+                    type="button"
+                  >
+                    <ArrowDown aria-hidden="true" className="h-4 w-4" />
+                    <span className="sr-only">Đưa bước xuống</span>
+                  </button>
+                  <button
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-control border border-danger/20 bg-white text-danger transition hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={steps.length <= 1}
+                    onClick={() => removeStep(step.clientId)}
+                    type="button"
+                  >
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
+                    <span className="sr-only">Xóa bước</span>
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -368,7 +404,7 @@ export function CadenceTemplateForm({
         </div>
       </section>
 
-      <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-2 border-t border-slate-200 bg-white/95 py-3 backdrop-blur sm:flex-row sm:justify-between">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex flex-col-reverse gap-2 border-t border-slate-200 bg-white/95 py-3 backdrop-blur sm:flex-row sm:justify-between lg:bottom-0">
         <Link
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink hover:border-ocean"
           href={initialTemplate ? `/app/cadences/${initialTemplate.id}` : "/app/cadences"}

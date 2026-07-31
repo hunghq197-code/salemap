@@ -8,9 +8,11 @@ import { ApplyCadenceModal } from "@/components/cadences/ApplyCadenceModal";
 import type { TaskLeadSummary } from "@/lib/data/tasks";
 
 type CadenceTemplateActionsProps = {
+  className?: string;
   leadOptions: TaskLeadSummary[];
   templateId: string;
   templateIsSystem?: boolean;
+  variant?: "card" | "detail";
 };
 
 type ApiResponse<T> = {
@@ -30,9 +32,11 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export function CadenceTemplateActions({
+  className,
   leadOptions,
   templateId,
   templateIsSystem = false,
+  variant = "detail",
 }: CadenceTemplateActionsProps) {
   const router = useRouter();
   const [applyOpen, setApplyOpen] = useState(false);
@@ -99,35 +103,43 @@ export function CadenceTemplateActions({
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div
+        className={[
+          className ?? "mt-5",
+          "gap-2",
+          variant === "card" ? "grid sm:flex sm:flex-wrap" : "flex flex-wrap",
+        ].join(" ")}
+      >
         <button
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-mint px-4 py-2 text-sm font-bold text-ink hover:bg-[#5de0b3]"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover"
           onClick={() => setApplyOpen(true)}
           type="button"
         >
           <PlayCircle aria-hidden="true" className="h-4 w-4" />
           Áp dụng cho lead
         </button>
-        <button
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-          disabled={submitting === "duplicate"}
-          onClick={duplicateTemplate}
-          type="button"
-        >
-          <Copy aria-hidden="true" className="h-4 w-4" />
-          Nhân bản
-        </button>
+        {variant === "detail" ? (
+          <button
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+            disabled={submitting === "duplicate"}
+            onClick={duplicateTemplate}
+            type="button"
+          >
+            <Copy aria-hidden="true" className="h-4 w-4" />
+            Nhân bản
+          </button>
+        ) : null}
         {!templateIsSystem ? (
           <>
             <Link
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
               href={`/app/cadences/${templateId}/edit`}
             >
               <Edit3 aria-hidden="true" className="h-4 w-4" />
               Sửa
             </Link>
             <button
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 hover:bg-rose-100"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-danger/20 bg-danger-soft px-4 py-2 text-sm font-bold text-danger transition hover:bg-red-100"
               disabled={submitting === "archive"}
               onClick={archiveTemplate}
               type="button"

@@ -1,20 +1,10 @@
 import { LEAD_STATUSES } from "@/lib/constants/lead-status";
+import { getLeadStatusPresentation } from "@/lib/design-system/status";
 
 export const PIPELINE_COLUMNS = LEAD_STATUSES.map((status, index) => ({
   description:
-    status.value === "new"
-      ? "Lead vừa lưu, cần phân loại và liên hệ."
-      : status.value === "contacted"
-        ? "Lead đã có lần liên hệ đầu tiên."
-        : status.value === "interested"
-          ? "Lead có tín hiệu quan tâm."
-          : status.value === "follow_up"
-            ? "Lead cần hẹn lại hoặc theo sát."
-            : status.value === "won"
-              ? "Lead đã chốt thành công."
-              : status.value === "lost"
-                ? "Lead đã mất cơ hội."
-                : "Lead không phù hợp để tiếp tục.",
+    getLeadStatusPresentation(status.value).description ||
+    "Lead cần được chăm sóc theo trạng thái hiện tại.",
   emptyText:
     status.value === "new"
       ? "Chưa có lead mới."
