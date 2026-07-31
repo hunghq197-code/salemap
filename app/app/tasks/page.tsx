@@ -5,7 +5,7 @@ import {
   getTasksForUser,
   listTaskLeadOptions,
 } from "@/lib/data/tasks";
-import { taskTabSchema } from "@/lib/validators/tasks";
+import { getTasksQuerySchema } from "@/lib/validators/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -18,25 +18,47 @@ function getString(value?: string | string[]) {
 }
 
 export default async function TasksPage(props: TasksPageProps) {
-  const searchParams = await props.searchParams;
-  const tabResult = taskTabSchema.safeParse(getString(searchParams?.tab) || "today");
-  const activeTab = tabResult.success ? tabResult.data : "today";
+  const searchParams = (await props.searchParams) ?? {};
+  const queryResult = getTasksQuerySchema.safeParse({
+    limit: getString(searchParams.limit) || "20",
+    page: getString(searchParams.page) || "1",
+    priority: getString(searchParams.priority) || undefined,
+    status: getString(searchParams.status) || undefined,
+    tab: getString(searchParams.tab) || "today",
+    taskType: getString(searchParams.taskType) || undefined,
+  });
+  const taskQuery = queryResult.success
+    ? queryResult.data
+    : {
+        limit: 20,
+        page: 1,
+        priority: undefined,
+        status: undefined,
+        tab: "today" as const,
+        taskType: undefined,
+      };
+  const activeTab = taskQuery.tab;
   const [counts, leadOptions, leadsWithoutTasks, taskResult] = await Promise.all([
     getTaskCounts(),
     listTaskLeadOptions(),
     activeTab === "no_schedule" ? getLeadsWithoutTasks(30) : Promise.resolve([]),
     activeTab === "no_schedule"
       ? Promise.resolve({ items: [], limit: 20, page: 1, total: 0 })
-      : getTasksForUser({ limit: 20, tab: activeTab }),
+      : getTasksForUser(taskQuery),
   ]);
 
   return (
     <TaskCenterPage
       activeTab={activeTab}
       counts={counts}
+      filters={{
+        priority: taskQuery.priority || "",
+        status: taskQuery.status || "",
+        taskType: taskQuery.taskType || "",
+      }}
       leadOptions={leadOptions}
       leadsWithoutTasks={leadsWithoutTasks}
-      tasks={taskResult.items}
+      taskResult={taskResult}
     />
   );
 }

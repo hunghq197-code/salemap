@@ -1,17 +1,25 @@
-import { BarChart3, Download, FileSpreadsheet, Filter, MapPinned, Plus, Search, Sparkles, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { createLeadAction } from "@/app/app/leads/actions";
 import { BulkActionsForm } from "@/components/cleanup/BulkActionsForm";
-import { LeadCard } from "@/components/leads/LeadCard";
+import { LeadEmptyState } from "@/components/leads/LeadEmptyState";
+import {
+  LeadFilterBar,
+  type LeadFilterValues,
+} from "@/components/leads/LeadFilterBar";
 import { LeadForm } from "@/components/leads/LeadForm";
+import { LeadHeaderActions } from "@/components/leads/LeadHeaderActions";
+import { LeadListView } from "@/components/leads/LeadListView";
+import { LeadSummaryCards } from "@/components/leads/LeadSummaryCards";
 import { FirstRunTip } from "@/components/onboarding/FirstRunTip";
 import { CreateSavedViewForm } from "@/components/saved-views/CreateSavedViewForm";
 import { Badge } from "@/components/ui/Badge";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Pagination } from "@/components/ui/Pagination";
 import { Toast } from "@/components/ui/Toast";
-import { LEAD_PRIORITY_OPTIONS } from "@/lib/constants/lead-priority";
-import { LEAD_STATUS_OPTIONS } from "@/lib/constants/lead-status";
-import { getFilteredLeads } from "@/lib/data/lead-filtered-list";
+import {
+  getFilteredLeadCount,
+  getFilteredLeads,
+} from "@/lib/data/lead-filtered-list";
 import { getTags } from "@/lib/data/tags";
 import { deserializeLeadFilters, getLeadFilterSummary } from "@/lib/leads/lead-filters";
 
@@ -21,30 +29,82 @@ type LeadsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
+type SearchParams = NonNullable<LeadsPageProps["searchParams"]>;
+
 function getString(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function getLeadHref(
+  searchParams: SearchParams,
+  overrides: Record<string, string | number | null | undefined> = {},
+) {
+  const params = new URLSearchParams();
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (key === "toast") return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item) params.append(key, item);
+      });
+      return;
+    }
+
+    if (value) params.set(key, value);
+  });
+
+  Object.entries(overrides).forEach(([key, value]) => {
+    params.delete(key);
+
+    if (value !== null && value !== undefined && String(value) !== "") {
+      params.set(key, String(value));
+    }
+  });
+
+  const query = params.toString();
+  return `/app/leads${query ? `?${query}` : ""}`;
+}
+
+function getActiveFilterCount(values: LeadFilterValues) {
+  return [
+    values.q,
+    values.status,
+    values.tagId,
+    values.priority,
+    values.source,
+    values.category,
+    values.followUp,
+    values.noFollowUp,
+    values.staleDays,
+    values.hasPhone,
+    values.hasEmail,
+    values.createdFrom,
+    values.createdTo,
+    values.dataView !== "active" ? values.dataView : "",
+  ].filter(Boolean).length;
+}
+
 export default async function LeadsPage(props: LeadsPageProps) {
-  const searchParams = await props.searchParams;
-  const q = getString(searchParams?.q) ?? "";
-  const status = getString(searchParams?.status) ?? "";
-  const tagId = getString(searchParams?.tagId) ?? "";
-  const sort = getString(searchParams?.sort) ?? "newest";
-  const priority = getString(searchParams?.priority) ?? "";
-  const source = getString(searchParams?.source) ?? "";
-  const category = getString(searchParams?.category) ?? "";
-  const followUp = getString(searchParams?.followUp) ?? "";
-  const noFollowUp = getString(searchParams?.noFollowUp) ?? "";
-  const staleDays = getString(searchParams?.staleDays) ?? "";
-  const hasPhone = getString(searchParams?.hasPhone) ?? "";
-  const hasEmail = getString(searchParams?.hasEmail) ?? "";
-  const createdFrom = getString(searchParams?.createdFrom) ?? "";
-  const createdTo = getString(searchParams?.createdTo) ?? "";
-  const dataView = getString(searchParams?.dataView) ?? "active";
-  const page = Number(getString(searchParams?.page) || 1);
-  const showCreateForm = getString(searchParams?.create) === "1";
-  const toastCode = getString(searchParams?.toast);
+  const searchParams = (await props.searchParams) ?? {};
+  const q = getString(searchParams.q) ?? "";
+  const status = getString(searchParams.status) ?? "";
+  const tagId = getString(searchParams.tagId) ?? "";
+  const sort = getString(searchParams.sort) ?? "newest";
+  const priority = getString(searchParams.priority) ?? "";
+  const source = getString(searchParams.source) ?? "";
+  const category = getString(searchParams.category) ?? "";
+  const followUp = getString(searchParams.followUp) ?? "";
+  const noFollowUp = getString(searchParams.noFollowUp) ?? "";
+  const staleDays = getString(searchParams.staleDays) ?? "";
+  const hasPhone = getString(searchParams.hasPhone) ?? "";
+  const hasEmail = getString(searchParams.hasEmail) ?? "";
+  const createdFrom = getString(searchParams.createdFrom) ?? "";
+  const createdTo = getString(searchParams.createdTo) ?? "";
+  const dataView = getString(searchParams.dataView) ?? "active";
+  const page = Number(getString(searchParams.page) || 1);
+  const showCreateForm = getString(searchParams.create) === "1";
+  const toastCode = getString(searchParams.toast);
   const filters = deserializeLeadFilters({
     ...searchParams,
     archived: dataView === "archived" ? "1" : undefined,
@@ -58,31 +118,50 @@ export default async function LeadsPage(props: LeadsPageProps) {
         ? "next_follow_up_at"
         : "updated_at";
   const sortDirection = sort === "oldest" || sort === "next_follow_up" ? "asc" : "desc";
+  const filterValues: LeadFilterValues = {
+    category,
+    createdFrom,
+    createdTo,
+    dataView,
+    followUp,
+    hasEmail,
+    hasPhone,
+    noFollowUp,
+    priority,
+    q,
+    sort,
+    source,
+    staleDays,
+    status,
+    tagId,
+  };
+  const activeFilterCount = getActiveFilterCount(filterValues);
 
-  const [leadResult, tags] = await Promise.all([
+  const [
+    leadResult,
+    tags,
+    totalLeadCount,
+    todayFollowUpCount,
+    overdueFollowUpCount,
+    interestedLeadCount,
+  ] = await Promise.all([
     getFilteredLeads({ filters, limit: 20, page, sortBy, sortDirection }),
     getTags(),
+    getFilteredLeadCount({}),
+    getFilteredLeadCount({ followUp: "today" }),
+    getFilteredLeadCount({ followUp: "overdue" }),
+    getFilteredLeadCount({ status: ["interested"] }),
   ]);
 
   const leads = leadResult.items;
   const filterSummary = getLeadFilterSummary(filters);
-  const hasFilters = Boolean(
-    q ||
-      status ||
-      tagId ||
-      priority ||
-      source ||
-      category ||
-      followUp ||
-      noFollowUp ||
-      staleDays ||
-      hasPhone ||
-      hasEmail ||
-      createdFrom ||
-      createdTo ||
-      dataView !== "active",
-  );
+  const hasFilters = activeFilterCount > 0;
   const totalPages = Math.max(1, Math.ceil(leadResult.total / leadResult.limit));
+  const fromResult =
+    leadResult.total === 0 ? 0 : (leadResult.page - 1) * leadResult.limit + 1;
+  const toResult = Math.min(leadResult.page * leadResult.limit, leadResult.total);
+  const createHref = getLeadHref(searchParams, { create: "1", page: null });
+  const closeCreateHref = getLeadHref(searchParams, { create: null, page: null });
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -90,59 +169,33 @@ export default async function LeadsPage(props: LeadsPageProps) {
 
       <PageHeader
         actions={
-          <>
-          {leadResult.total > 0 ? (
-            <>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
-                href="/app/import"
-              >
-                <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
-                Import dữ liệu
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
-                href="/app/export"
-              >
-                <Download aria-hidden="true" className="h-5 w-5" />
-                Xuất dữ liệu
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
-                href="/app/leads/cleanup"
-              >
-                <Sparkles aria-hidden="true" className="h-5 w-5" />
-                Dọn dữ liệu
-              </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2.5 text-sm font-bold text-text-primary shadow-sm hover:border-primary/40 hover:text-primary"
-                href="/app/analytics"
-              >
-                <BarChart3 aria-hidden="true" className="h-5 w-5" />
-                Xem hiệu suất
-              </Link>
-            </>
-          ) : null}
-          <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-soft hover:bg-primary-hover"
-            href="/app/leads?create=1"
-          >
-            <Plus aria-hidden="true" className="h-5 w-5" />
-            Thêm lead
-          </Link>
-          </>
+          <LeadHeaderActions
+            createHref={createHref}
+            discoverHref="/app/discover"
+            importHref="/app/import"
+            showUtilityActions={totalLeadCount > 0}
+          />
         }
-        description="Lead là danh sách khách tiềm năng của riêng bạn. Bạn có thể thêm thủ công hoặc lưu trực tiếp từ kết quả tìm kiếm bản đồ."
+        description={`${totalLeadCount} lead active trong workspace. Đang hiển thị ${leadResult.total} lead phù hợp với bộ lọc hiện tại.`}
         eyebrow="Lead"
         fullBleed
-        title="Lead cá nhân"
+        title="Khách hàng tiềm năng"
       >
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge tone="primary">{leadResult.total} lead</Badge>
+          <Badge tone="primary">{leadResult.total} kết quả</Badge>
           {hasFilters ? <Badge tone="warning">Đang lọc</Badge> : null}
-          <Badge tone="neutral">20 lead mỗi trang</Badge>
+          <Badge tone="neutral">{leadResult.limit} lead mỗi trang</Badge>
         </div>
       </PageHeader>
+
+      <LeadSummaryCards
+        counts={{
+          interested: interestedLeadCount,
+          overdue: overdueFollowUpCount,
+          today: todayFollowUpCount,
+          total: totalLeadCount,
+        }}
+      />
 
       <FirstRunTip
         message="Lead mới lưu nên có follow-up ngay trong 24 giờ để tránh bị quên."
@@ -152,14 +205,17 @@ export default async function LeadsPage(props: LeadsPageProps) {
       {showCreateForm ? (
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Thêm lead</h2>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/app/leads">
+            <h2 className="text-xl font-bold text-text-primary">Thêm lead</h2>
+            <Link
+              className="text-sm font-bold text-primary hover:text-text-primary"
+              href={closeCreateHref}
+            >
               Đóng
             </Link>
           </div>
           <LeadForm
             action={createLeadAction}
-            cancelHref="/app/leads"
+            cancelHref={closeCreateHref}
             submitLabel="Lưu lead"
             tags={tags}
             toastCode={toastCode}
@@ -167,313 +223,46 @@ export default async function LeadsPage(props: LeadsPageProps) {
         </section>
       ) : null}
 
-      <form
-        className="mt-6 rounded-card border border-border-soft bg-surface p-4 shadow-card"
-        method="get"
-      >
-        <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]">
-          <label className="text-sm font-bold text-ink">
-            Tìm kiếm
-            <div className="relative mt-2">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                className="min-h-12 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-                defaultValue={q}
-                name="q"
-                placeholder="Tìm theo tên, số điện thoại, địa chỉ..."
-              />
-            </div>
-          </label>
-          <label className="text-sm font-bold text-ink">
-            Trạng thái
-            <select
-              className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-              defaultValue={status}
-              name="status"
-            >
-              <option value="">Tất cả</option>
-              {LEAD_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-bold text-ink">
-            Tag
-            <select
-              className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-              defaultValue={tagId}
-              name="tagId"
-            >
-              <option value="">Tất cả</option>
-              {tags.map((tag) => (
-                <option key={tag.id} value={tag.id}>
-                  {tag.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-bold text-ink">
-            Sắp xếp
-            <select
-              className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-              defaultValue={sort}
-              name="sort"
-            >
-              <option value="newest">Mới nhất</option>
-              <option value="oldest">Cũ nhất</option>
-              <option value="next_follow_up">Follow-up gần nhất</option>
-            </select>
-          </label>
-          <label className="text-sm font-bold text-ink">
-            Dữ liệu
-            <select
-              className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-              defaultValue={dataView}
-              name="dataView"
-            >
-              <option value="active">Đang hoạt động</option>
-              <option value="archived">Đã lưu trữ</option>
-              <option value="deleted">Đã xóa mềm</option>
-            </select>
-          </label>
-          <div className="flex items-end gap-2">
-            <button
-              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 text-sm font-bold text-white hover:bg-ocean lg:flex-none"
-              type="submit"
-            >
-              <Filter aria-hidden="true" className="h-4 w-4" />
-              Lọc
-            </button>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
-              href="/app/leads"
-            >
-              Xóa
-            </Link>
-          </div>
-        </div>
-        <details className="mt-4 rounded-card border border-border-soft bg-surface-muted p-4">
-          <summary className="cursor-pointer text-sm font-bold text-text-primary">
-            Bộ lọc nâng cao
-          </summary>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <label className="text-sm font-bold text-ink">
-              Ưu tiên
-              <select
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={priority}
-                name="priority"
-              >
-                <option value="">Tất cả</option>
-                {LEAD_PRIORITY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Nguồn lead
-              <select
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={source}
-                name="source"
-              >
-                <option value="">Tất cả</option>
-                <option value="manual">Thủ công</option>
-                <option value="import_csv">Import CSV</option>
-                <option value="import_excel">Import Excel</option>
-                <option value="map_near_me">Bản đồ gần tôi</option>
-                <option value="map_area">Bản đồ khu vực</option>
-                <option value="route_search">Tuyến đường</option>
-              </select>
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Ngành/loại khách
-              <input
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={category}
-                name="category"
-                placeholder="nhà thuốc, spa..."
-              />
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Follow-up
-              <select
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={followUp}
-                name="followUp"
-              >
-                <option value="">Tất cả</option>
-                <option value="today">Hôm nay</option>
-                <option value="overdue">Quá hạn</option>
-                <option value="today_or_overdue">Hôm nay hoặc quá hạn</option>
-                <option value="this_week">Tuần này</option>
-                <option value="future">Tương lai</option>
-              </select>
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Từ ngày tạo
-              <input
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={createdFrom}
-                name="createdFrom"
-                type="date"
-              />
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Đến ngày tạo
-              <input
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={createdTo}
-                name="createdTo"
-                type="date"
-              />
-            </label>
-            <label className="text-sm font-bold text-ink">
-              Lâu chưa chăm sóc
-              <input
-                className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean"
-                defaultValue={staleDays}
-                min={1}
-                name="staleDays"
-                placeholder="14"
-                type="number"
-              />
-            </label>
-            <div className="grid gap-2 text-sm font-bold text-ink">
-              <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <input
-                  className="h-5 w-5"
-                  defaultChecked={hasPhone === "1" || hasPhone === "true"}
-                  name="hasPhone"
-                  type="checkbox"
-                  value="1"
-                />
-                Có số điện thoại
-              </label>
-              <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <input
-                  className="h-5 w-5"
-                  defaultChecked={hasEmail === "1" || hasEmail === "true"}
-                  name="hasEmail"
-                  type="checkbox"
-                  value="1"
-                />
-                Có email
-              </label>
-              <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                <input
-                  className="h-5 w-5"
-                  defaultChecked={noFollowUp === "1" || noFollowUp === "true"}
-                  name="noFollowUp"
-                  type="checkbox"
-                  value="1"
-                />
-                Chưa có lịch hẹn
-              </label>
-            </div>
-          </div>
-        </details>
-      </form>
+      <LeadFilterBar
+        activeFilterCount={activeFilterCount}
+        filterSummary={filterSummary}
+        tags={tags}
+        values={filterValues}
+      />
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-card border border-border-soft bg-surface p-4 shadow-sm">
-          <p className="text-sm font-bold text-text-muted">Tóm tắt bộ lọc</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {filterSummary.map((item) => (
-              <span
-                className="inline-flex min-h-8 items-center rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
-                key={item}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
+      {hasFilters ? (
+        <div className="mt-4">
+          <CreateSavedViewForm filters={filters} />
         </div>
-        <CreateSavedViewForm filters={filters} />
-      </div>
+      ) : null}
 
       {leads.length > 0 ? (
         <>
-          <div className="mt-5 flex flex-col gap-2 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5 flex flex-col gap-2 text-sm font-semibold text-text-secondary sm:flex-row sm:items-center sm:justify-between">
             <p>
-              Hiển thị {leads.length} / {leadResult.total} lead
+              Hiển thị {fromResult}-{toResult} trên {leadResult.total} lead
             </p>
             <p>
-              Trang {leadResult.page} / {totalPages}
+              Trang {leadResult.page}/{totalPages}
             </p>
           </div>
           <BulkActionsForm currentPageLeadIds={leads.map((lead) => lead.id)} tags={tags}>
-            <div className="space-y-4">
-              {leads.map((lead) => (
-                <LeadCard key={lead.id} lead={lead} selectable />
-              ))}
-            </div>
+            <LeadListView leads={leads} />
           </BulkActionsForm>
-          {totalPages > 1 ? (
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {leadResult.page > 1 ? (
-                <Link
-                  className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-                  href={`/app/leads?page=${leadResult.page - 1}`}
-                >
-                  Trang trước
-                </Link>
-              ) : null}
-              {leadResult.page < totalPages ? (
-                <Link
-                  className="inline-flex min-h-11 items-center rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-ocean"
-                  href={`/app/leads?page=${leadResult.page + 1}`}
-                >
-                  Trang sau
-                </Link>
-              ) : null}
-            </div>
-          ) : null}
+          <Pagination
+            className="mt-6"
+            currentPage={leadResult.page}
+            getPageHref={(targetPage) =>
+              getLeadHref(searchParams, {
+                create: null,
+                page: targetPage,
+              })
+            }
+            totalPages={totalPages}
+          />
         </>
       ) : (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-            <UsersRound aria-hidden="true" className="h-7 w-7" />
-          </div>
-          <h2 className="mt-5 text-xl font-bold text-ink">
-            {hasFilters ? "Chưa có lead phù hợp." : "Bạn chưa có lead nào"}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">
-            {hasFilters
-              ? "Hãy xóa bộ lọc hiện tại hoặc thử từ khóa khác."
-              : "Hãy tìm khách trên bản đồ hoặc import danh sách khách cũ để bắt đầu quản lý."}
-          </p>
-          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-              href="/app/discover"
-            >
-              <MapPinned aria-hidden="true" className="h-5 w-5" />
-              Tìm khách trên bản đồ
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
-              href="/app/import"
-            >
-              <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
-              Import lead
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink shadow-sm hover:border-ocean"
-              href="/app/leads?create=1"
-            >
-              <Plus aria-hidden="true" className="h-5 w-5" />
-              Thêm lead thủ công
-            </Link>
-          </div>
-        </section>
+        <LeadEmptyState hasFilters={hasFilters} />
       )}
     </div>
   );

@@ -176,7 +176,7 @@ export function LeadTaskPanel({ lead, tasks }: LeadTaskPanelProps) {
 
   return (
     <section
-      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      className="scroll-mt-24"
       id="lead-tasks"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -2,6 +2,7 @@ import {
   Archive,
   ArrowLeft,
   CalendarClock,
+  Edit3,
   ExternalLink,
   Globe,
   Mail,
@@ -31,12 +32,15 @@ import { LeadPriorityBadge } from "@/components/leads/LeadPriorityBadge";
 import { LeadStatusBadge } from "@/components/leads/LeadStatusBadge";
 import { LeadTaskPanel } from "@/components/leads/LeadTaskPanel";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
+import { TaskPriorityBadge } from "@/components/tasks/TaskPriorityBadge";
+import { TaskTypeBadge } from "@/components/tasks/TaskTypeBadge";
+import { Badge } from "@/components/ui/Badge";
 import { Toast } from "@/components/ui/Toast";
-import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { getLeadActiveCadence } from "@/lib/data/cadences";
-import { getLeadById } from "@/lib/data/leads";
+import { isFeatureEnabled } from "@/lib/data/feature-flags";
 import { getLeadNotes } from "@/lib/data/lead-notes";
-import { getLeadTasks, getLeadTaskTimeline } from "@/lib/data/tasks";
+import { getLeadById, type LeadRecord } from "@/lib/data/leads";
+import { getLeadTaskTimeline, getLeadTasks, type TaskRecord } from "@/lib/data/tasks";
 import { getTags } from "@/lib/data/tags";
 import { getLeadMergeMetadata } from "@/lib/leads/merge-leads";
 import { getGoogleMapsDirectionsUrl } from "@/lib/maps-url";
@@ -83,6 +87,136 @@ function cleanPhone(phone?: string | null) {
   return phone?.replace(/\D/g, "") || "";
 }
 
+function isOpenTask(task: TaskRecord) {
+  return task.status === "pending" || task.status === "snoozed";
+}
+
+function isOverdue(value?: string | null) {
+  return Boolean(value && new Date(value).getTime() < Date.now());
+}
+
+function getNextTask(tasks: TaskRecord[]) {
+  return tasks
+    .filter(isOpenTask)
+    .sort(
+      (a, b) =>
+        new Date(a.remind_at || 0).getTime() - new Date(b.remind_at || 0).getTime(),
+    )[0];
+}
+
+function getSourceBadgeLabel(lead: LeadRecord) {
+  if (lead.source === "route_search") return "Từ tuyến đường";
+  if (lead.external_source === "google_maps" || lead.source?.startsWith("map_")) {
+    return "Từ Google Maps";
+  }
+  return null;
+}
+
+function FieldItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-control bg-surface-muted px-4 py-3">
+      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-text-muted">
+        <Icon aria-hidden="true" className="h-4 w-4" />
+        {label}
+      </p>
+      <p className="mt-2 break-words text-sm font-bold leading-6 text-text-primary">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function LeadNextAction({ lead, tasks }: { lead: LeadRecord; tasks: TaskRecord[] }) {
+  const nextTask = getNextTask(tasks);
+
+  if (!nextTask) {
+    return (
+      <section className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-text-muted">Next action</p>
+            <h2 className="mt-2 text-xl font-bold text-text-primary">
+              Chưa có follow-up mở
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">
+              Tạo lịch chăm sóc tiếp theo cho {lead.name} để không mất nhịp.
+            </p>
+          </div>
+          <a
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
+            href="#lead-tasks"
+          >
+            <CalendarClock aria-hidden="true" className="h-5 w-5" />
+            Tạo follow-up
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  const overdue = isOverdue(nextTask.remind_at);
+
+  return (
+    <section
+      className={[
+        "rounded-card border bg-surface p-4 shadow-card sm:p-5",
+        overdue ? "border-danger/35" : "border-border-soft",
+      ].join(" ")}
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-text-muted">Next action</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <TaskTypeBadge type={nextTask.task_type} />
+            <TaskPriorityBadge priority={nextTask.priority} />
+            {overdue ? <Badge tone="danger">Quá hạn</Badge> : null}
+          </div>
+          <h2 className="mt-3 text-xl font-bold leading-7 text-text-primary">
+            {nextTask.title}
+          </h2>
+          <p
+            className={[
+              "mt-2 flex items-center gap-2 text-sm font-semibold",
+              overdue ? "text-danger" : "text-text-secondary",
+            ].join(" ")}
+          >
+            <CalendarClock aria-hidden="true" className="h-4 w-4" />
+            {formatDateTime(nextTask.remind_at)}
+          </p>
+          {nextTask.description ? (
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-text-secondary">
+              {nextTask.description}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <a
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+            href="#lead-tasks"
+          >
+            Xử lý task
+          </a>
+          <a
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover"
+            href="#add-note"
+          >
+            <MessageSquarePlus aria-hidden="true" className="h-4 w-4" />
+            Ghi chú
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function LeadDetailPage(props: LeadDetailPageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -94,13 +228,13 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
 
   if (!lead) {
     return (
-      <div className="mx-auto max-w-3xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-ink">Không tìm thấy lead</h1>
-        <p className="mt-3 text-base leading-8 text-slate-600">
+      <div className="mx-auto max-w-3xl rounded-card border border-border-soft bg-surface p-6 shadow-card">
+        <h1 className="text-2xl font-bold text-text-primary">Không tìm thấy lead</h1>
+        <p className="mt-3 text-base leading-8 text-text-secondary">
           Lead này có thể đã bị xóa hoặc không thuộc workspace của bạn.
         </p>
         <Link
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-lg bg-mint px-5 py-3 text-sm font-bold text-ink"
+          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-5 py-3 text-sm font-bold text-white"
           href="/app/leads"
         >
           Quay lại danh sách lead
@@ -109,23 +243,24 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
     );
   }
 
-  const [notes, mergeMetadata, leadTasks, taskTimeline, activeCadence] = await Promise.all([
-    getLeadNotes(lead.id),
-    getLeadMergeMetadata(lead.id),
-    getLeadTasks(lead.id),
-    getLeadTaskTimeline(lead.id),
-    getLeadActiveCadence(lead.id),
-  ]);
+  const [notes, mergeMetadata, leadTasks, taskTimeline, activeCadence] =
+    await Promise.all([
+      getLeadNotes(lead.id, 20).catch(() => []),
+      getLeadMergeMetadata(lead.id).catch(() => ({
+        mergedIntoLeadId: null,
+        mergedLeadCount: 0,
+      })),
+      getLeadTasks(lead.id).catch(() => []),
+      getLeadTaskTimeline(lead.id).catch(() => ({ events: [], notes: [] })),
+      getLeadActiveCadence(lead.id).catch(() => null),
+    ]);
   const showEditForm = getString(searchParams?.edit) === "1";
   const toastCode = getString(searchParams?.toast);
   const updateAction = updateLeadAction.bind(null, lead.id);
   const archiveAction = archiveLeadAction.bind(null, lead.id);
   const deleteAction = softDeleteLeadAction.bind(null, lead.id);
   const zaloPhone = cleanPhone(lead.phone);
-  const isRouteLead = lead.source === "route_search";
-  const isMapLead =
-    !isRouteLead && (lead.external_source === "google_maps" || lead.source?.startsWith("map_"));
-  const sourceBadgeLabel = isRouteLead ? "Từ tuyến đường" : isMapLead ? "Từ Google Maps" : null;
+  const sourceBadgeLabel = getSourceBadgeLabel(lead);
   const directionsHref = getGoogleMapsDirectionsUrl({
     address: lead.address,
     googleMapsUrl: lead.google_maps_url,
@@ -143,7 +278,7 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
     { icon: CalendarClock, label: "Ngày tạo", value: formatDateTime(lead.created_at) },
     {
       icon: CalendarClock,
-      label: "Lần liên hệ gần nhất",
+      label: "Liên hệ gần nhất",
       value: formatDateTime(lead.last_contacted_at),
     },
     {
@@ -159,214 +294,265 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl pb-24 lg:pb-0">
       <Toast code={toastCode} />
       <LeadDetailTracker priority={lead.priority} status={lead.status} />
 
       {mergeMetadata.mergedIntoLeadId ? (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+        <div className="mb-4 rounded-card border border-warning/25 bg-warning-soft p-4 text-sm font-semibold leading-6 text-amber-900">
           Lead này đã được gộp vào lead khác.{" "}
-          <Link className="font-bold text-ocean hover:text-ink" href={`/app/leads/${mergeMetadata.mergedIntoLeadId}`}>
+          <Link
+            className="font-bold text-primary hover:text-text-primary"
+            href={`/app/leads/${mergeMetadata.mergedIntoLeadId}`}
+          >
             Xem lead chính
           </Link>
         </div>
       ) : mergeMetadata.mergedLeadCount > 0 ? (
-        <div className="mb-4 rounded-lg border border-mint/40 bg-mint/10 p-4 text-sm font-semibold leading-6 text-ocean">
+        <div className="mb-4 rounded-card border border-success/25 bg-success-soft p-4 text-sm font-semibold leading-6 text-emerald-800">
           Lead này đã gộp dữ liệu từ {mergeMetadata.mergedLeadCount} lead khác.
         </div>
       ) : null}
 
       <Link
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-ocean hover:text-ink"
+        className="inline-flex min-h-11 items-center gap-2 rounded-control text-sm font-bold text-primary hover:text-text-primary"
         href="/app/leads"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại lead cá nhân
+        Quay lại danh sách
       </Link>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[1.4fr_0.8fr]">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-                Lead detail
+      <section className="mt-4 rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+              Lead detail
+            </p>
+            <h1 className="mt-2 text-3xl font-bold leading-tight text-text-primary sm:text-4xl">
+              {lead.name}
+            </h1>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <LeadStatusBadge status={lead.status} />
+              <LeadPriorityBadge priority={lead.priority} />
+              {sourceBadgeLabel ? <Badge tone="accent">{sourceBadgeLabel}</Badge> : null}
+              {lead.category ? <Badge tone="neutral">{lead.category}</Badge> : null}
+            </div>
+            {lead.address ? (
+              <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-text-secondary">
+                <MapPin aria-hidden="true" className="mt-1 h-4 w-4 shrink-0" />
+                <span>{lead.address}</span>
               </p>
-              <h1 className="mt-3 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-                {lead.name}
-              </h1>
+            ) : null}
+            {lead.tags.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-2">
-                <LeadStatusBadge status={lead.status} />
-                <LeadPriorityBadge priority={lead.priority} />
-                {sourceBadgeLabel ? (
-                  <span className="inline-flex min-h-7 items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700">
-                    {sourceBadgeLabel}
-                  </span>
-                ) : null}
+                {lead.tags.map((tag) => (
+                  <Badge key={tag.id} tone="outline">
+                    {tag.name}
+                  </Badge>
+                ))}
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {lead.phone ? (
-                <a
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
-                  href={`tel:${lead.phone}`}
-                >
-                  <Phone aria-hidden="true" className="h-4 w-4" />
-                  Gọi
-                </a>
-              ) : null}
-              {zaloPhone ? (
-                <a
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
-                  href={`https://zalo.me/${zaloPhone}`}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <MessageCircle aria-hidden="true" className="h-4 w-4" />
-                  Nhắn Zalo
-                </a>
-              ) : null}
-              {directionsHref ? (
-                <a
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
-                  href={directionsHref}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <Navigation aria-hidden="true" className="h-4 w-4" />
-                  Chỉ đường
-                </a>
-              ) : null}
-              {lead.google_maps_url ? (
-                <a
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
-                  href={lead.google_maps_url}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                  Google Maps
-                </a>
-              ) : null}
-              <Link
-                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-4 py-2 text-sm font-bold text-white hover:bg-ocean"
-                href={`/app/leads/${lead.id}?edit=1`}
-              >
-                Sửa
-              </Link>
-            </div>
+            ) : null}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="hidden flex-wrap gap-2 lg:flex lg:justify-end">
             <a
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-              href="#add-note"
-            >
-              <MessageSquarePlus aria-hidden="true" className="h-5 w-5" />
-              Thêm ghi chú
-            </a>
-            <a
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink hover:border-ocean hover:text-ocean"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover"
               href="#lead-tasks"
             >
               <CalendarClock aria-hidden="true" className="h-5 w-5" />
               Tạo follow-up
             </a>
+            {lead.phone ? (
+              <a
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                href={`tel:${lead.phone}`}
+              >
+                <Phone aria-hidden="true" className="h-5 w-5" />
+                Gọi
+              </a>
+            ) : null}
+            {directionsHref ? (
+              <a
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                href={directionsHref}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <Navigation aria-hidden="true" className="h-5 w-5" />
+                Chỉ đường
+              </a>
+            ) : null}
+            <Link
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+              href={`/app/leads/${lead.id}?edit=1`}
+            >
+              <Edit3 aria-hidden="true" className="h-5 w-5" />
+              Sửa
+            </Link>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {infoItems.map(({ icon: Icon, label, value }) => (
-              <div className="rounded-lg bg-cloud px-4 py-3" key={label}>
-                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-                  <Icon aria-hidden="true" className="h-4 w-4" />
-                  {label}
-                </p>
-                <p className="mt-2 break-words text-base font-bold text-ink">{value}</p>
-              </div>
-            ))}
-          </div>
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-5">
+          <LeadNextAction lead={lead} tasks={leadTasks} />
 
-          {lead.tags.length > 0 ? (
-            <div className="mt-5 flex flex-wrap gap-2">
-              {lead.tags.map((tag) => (
-                <span
-                  className="inline-flex min-h-8 items-center rounded-full bg-cloud px-3 py-1 text-xs font-bold text-slate-600"
-                  key={tag.id}
+          {showEditForm ? (
+            <section>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-bold text-text-primary">Sửa thông tin lead</h2>
+                <Link
+                  className="text-sm font-bold text-primary hover:text-text-primary"
+                  href={`/app/leads/${lead.id}`}
                 >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
+                  Đóng
+                </Link>
+              </div>
+              <LeadForm
+                action={updateAction}
+                cancelHref={`/app/leads/${lead.id}`}
+                lead={lead}
+                submitLabel="Lưu lead"
+                tags={tags}
+                toastCode={toastCode}
+              />
+            </section>
           ) : null}
 
-          <div className="mt-5 rounded-lg bg-cloud px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-              Ghi chú tóm tắt
-            </p>
-            <p className="mt-2 text-base leading-8 text-slate-600">
-              {lead.note_summary || "Chưa có ghi chú cho lead này."}
-            </p>
-          </div>
-        </section>
+          <LeadTaskPanel lead={lead} tasks={leadTasks} />
 
-        <aside className="space-y-4">
+          <section id="add-note">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-text-primary">Thêm ghi chú</h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                Lưu kết quả liên hệ, trạng thái sau tương tác và follow-up nếu cần.
+              </p>
+            </div>
+            <AddNoteForm action={createLeadNoteAction} lead={lead} toastCode={toastCode} />
+          </section>
+
+          <LeadTimeline
+            events={taskTimeline.events}
+            leadCreatedAt={lead.created_at}
+            notes={notes}
+          />
+
+          {aiEnabled ? (
+            <AIAssistantPanel leadId={lead.id} title="Trợ lý AI cho lead này" />
+          ) : (
+            <section className="rounded-card border border-border-soft bg-surface p-5 text-base leading-8 text-text-secondary shadow-card">
+              Trợ lý AI đang được mở dần.
+            </section>
+          )}
+        </div>
+
+        <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          <section className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-text-muted">Liên hệ</p>
+                <h2 className="mt-1 text-xl font-bold text-text-primary">{lead.name}</h2>
+              </div>
+              <LeadStatusBadge status={lead.status} />
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {lead.phone ? (
+                <a
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-4 py-3 text-sm font-bold text-white shadow-soft transition hover:bg-primary-hover"
+                  href={`tel:${lead.phone}`}
+                >
+                  <Phone aria-hidden="true" className="h-5 w-5" />
+                  Gọi khách
+                </a>
+              ) : null}
+              {zaloPhone ? (
+                <a
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                  href={`https://zalo.me/${zaloPhone}`}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <MessageCircle aria-hidden="true" className="h-5 w-5" />
+                  Nhắn Zalo
+                </a>
+              ) : null}
+              {directionsHref ? (
+                <a
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                  href={directionsHref}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <Navigation aria-hidden="true" className="h-5 w-5" />
+                  Chỉ đường
+                </a>
+              ) : null}
+              {lead.google_maps_url ? (
+                <a
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-3 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                  href={lead.google_maps_url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <ExternalLink aria-hidden="true" className="h-5 w-5" />
+                  Google Maps
+                </a>
+              ) : null}
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              {infoItems.map((item) => (
+                <FieldItem
+                  icon={item.icon}
+                  key={item.label}
+                  label={item.label}
+                  value={item.value}
+                />
+              ))}
+            </div>
+
+            <div className="mt-5 rounded-control bg-surface-muted px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-text-muted">
+                Ghi chú tóm tắt
+              </p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                {lead.note_summary || "Chưa có ghi chú cho lead này."}
+              </p>
+            </div>
+          </section>
+
           <section
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5"
             id="create-follow-up"
           >
-            <h2 className="text-lg font-bold text-ink">Tạo follow-up</h2>
+            <h2 className="text-lg font-bold text-text-primary">Tạo follow-up</h2>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">
+              Lên lịch việc tiếp theo cho riêng lead này.
+            </p>
             <FollowUpForm
               action={createLeadReminderAction}
               defaultRemindAt={tomorrowMorningLocal()}
               lead={lead}
               toastCode={toastCode}
             />
-            <form action={createLeadReminderAction} className="hidden">
-              <input name="leadId" type="hidden" value={lead.id} />
-              <label className="block text-sm font-bold text-ink">
-                Tiêu đề
-                <input
-                  className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-                  defaultValue={`Follow-up ${lead.name}`}
-                  minLength={2}
-                  name="title"
-                  required
-                />
-              </label>
-              <label className="block text-sm font-bold text-ink">
-                Ngày giờ nhắc
-                <input
-                  className="mt-2 min-h-12 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-                  defaultValue={tomorrowMorningLocal()}
-                  name="remindAt"
-                  required
-                  type="datetime-local"
-                />
-              </label>
-              <label className="block text-sm font-bold text-ink">
-                Mô tả
-                <textarea
-                  className="mt-2 min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-base leading-7 text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15"
-                  maxLength={500}
-                  name="description"
-                  placeholder="Nội dung cần nhắc"
-                />
-              </label>
-              <button
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-mint px-5 py-3 text-base font-bold text-ink shadow-soft hover:bg-[#5de0b3]"
-                type="submit"
-              >
-                <CalendarClock aria-hidden="true" className="h-5 w-5" />
-                Tạo follow-up
-              </button>
-            </form>
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-ink">Quản lý lead</h2>
+          <LeadCadencePanel activeCadence={activeCadence} lead={lead} />
+
+          <section className="rounded-card border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+            <h2 className="text-lg font-bold text-text-primary">Quản lý lead</h2>
             <div className="mt-4 grid gap-2">
+              <Link
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
+                href={`/app/leads/${lead.id}?edit=1`}
+              >
+                <Edit3 aria-hidden="true" className="h-4 w-4" />
+                Sửa thông tin
+              </Link>
               <form action={archiveAction}>
                 <button
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-4 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
                   type="submit"
                 >
                   <Archive aria-hidden="true" className="h-4 w-4" />
@@ -375,7 +561,7 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
               </form>
               <form action={deleteAction}>
                 <button
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-700 hover:bg-rose-100"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control border border-danger/20 bg-danger-soft px-4 py-2 text-sm font-bold text-danger transition hover:bg-red-100"
                   type="submit"
                 >
                   <Trash2 aria-hidden="true" className="h-4 w-4" />
@@ -387,98 +573,49 @@ export default async function LeadDetailPage(props: LeadDetailPageProps) {
         </aside>
       </div>
 
-      <section className="mt-5">
-        <LeadCadencePanel activeCadence={activeCadence} lead={lead} />
-      </section>
-
-      <section className="mt-5">
-        <LeadTaskPanel lead={lead} tasks={leadTasks} />
-      </section>
-
-      {showEditForm ? (
-        <section className="mt-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Sửa thông tin lead</h2>
-            <Link
-              className="text-sm font-bold text-ocean hover:text-ink"
-              href={`/app/leads/${lead.id}`}
-            >
-              Đóng
-            </Link>
-          </div>
-          <LeadForm
-            action={updateAction}
-            cancelHref={`/app/leads/${lead.id}`}
-            lead={lead}
-            submitLabel="Lưu lead"
-            tags={tags}
-            toastCode={toastCode}
-          />
-        </section>
-      ) : null}
-
-      <section className="mt-5">
-        {aiEnabled ? (
-          <AIAssistantPanel leadId={lead.id} title="Trợ lý AI cho lead này" />
-        ) : (
-          <div className="rounded-lg border border-slate-200 bg-white p-5 text-base leading-8 text-slate-600 shadow-sm">
-            Trợ lý AI đang được mở dần.
-          </div>
-        )}
-      </section>
-
-      <section className="mt-5 grid gap-5 lg:grid-cols-[1fr_1fr]">
-        <div id="add-note">
-          <h2 className="mb-3 text-xl font-bold text-ink">Thêm ghi chú</h2>
-          <AddNoteForm action={createLeadNoteAction} lead={lead} toastCode={toastCode} />
-        </div>
-        <LeadTimeline
-          events={taskTimeline.events}
-          leadCreatedAt={lead.created_at}
-          notes={notes}
-        />
-      </section>
-
-      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-40 grid grid-cols-4 gap-2 rounded-lg border border-slate-200 bg-white/95 p-2 shadow-xl backdrop-blur lg:hidden">
+      <div
+        className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-3 right-3 z-40 grid grid-cols-4 gap-2 rounded-card border border-border-soft bg-surface/95 p-2 shadow-floating backdrop-blur lg:hidden"
+        data-testid="lead-mobile-action-bar"
+      >
         {lead.phone ? (
           <a
-            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-mint/20 px-1 text-[11px] font-bold text-ink"
+            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-primary-soft px-1 text-[11px] font-bold text-primary"
             href={`tel:${lead.phone}`}
           >
             <Phone aria-hidden="true" className="h-5 w-5" />
             Gọi
           </a>
         ) : (
-          <span className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-slate-100 px-1 text-[11px] font-bold text-slate-400">
+          <span className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-surface-muted px-1 text-[11px] font-bold text-text-muted">
             <Phone aria-hidden="true" className="h-5 w-5" />
             Gọi
           </span>
         )}
-        {zaloPhone ? (
+        {directionsHref ? (
           <a
-            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-cloud px-1 text-[11px] font-bold text-ink"
-            href={`https://zalo.me/${zaloPhone}`}
+            className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-surface-muted px-1 text-[11px] font-bold text-text-primary"
+            href={directionsHref}
             rel="noreferrer"
             target="_blank"
           >
-            <MessageCircle aria-hidden="true" className="h-5 w-5" />
-            Nhắn
+            <Navigation aria-hidden="true" className="h-5 w-5" />
+            Đường
           </a>
         ) : (
-          <span className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-slate-100 px-1 text-[11px] font-bold text-slate-400">
-            <MessageCircle aria-hidden="true" className="h-5 w-5" />
-            Nhắn
+          <span className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-surface-muted px-1 text-[11px] font-bold text-text-muted">
+            <Navigation aria-hidden="true" className="h-5 w-5" />
+            Đường
           </span>
         )}
         <a
-          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-ink px-1 text-[11px] font-bold text-white"
+          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-surface-muted px-1 text-[11px] font-bold text-text-primary"
           href="#add-note"
         >
           <MessageSquarePlus aria-hidden="true" className="h-5 w-5" />
           Ghi chú
         </a>
         <a
-          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg bg-cloud px-1 text-[11px] font-bold text-ink"
+          className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-control bg-primary px-1 text-[11px] font-bold text-white"
           href="#lead-tasks"
         >
           <CalendarClock aria-hidden="true" className="h-5 w-5" />

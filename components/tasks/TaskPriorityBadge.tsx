@@ -1,4 +1,5 @@
 import { getTaskPriorityOption } from "@/lib/constants/tasks";
+import { getPriorityTone, statusToneClasses } from "@/lib/design-system/status";
 
 type TaskPriorityBadgeProps = {
   priority?: string | null;
@@ -11,7 +12,7 @@ export function TaskPriorityBadge({ priority }: TaskPriorityBadgeProps) {
     <span
       className={[
         "inline-flex min-h-7 items-center rounded-full border px-3 py-1 text-xs font-bold",
-        option.badgeClass,
+        statusToneClasses[getPriorityTone(priority)],
       ].join(" ")}
     >
       {option.label}

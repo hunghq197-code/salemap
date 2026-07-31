@@ -32,7 +32,7 @@ export function QuickTaskActions({ phone }: QuickTaskActionsProps) {
   return (
     <>
       <a
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
         href={`tel:${phone}`}
         onClick={() =>
           trackEvent(ANALYTICS_EVENTS.TASK_QUICK_CALL_CLICKED, {
@@ -44,7 +44,7 @@ export function QuickTaskActions({ phone }: QuickTaskActionsProps) {
         Gọi
       </a>
       <button
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-ink hover:border-ocean hover:text-ocean"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-3 py-2 text-sm font-bold text-text-primary transition hover:border-primary/40 hover:text-primary"
         onClick={handleCopy}
         type="button"
       >

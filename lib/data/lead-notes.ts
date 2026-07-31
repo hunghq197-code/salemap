@@ -40,15 +40,19 @@ async function getOwnLead(leadId: string) {
   };
 }
 
-export async function getLeadNotes(leadId: string) {
+export async function getLeadNotes(leadId: string, limit = 50) {
   const { supabase, userId } = await getOwnLead(leadId);
+  const safeLimit = Number.isFinite(limit)
+    ? Math.min(100, Math.max(1, Math.floor(limit)))
+    : 50;
   const { data, error } = await supabase
     .from("lead_notes")
     .select("id,lead_id,interaction_type,outcome,content,status_before,status_after,contacted_at,created_at")
     .eq("lead_id", leadId)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .order("contacted_at", { ascending: false });
+    .order("contacted_at", { ascending: false })
+    .limit(safeLimit);
 
   if (error) {
     throw new Error(error.message);

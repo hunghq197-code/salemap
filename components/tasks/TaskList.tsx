@@ -17,7 +17,7 @@ function getEmptyCopy(tab: TaskTab) {
   if (tab === "overdue") {
     return {
       body: "Các việc quá hạn sẽ nằm ở đây để bạn xử lý trước.",
-      title: "Không có việc quá hạn. Rất tốt!",
+      title: "Không có việc quá hạn.",
     };
   }
 

@@ -15,17 +15,20 @@ import {
   CompleteTaskModal,
   type CompleteTaskPayload,
 } from "@/components/tasks/CompleteTaskModal";
-import {
-  LeadsWithoutTasksList,
-} from "@/components/tasks/LeadsWithoutTasksList";
+import { LeadsWithoutTasksList } from "@/components/tasks/LeadsWithoutTasksList";
 import {
   SnoozeTaskModal,
   type SnoozeTaskPayload,
 } from "@/components/tasks/SnoozeTaskModal";
-import { Badge } from "@/components/ui/Badge";
-import { PageHeader } from "@/components/ui/PageHeader";
+import {
+  TaskFilterBar,
+  type TaskFilterValues,
+} from "@/components/tasks/TaskFilterBar";
 import { TaskList } from "@/components/tasks/TaskList";
 import { TaskTabs } from "@/components/tasks/TaskTabs";
+import { Badge } from "@/components/ui/Badge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Pagination } from "@/components/ui/Pagination";
 import type { TaskTab } from "@/lib/constants/tasks";
 import type {
   LeadWithoutTask,
@@ -37,9 +40,15 @@ import type {
 type TaskCenterPageProps = {
   activeTab: TaskTab;
   counts: TaskCountsData;
+  filters: TaskFilterValues;
   leadOptions: TaskLeadSummary[];
   leadsWithoutTasks: LeadWithoutTask[];
-  tasks: TaskRecord[];
+  taskResult: {
+    items: TaskRecord[];
+    limit: number;
+    page: number;
+    total: number;
+  };
 };
 
 type ApiResponse<T> = {
@@ -61,9 +70,10 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export function TaskCenterPage({
   activeTab,
   counts,
+  filters,
   leadOptions,
   leadsWithoutTasks,
-  tasks,
+  taskResult,
 }: TaskCenterPageProps) {
   const router = useRouter();
   const [createLeadId, setCreateLeadId] = useState<string | null>(null);
@@ -72,6 +82,7 @@ export function TaskCenterPage({
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [snoozingTask, setSnoozingTask] = useState<TaskRecord | null>(null);
   const createModalOpen = createLeadId !== null;
+  const totalPages = Math.max(1, Math.ceil(taskResult.total / taskResult.limit));
 
   useEffect(() => {
     trackEvent(ANALYTICS_EVENTS.TASK_CENTER_VIEWED, {
@@ -81,6 +92,19 @@ export function TaskCenterPage({
 
   function refreshAfterMutation() {
     router.refresh();
+  }
+
+  function getTaskPageHref(targetPage: number) {
+    const params = new URLSearchParams({
+      page: String(targetPage),
+      tab: activeTab,
+    });
+
+    if (filters.priority) params.set("priority", filters.priority);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.taskType) params.set("taskType", filters.taskType);
+
+    return `/app/tasks?${params.toString()}`;
   }
 
   async function handleCreateTask(payload: CreateTaskPayload) {
@@ -213,16 +237,16 @@ export function TaskCenterPage({
     <div className="mx-auto max-w-7xl">
       <PageHeader
         actions={
-        <button
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft hover:bg-primary-hover"
-          onClick={() => setCreateLeadId("")}
-          type="button"
-        >
-          <CalendarPlus aria-hidden="true" className="h-5 w-5" />
-          Tạo việc cần làm
-        </button>
+          <button
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control bg-primary px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
+            onClick={() => setCreateLeadId("")}
+            type="button"
+          >
+            <CalendarPlus aria-hidden="true" className="h-5 w-5" />
+            Tạo việc cần làm
+          </button>
         }
-        description={`Theo dõi cuộc gọi, tin nhắn, follow-up và lịch chăm sóc khách hàng. Hôm nay có ${counts.today} việc, ${counts.overdue} việc quá hạn.`}
+        description={`Mở mặc định theo việc hôm nay. Hiện có ${counts.today} việc hôm nay và ${counts.overdue} việc quá hạn cần ưu tiên.`}
         eyebrow="Task center"
         fullBleed
         title="Việc cần làm"
@@ -233,6 +257,9 @@ export function TaskCenterPage({
             {counts.overdue} quá hạn
           </Badge>
           <Badge tone="primary">{counts.upcoming} sắp tới</Badge>
+          {activeTab !== "no_schedule" ? (
+            <Badge tone="neutral">{taskResult.total} kết quả trong tab</Badge>
+          ) : null}
         </div>
       </PageHeader>
 
@@ -241,10 +268,13 @@ export function TaskCenterPage({
         message="Mỗi sáng chỉ cần mở Việc cần làm để biết hôm nay cần gọi ai, nhắn ai, theo dõi ai."
         storageKey="salemap:first-run-tip:tasks"
       />
-      <TaskTabs activeTab={activeTab} counts={counts} />
+      <TaskTabs activeTab={activeTab} counts={counts} filters={filters} />
+      {activeTab !== "no_schedule" ? (
+        <TaskFilterBar activeTab={activeTab} values={filters} />
+      ) : null}
 
       {error ? (
-        <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+        <div className="mt-5 rounded-card border border-danger/20 bg-danger-soft p-4 text-sm font-semibold leading-6 text-danger">
           {error}
         </div>
       ) : null}
@@ -255,13 +285,31 @@ export function TaskCenterPage({
           onCreateTask={(lead) => setCreateLeadId(lead.id)}
         />
       ) : (
-        <TaskList
-          activeTab={activeTab}
-          onCancel={handleCancelTask}
-          onComplete={setCompletingTask}
-          onSnooze={setSnoozingTask}
-          tasks={tasks}
-        />
+        <>
+          {taskResult.total > 0 ? (
+            <div className="mt-5 flex flex-col gap-2 text-sm font-semibold text-text-secondary sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Hiển thị {taskResult.items.length} / {taskResult.total} việc
+              </p>
+              <p>
+                Trang {taskResult.page}/{totalPages}
+              </p>
+            </div>
+          ) : null}
+          <TaskList
+            activeTab={activeTab}
+            onCancel={handleCancelTask}
+            onComplete={setCompletingTask}
+            onSnooze={setSnoozingTask}
+            tasks={taskResult.items}
+          />
+          <Pagination
+            className="mt-6"
+            currentPage={taskResult.page}
+            getPageHref={getTaskPageHref}
+            totalPages={totalPages}
+          />
+        </>
       )}
 
       <CreateTaskModal
