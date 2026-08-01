@@ -17,6 +17,40 @@ export const analyticsPeriodSchema = z.object({
   period: z
     .enum(Object.keys(ANALYTICS_PERIODS) as [keyof typeof ANALYTICS_PERIODS, ...Array<keyof typeof ANALYTICS_PERIODS>])
     .default("last_7_days"),
+}).superRefine((value, ctx) => {
+  if (value.period !== "custom") {
+    return;
+  }
+
+  if (!value.customFrom || !value.customTo) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Custom analytics period requires from and to dates.",
+      path: ["customFrom"],
+    });
+    return;
+  }
+
+  if (value.customTo < value.customFrom) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Analytics period end must be after start.",
+      path: ["customTo"],
+    });
+    return;
+  }
+
+  const start = new Date(`${value.customFrom}T00:00:00.000Z`);
+  const end = new Date(`${value.customTo}T00:00:00.000Z`);
+  const dayLength = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+
+  if (dayLength > 93) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Analytics period is too large.",
+      path: ["customTo"],
+    });
+  }
 });
 
 const salesGoalBaseSchema = z.object({

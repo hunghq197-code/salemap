@@ -10,7 +10,8 @@ type RouteContext = {
 };
 
 function csvEscape(value: unknown) {
-  const text = value === null || value === undefined ? "" : String(value);
+  const rawText = value === null || value === undefined ? "" : String(value);
+  const text = /^[=+\-@]/.test(rawText.trimStart()) ? `'${rawText}` : rawText;
   return `"${text.replace(/"/g, '""')}"`;
 }
 

@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ImportJobDetailClient } from "@/components/import/ImportJobDetailClient";
+import { IMPORT_ROW_STATUSES } from "@/lib/constants/import";
 import { getImportJobById } from "@/lib/data/import-jobs";
 import { getImportRows } from "@/lib/data/import-rows";
 
@@ -18,6 +19,11 @@ function getString(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function getSafeRowStatus(value?: string | string[]) {
+  const status = getString(value);
+  return IMPORT_ROW_STATUSES.some((item) => item === status) ? status : undefined;
+}
+
 export default async function ImportJobPage(props: ImportJobPageProps) {
   const searchParams = await props.searchParams;
   const params = await props.params;
@@ -27,7 +33,7 @@ export default async function ImportJobPage(props: ImportJobPageProps) {
     notFound();
   }
 
-  const rowStatus = getString(searchParams?.status);
+  const rowStatus = getSafeRowStatus(searchParams?.status);
   const rows = await getImportRows(job.id, {
     limit: 50,
     status: rowStatus,

@@ -3,6 +3,7 @@ import { IMPORT_FILE_LIMITS } from "@/lib/constants/import";
 import { createImportJob } from "@/lib/data/import-jobs";
 import { createImportRows } from "@/lib/data/import-rows";
 import { getPlanForCurrentUser } from "@/lib/data/subscriptions";
+import { checkDailyQuota, consumeDailyQuota } from "@/lib/data/usage";
 import { suggestFieldMapping } from "@/lib/import/field-mapping";
 import { ImportParseError, parseImportFile } from "@/lib/import/parse-file";
 import { enforceSameOrigin, rateLimit } from "@/lib/security/request";
@@ -33,6 +34,35 @@ function parseErrorMessage(error: unknown) {
   }
 
   return "Không thể đọc file này. Vui lòng kiểm tra định dạng CSV/XLSX và thử lại.";
+}
+
+function isMissingUsageTable(error: unknown) {
+  return error instanceof Error && error.message.includes("daily_usage_limits");
+}
+
+async function checkImportQuota() {
+  try {
+    const quota = await checkDailyQuota("import_rows");
+    return { allowed: quota.allowed, quotaReady: true, usage: quota.usage };
+  } catch (error) {
+    if (isMissingUsageTable(error)) {
+      return { allowed: true, quotaReady: false, usage: null };
+    }
+
+    throw error;
+  }
+}
+
+async function consumeImportQuota() {
+  try {
+    return await consumeDailyQuota("import_rows");
+  } catch (error) {
+    if (isMissingUsageTable(error)) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
@@ -83,6 +113,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const quota = await checkImportQuota();
+
+  if (!quota.allowed) {
+    return errorResponse(
+      "Bạn đã dùng hết lượt import của gói hiện tại. Vui lòng xem gói dịch vụ hoặc thử lại sau.",
+      "QUOTA_EXCEEDED",
+      429,
+    );
+  }
+
   try {
     const parsed = await parseImportFile(file, file.name, {
       maxRows: limits.maxRows,
@@ -113,6 +153,7 @@ export async function POST(request: Request) {
         rowIndex: index + 2,
       })),
     );
+    await consumeImportQuota();
 
     return NextResponse.json({
       data: {
