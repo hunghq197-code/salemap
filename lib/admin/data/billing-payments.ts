@@ -22,6 +22,21 @@ export type AdminBillingPaymentsResult = {
   schemaReady: boolean;
 };
 
+export type AdminPaymentEvent = {
+  created_at?: string | null;
+  event_type: string;
+  id: string;
+  order_code?: number | null;
+  payment_id?: string | null;
+  payment_link_id?: string | null;
+  processed?: boolean | null;
+  processing_error?: string | null;
+  provider?: string | null;
+  safe_event?: Record<string, unknown> | null;
+  transaction_reference?: string | null;
+  user_id?: string | null;
+};
+
 function normalizeSearch(value?: string) {
   return String(value || "").trim().toLowerCase();
 }
@@ -97,7 +112,82 @@ export async function getAdminBillingPayments(
 export async function getAdminBillingPaymentById(paymentId: string) {
   await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
 
-  const payments = await getAdminBillingPayments();
+  if (!paymentId) {
+    return null;
+  }
 
-  return payments.items.find((payment) => payment.id === paymentId) ?? null;
+  const supabase = createSupabaseAdminClient();
+  const [paymentResult, users, profiles] = await Promise.all([
+    supabase.from("payments").select("*").eq("id", paymentId).maybeSingle(),
+    listAuthUsers(),
+    listProfiles(),
+  ]);
+
+  if (paymentResult.error || !paymentResult.data) {
+    return null;
+  }
+
+  const payment = paymentResult.data as BillingPaymentRecord;
+  const emailMap = toUserEmailMap(users);
+  const profileMap = toProfileMap(profiles);
+
+  return {
+    ...payment,
+    userEmail: emailMap.get(payment.user_id) || "",
+    userLabel: getUserLabel(payment.user_id, profileMap, emailMap),
+  } satisfies AdminBillingPayment;
+}
+
+export async function getAdminPaymentEvents(paymentId: string) {
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
+
+  if (!paymentId) {
+    return [] as AdminPaymentEvent[];
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("payment_events")
+    .select(
+      "id,payment_id,user_id,provider,event_type,order_code,payment_link_id,transaction_reference,safe_event,processed,processing_error,created_at",
+    )
+    .eq("payment_id", paymentId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    return [] as AdminPaymentEvent[];
+  }
+
+  return (data ?? []) as AdminPaymentEvent[];
+}
+
+export async function getAdminBillingPaymentsForSubscription(subscriptionId: string) {
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_PAYMENTS);
+
+  if (!subscriptionId) {
+    return [] as AdminBillingPayment[];
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("subscription_id", subscriptionId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    return [] as AdminBillingPayment[];
+  }
+
+  const [users, profiles] = await Promise.all([listAuthUsers(), listProfiles()]);
+  const emailMap = toUserEmailMap(users);
+  const profileMap = toProfileMap(profiles);
+
+  return ((data ?? []) as BillingPaymentRecord[]).map((payment) => ({
+    ...payment,
+    userEmail: emailMap.get(payment.user_id) || "",
+    userLabel: getUserLabel(payment.user_id, profileMap, emailMap),
+  }));
 }

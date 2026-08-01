@@ -1,6 +1,6 @@
 import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
 import { adminJson, handleAdminApi } from "@/lib/admin/api-guard";
-import { changeSubscriptionPlan } from "@/lib/admin/data/subscriptions";
+import { changePlan } from "@/lib/billing/subscriptions";
 import { SafeError } from "@/lib/security/safe-error";
 
 type AdminSubscriptionRouteProps = {
@@ -10,18 +10,22 @@ type AdminSubscriptionRouteProps = {
 };
 
 export async function POST(request: Request, props: AdminSubscriptionRouteProps) {
-  return handleAdminApi(request, ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION, async () => {
+  return handleAdminApi(request, ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION, async (admin) => {
     const { subscriptionId } = await props.params;
     const payload = await request.json().catch(() => ({}));
 
-    if (!payload.planKey || typeof payload.planKey !== "string") {
+    const planId = String(payload.planId || payload.planKey || "");
+
+    if (!planId) {
       throw new SafeError("VALIDATION_ERROR", 400);
     }
 
     return adminJson(
-      await changeSubscriptionPlan(subscriptionId, payload.planKey, {
-        months: Number(payload.months ?? 1),
+      await changePlan({
+        adminUser: admin,
         note: String(payload.note || ""),
+        planId: planId === "free_beta" ? "free" : planId,
+        subscriptionId,
       }),
     );
   });

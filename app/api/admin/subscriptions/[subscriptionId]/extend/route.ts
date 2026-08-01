@@ -1,6 +1,6 @@
 import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
 import { adminJson, handleAdminApi } from "@/lib/admin/api-guard";
-import { extendSubscriptionOneMonth } from "@/lib/admin/data/subscriptions";
+import { extendSubscription } from "@/lib/billing/subscriptions";
 
 type AdminSubscriptionRouteProps = {
   params: Promise<{
@@ -9,12 +9,17 @@ type AdminSubscriptionRouteProps = {
 };
 
 export async function POST(request: Request, props: AdminSubscriptionRouteProps) {
-  return handleAdminApi(request, ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION, async () => {
+  return handleAdminApi(request, ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION, async (admin) => {
     const { subscriptionId } = await props.params;
     const payload = await request.json().catch(() => ({}));
 
     return adminJson(
-      await extendSubscriptionOneMonth(subscriptionId, String(payload.note || "")),
+      await extendSubscription({
+        adminUser: admin,
+        days: Math.max(1, Math.min(365, Number(payload.days ?? 30) || 30)),
+        note: String(payload.note || ""),
+        subscriptionId,
+      }),
     );
   });
 }

@@ -393,7 +393,7 @@ export async function extendSubscription(input: {
 
   if (input.adminUser) {
     await writeAdminAuditLog({
-      action: "subscription_updated",
+      action: "subscription_extended",
       actorRole: input.adminUser.role,
       actorUserId: input.adminUser.userId,
       metadata: {
@@ -472,6 +472,23 @@ export async function changePlan(input: {
     userId: current.user_id,
   });
 
+  if (input.adminUser) {
+    await writeAdminAuditLog({
+      action: "subscription_plan_changed",
+      actorRole: input.adminUser.role,
+      actorUserId: input.adminUser.userId,
+      metadata: {
+        fromPlanId: normalizePlanId(current.plan_id || current.plan_key),
+        source: "billing_core",
+        status: "plan_changed",
+        toPlanId: plan.id,
+      },
+      severity: "warning",
+      targetId: input.subscriptionId,
+      targetType: "subscription",
+    });
+  }
+
   return normalizeSubscription(updated as BillingSubscriptionRecord, current.user_id);
 }
 
@@ -512,6 +529,22 @@ export async function cancelSubscription(input: {
     toStatus: "cancelled",
     userId: subscription.user_id,
   });
+
+  if (input.adminUser) {
+    await writeAdminAuditLog({
+      action: "subscription_cancelled",
+      actorRole: input.adminUser.role,
+      actorUserId: input.adminUser.userId,
+      metadata: {
+        reason: input.reason || null,
+        source: "billing_core",
+        status: "cancelled",
+      },
+      severity: "warning",
+      targetId: input.subscriptionId,
+      targetType: "subscription",
+    });
+  }
 
   return normalizeSubscription(subscription, subscription.user_id);
 }
@@ -579,6 +612,23 @@ export async function grantTrial(input: {
     toStatus: "trialing",
     userId: subscription.user_id,
   });
+
+  if (input.adminUser) {
+    await writeAdminAuditLog({
+      action: "subscription_trial_granted",
+      actorRole: input.adminUser.role,
+      actorUserId: input.adminUser.userId,
+      metadata: {
+        days: input.days ?? 14,
+        planId: plan.id,
+        source: "billing_core",
+        status: "trial_granted",
+      },
+      severity: "warning",
+      targetId: input.subscriptionId,
+      targetType: "subscription",
+    });
+  }
 
   return normalizeSubscription(data as BillingSubscriptionRecord, subscription.user_id);
 }

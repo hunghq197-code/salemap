@@ -794,6 +794,51 @@ git push origin main
 - Do not commit local env files or API keys.
 - The user speaks Vietnamese and prefers direct practical guidance.
 
+## 2026-08-01 Update - Phase 2D Billing UI And Payment QA
+
+This phase implemented the requested Billing UI + Payment Production QA + Subscription & Quota Operations pass.
+
+Implemented changes:
+
+- Redesigned `/app/billing`, checkout panel, success and cancel state pages around server-side payment status.
+- Added billing components for current plan, quota summary, pricing cards, payment method selector, manual/VietQR instructions, payment history, and billing status badges.
+- Added admin detail pages:
+  - `/admin/payments/[paymentId]`
+  - `/admin/subscriptions/[subscriptionId]`
+- Updated `/admin/payments` with filters, detail links, and support read-only behavior for payment mutations.
+- Updated `/admin/subscriptions` with detail links.
+- Updated `/admin/users/[userId]` Billing section with provider payment count, recent payments, subscription detail link, and recent subscription events.
+- Hardened `lib/billing/payments.ts` with payment transition validation, paid idempotency early-return, amount/plan/currency validation, admin note persistence, and clearer audit actions.
+- Updated admin subscription server actions and API routes to use `lib/billing/subscriptions.ts` core functions.
+- Added admin audit logs for subscription extended/changed/cancelled/trial-granted.
+- Added database idempotency indexes in `supabase/billing-provider-architecture.sql` for payment code, payment link id, and paid subscription events per payment id.
+- Extended `scripts/security-scan.mjs` to require billing payment core transition/idempotency guards.
+- Added `UI_PHASE_2D_BILLING_REPORT.md`.
+
+Validation run:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run build
+npm run smoke
+```
+
+Results:
+
+- Typecheck passed.
+- Lint passed with 0 warnings and 0 errors.
+- Security scan passed.
+- Production build passed.
+- Smoke passed 39/39 checks.
+
+Deployment note:
+
+- Run `supabase/billing-provider-architecture.sql` on staging/production so the new unique idempotency indexes exist.
+- Configure billing env vars before real transaction QA: manual bank/VietQR vars, optional payOS vars, `BILLING_ENABLED`, provider allowlist, app URL, and `CRON_SECRET`.
+- Real payOS webhook/payment and real bank reconciliation were not executed in local Codex; they still need staging/live credential QA.
+
 ## 2026-07-22 Update - Performance Optimization MVP
 
 This phase focused on reducing route lag and heavy client work without adding new product features.

@@ -2,24 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  downgradeSubscriptionToFree,
-  extendSubscriptionOneMonth,
-  markSubscriptionCancelled,
-} from "@/lib/admin/data/subscriptions";
 import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
 import { requirePermission } from "@/lib/admin/auth";
-import { grantTrial } from "@/lib/billing/subscriptions";
+import {
+  cancelSubscription,
+  changePlan,
+  extendSubscription,
+  grantTrial,
+} from "@/lib/billing/subscriptions";
 
 export async function extendSubscriptionAction(
   subscriptionId: string,
   formData: FormData,
 ) {
   try {
-    await extendSubscriptionOneMonth(
+    const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
+    await extendSubscription({
+      adminUser: admin,
+      days: 30,
+      note: String(formData.get("note") || ""),
       subscriptionId,
-      String(formData.get("note") || ""),
-    );
+    });
     revalidatePath("/admin/subscriptions");
   } catch {
     redirect("/admin/subscriptions?error=extend_failed");
@@ -33,10 +36,13 @@ export async function downgradeSubscriptionAction(
   formData: FormData,
 ) {
   try {
-    await downgradeSubscriptionToFree(
+    const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
+    await changePlan({
+      adminUser: admin,
+      note: String(formData.get("reason") || ""),
+      planId: "free",
       subscriptionId,
-      String(formData.get("reason") || ""),
-    );
+    });
     revalidatePath("/admin/subscriptions");
   } catch {
     redirect("/admin/subscriptions?error=downgrade_failed");
@@ -50,10 +56,12 @@ export async function markSubscriptionCancelledAction(
   formData: FormData,
 ) {
   try {
-    await markSubscriptionCancelled(
+    const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_SUBSCRIPTION);
+    await cancelSubscription({
+      adminUser: admin,
+      reason: String(formData.get("note") || ""),
       subscriptionId,
-      String(formData.get("note") || ""),
-    );
+    });
     revalidatePath("/admin/subscriptions");
   } catch {
     redirect("/admin/subscriptions?error=cancel_failed");

@@ -36,6 +36,30 @@ export type AdminSubscriptionsResult = {
   schemaReady: boolean;
 };
 
+export type AdminSubscriptionEvent = {
+  amount_vnd?: number | null;
+  created_at?: string | null;
+  created_by?: string | null;
+  event_type: string;
+  from_plan_id?: string | null;
+  from_plan_key?: string | null;
+  from_status?: string | null;
+  id: string;
+  metadata?: Record<string, unknown> | null;
+  months?: number | null;
+  new_period_end?: string | null;
+  new_period_start?: string | null;
+  note?: string | null;
+  payment_id?: string | null;
+  payment_request_id?: string | null;
+  previous_period_end?: string | null;
+  subscription_id?: string | null;
+  to_plan_id?: string | null;
+  to_plan_key?: string | null;
+  to_status?: string | null;
+  user_id: string;
+};
+
 function daysRemaining(value?: string | null) {
   if (!value) {
     return null;
@@ -161,6 +185,62 @@ export async function extendSubscriptionOneMonth(subscriptionId: string, note?: 
   });
 
   return renewed;
+}
+
+export async function getAdminSubscriptionById(subscriptionId: string) {
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_SUBSCRIPTIONS);
+
+  if (!subscriptionId) {
+    return null;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const [subscriptionResult, users, profiles] = await Promise.all([
+    supabase.from("subscriptions").select("*").eq("id", subscriptionId).maybeSingle(),
+    listAuthUsers(),
+    listProfiles(),
+  ]);
+
+  if (subscriptionResult.error || !subscriptionResult.data) {
+    return null;
+  }
+
+  const subscription = subscriptionResult.data as SubscriptionRecord;
+  const plan = getSubscriptionPlan(subscription.plan_key);
+  const emailMap = toUserEmailMap(users);
+  const profileMap = toProfileMap(profiles);
+
+  return {
+    ...subscription,
+    daysRemaining: daysRemaining(subscription.current_period_end),
+    plan_name: plan.name,
+    userEmail: emailMap.get(subscription.user_id) || "",
+    userLabel: getUserLabel(subscription.user_id, profileMap, emailMap),
+  } satisfies AdminSubscriptionRow;
+}
+
+export async function getAdminSubscriptionEvents(subscriptionId: string) {
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_SUBSCRIPTIONS);
+
+  if (!subscriptionId) {
+    return [] as AdminSubscriptionEvent[];
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("subscription_events")
+    .select(
+      "id,subscription_id,user_id,event_type,from_plan_id,to_plan_id,from_status,to_status,payment_id,payment_request_id,from_plan_key,to_plan_key,previous_period_end,new_period_start,new_period_end,amount_vnd,months,note,metadata,created_by,created_at",
+    )
+    .eq("subscription_id", subscriptionId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    return [] as AdminSubscriptionEvent[];
+  }
+
+  return (data ?? []) as AdminSubscriptionEvent[];
 }
 
 export async function downgradeSubscriptionToFree(subscriptionId: string, reason?: string) {

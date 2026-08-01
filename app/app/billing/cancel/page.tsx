@@ -1,5 +1,8 @@
-import { ArrowLeft, XCircle } from "lucide-react";
+import { ArrowLeft, RotateCcw, XCircle } from "lucide-react";
 import Link from "next/link";
+import { PaymentStatusBadge } from "@/components/billing/PaymentStatusBadge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import {
   getPaymentByIdForUser,
   getPaymentByOrderCodeForUser,
@@ -41,45 +44,48 @@ export default async function BillingCancelPage(props: BillingCancelPageProps) {
   return (
     <div className="mx-auto max-w-3xl">
       <Link
-        className="inline-flex items-center gap-2 text-sm font-bold text-ocean hover:text-ink"
+        className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-text-primary"
         href="/app/billing"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Quay lại gói sử dụng
+        Quay lại gói dịch vụ
       </Link>
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-rose-50 text-rose-700">
+      <Card className="mt-6 text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-control bg-danger-soft text-danger">
           <XCircle aria-hidden="true" className="h-7 w-7" />
         </span>
-        <h1 className="mt-5 text-3xl font-bold leading-tight text-ink">
-          Thanh toán đã bị hủy hoặc chưa hoàn tất
+        <div className="mt-4 flex justify-center">
+          <PaymentStatusBadge status={safePayment?.status || "cancelled"} />
+        </div>
+        <h1 className="mt-5 text-3xl font-bold leading-tight text-text-primary">
+          Thanh toán chưa hoàn tất
         </h1>
-        <p className="mt-3 text-base leading-8 text-slate-600">
-          Gói hiện tại của bạn chưa thay đổi. Bạn có thể tạo payment mới hoặc dùng chuyển khoản/VietQR thủ công.
+        <p className="mt-3 text-base leading-8 text-text-secondary">
+          Gói hiện tại của bạn chưa thay đổi. Trang này không tự tạo payment mới và không kích
+          hoạt subscription.
         </p>
+
         {safePayment ? (
-          <p className="mt-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold text-slate-600">
-            Mã đơn hàng: {safePayment.orderCode} · Trạng thái hiện tại: {safePayment.status}
+          <p className="mt-6 rounded-control border border-border-soft bg-surface-muted px-4 py-3 text-sm font-semibold leading-6 text-text-secondary">
+            Order code: <span className="font-mono text-text-primary">{safePayment.orderCode}</span>{" "}
+            · Trạng thái hiện tại: {safePayment.status}
           </p>
         ) : null}
+
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
           {safePayment ? (
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink hover:border-ocean"
+            <Button
               href={`/app/billing/checkout?paymentId=${safePayment.id}`}
+              icon={<RotateCcw className="h-4 w-4" />}
+              variant="outline"
             >
-              Xem payment
-            </Link>
+              Thử lại payment này
+            </Button>
           ) : null}
-          <Link
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-ink px-5 py-3 text-base font-bold text-white hover:bg-ocean"
-            href="/app/billing"
-          >
-            Về gói sử dụng
-          </Link>
+          <Button href="/app/billing">Chọn phương thức khác</Button>
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

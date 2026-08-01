@@ -4,20 +4,27 @@ import {
   markBillingPaymentFailedAction,
   markBillingPaymentPaidAction,
 } from "@/app/admin/payments/actions";
+import { AdminField } from "@/components/admin/AdminField";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
 import { AdminTable } from "@/components/admin/AdminTable";
+import { ADMIN_PERMISSIONS, hasPermission } from "@/lib/admin/admin-permissions";
+import { getAdminContext } from "@/lib/admin/auth";
 import { getAdminBillingPayments } from "@/lib/admin/data/billing-payments";
 import { getAdminPaymentGatewayTransactions } from "@/lib/admin/data/payment-gateway";
 import { getAdminPaymentRequests } from "@/lib/admin/data/payment-requests";
 import type { AdminSearchParams } from "@/lib/admin/data/utils";
+import { getParam } from "@/lib/admin/data/utils";
 
 export const dynamic = "force-dynamic";
 
 type AdminPaymentsPageProps = {
   searchParams?: AdminSearchParams;
 };
+
+const inputClass =
+  "mt-1 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15";
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -40,11 +47,15 @@ function formatCurrency(value?: number | null) {
 
 export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
   const searchParams = await props.searchParams;
-  const [billingPayments, manualPayments, gatewayPayments] = await Promise.all([
+  const [billingPayments, manualPayments, gatewayPayments, admin] = await Promise.all([
     getAdminBillingPayments(searchParams),
     getAdminPaymentRequests(searchParams),
     getAdminPaymentGatewayTransactions(searchParams),
+    getAdminContext(),
   ]);
+  const canUpdatePayments = Boolean(
+    admin && hasPermission(admin.role, ADMIN_PERMISSIONS.UPDATE_PAYMENT_STATUS),
+  );
   const billingPaid = billingPayments.items.filter((item) => item.status === "paid").length;
   const billingPending = billingPayments.items.filter((item) =>
     ["pending", "processing", "waiting_confirmation"].includes(item.status),
@@ -68,6 +79,50 @@ export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
         <AdminKpiCard label="Legacy manual" value={`${pendingManual}/${paidManual}`} />
         <AdminKpiCard label="payOS paid" value={gatewayPaid} />
       </section>
+
+      <form className="mt-8 rounded-lg border border-slate-200 bg-white p-4 shadow-sm" method="get">
+        <div className="grid gap-4 md:grid-cols-6">
+          <AdminField label="Tìm kiếm">
+            <input className={inputClass} defaultValue={getParam(searchParams, "q") || ""} name="q" placeholder="Email, order, plan" />
+          </AdminField>
+          <AdminField label="Provider">
+            <select className={inputClass} defaultValue={getParam(searchParams, "provider") || ""} name="provider">
+              <option value="">Tất cả</option>
+              <option value="manual_bank_transfer">Manual</option>
+              <option value="vietqr_manual">VietQR</option>
+              <option value="payos">payOS</option>
+            </select>
+          </AdminField>
+          <AdminField label="Status">
+            <select className={inputClass} defaultValue={getParam(searchParams, "status") || ""} name="status">
+              <option value="">Tất cả</option>
+              <option value="pending">pending</option>
+              <option value="waiting_confirmation">waiting_confirmation</option>
+              <option value="processing">processing</option>
+              <option value="paid">paid</option>
+              <option value="failed">failed</option>
+              <option value="cancelled">cancelled</option>
+              <option value="expired">expired</option>
+            </select>
+          </AdminField>
+          <AdminField label="Plan">
+            <select className={inputClass} defaultValue={getParam(searchParams, "planId") || ""} name="planId">
+              <option value="">Tất cả</option>
+              <option value="pro">Pro</option>
+              <option value="pro_plus">Pro Plus</option>
+            </select>
+          </AdminField>
+          <AdminField label="Từ ngày">
+            <input className={inputClass} defaultValue={getParam(searchParams, "fromDate") || ""} name="fromDate" type="date" />
+          </AdminField>
+          <button
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 py-2.5 text-sm font-bold text-white md:self-end"
+            type="submit"
+          >
+            Lọc payments
+          </button>
+        </div>
+      </form>
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -93,11 +148,12 @@ export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
             "Status",
             "Confirmed",
             "Paid at",
+            "Detail",
             "Actions",
           ]}
         >
           {billingPayments.items.slice(0, 50).map((item) => {
-            const canMutate = !["paid", "failed", "cancelled", "refunded"].includes(item.status);
+            const canMutate = ["pending", "processing", "waiting_confirmation"].includes(item.status);
             const markPaidAction = markBillingPaymentPaidAction.bind(null, item.id);
             const markFailedAction = markBillingPaymentFailedAction.bind(null, item.id);
             const cancelAction = cancelBillingPaymentAction.bind(null, item.id);
@@ -119,8 +175,13 @@ export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
                 <td className="whitespace-nowrap px-4 py-3"><AdminStatusBadge value={item.status} /></td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(item.user_confirmed_transfer_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(item.paid_at)}</td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <Link className="text-sm font-bold text-ocean hover:text-ink" href={`/admin/payments/${item.id}`}>
+                    Mở detail
+                  </Link>
+                </td>
                 <td className="min-w-[320px] px-4 py-3">
-                  {canMutate ? (
+                  {canMutate && canUpdatePayments ? (
                     <div className="space-y-2">
                       <form action={markPaidAction} className="flex gap-2">
                         <input className="min-h-9 w-36 rounded-lg border border-slate-200 px-2 py-1 text-xs" name="adminNote" placeholder="Ghi chú" />
@@ -142,7 +203,9 @@ export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
                       </div>
                     </div>
                   ) : (
-                    <span className="text-xs font-semibold text-slate-500">Đã xử lý</span>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {canUpdatePayments ? "Đã xử lý" : "Read-only"}
+                    </span>
                   )}
                 </td>
               </tr>

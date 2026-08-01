@@ -132,6 +132,16 @@ export function getPlanPrice(planId: string, billingPeriod: BillingPeriod) {
   return plan.priceMonthly;
 }
 
+export function formatPlanPrice(planId: string, billingPeriod: BillingPeriod = "monthly") {
+  const price = getPlanPrice(planId, billingPeriod);
+
+  if (price <= 0) {
+    return "0đ";
+  }
+
+  return `${new Intl.NumberFormat("vi-VN").format(price)}đ`;
+}
+
 export function isPaidPlan(planId?: string | null) {
   return normalizePlanId(planId) !== "free";
 }

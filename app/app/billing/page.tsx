@@ -1,9 +1,11 @@
-import { CreditCard, ExternalLink, ShieldCheck } from "lucide-react";
-import Link from "next/link";
+import { CreditCard, HelpCircle, Landmark, QrCode, ShieldCheck, WalletCards } from "lucide-react";
 import { BillingPlans } from "@/components/billing/BillingPlans";
+import { BillingUsageSummary } from "@/components/billing/BillingUsageSummary";
 import { CancellationReasonModal } from "@/components/billing/CancellationReasonModal";
-import { RenewSubscriptionButton } from "@/components/billing/RenewSubscriptionButton";
-import { QuotaUsageCard } from "@/components/quota/QuotaUsageCard";
+import { CurrentPlanCard } from "@/components/billing/CurrentPlanCard";
+import { PaymentHistory } from "@/components/billing/PaymentHistory";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { FeatureDisabledNotice } from "@/components/ui/FeatureDisabledNotice";
 import {
   getAllowedBillingProviders,
@@ -11,299 +13,47 @@ import {
   isBillingProviderEnabled,
   toSafeBillingPayment,
 } from "@/lib/billing/payments";
+import { fromSubscriptionPlanKey } from "@/lib/billing/plans";
 import { getManualBankPreview } from "@/lib/billing/providers/manual-bank";
-import type { SafeBillingPayment } from "@/lib/billing/types";
+import type { PaymentProviderId, PlanId } from "@/lib/billing/types";
 import { BILLING_QUOTA_ACTIONS } from "@/lib/constants/quota";
-import {
-  getSubscriptionPlan,
-  isPaidSubscriptionPlanKey,
-} from "@/lib/constants/subscription-plans";
+import { isPaidSubscriptionPlanKey } from "@/lib/constants/subscription-plans";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
-import {
-  getMyPaymentGatewayTransactions,
-  type PaymentGatewayTransactionRecord,
-} from "@/lib/data/payment-gateway-transactions";
-import { getMyPaymentRequests, type PaymentRequestRecord } from "@/lib/data/payment-requests";
 import { getSubscriptionStatusForCurrentUser } from "@/lib/data/subscriptions";
 import { getDailyUsageSnapshot } from "@/lib/data/usage";
 
 export const dynamic = "force-dynamic";
 
-const statusLabels: Record<string, string> = {
-  active: "Đang hoạt động",
-  cancelled: "Đã hủy",
-  expired: "Đã hết hạn",
-  paid: "Đã thanh toán",
-  past_due: "Quá hạn",
-  pending: "Chờ chuyển khoản",
-  processing: "Đang xử lý",
-  rejected: "Bị từ chối",
-  waiting_confirmation: "Chờ xác nhận",
-};
-
-function formatDate(value?: string | null) {
-  return value ? new Date(value).toLocaleDateString("vi-VN") : "Chưa có";
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("vi-VN").format(value) + "đ";
-}
-
-function formatDaysRemaining(daysRemaining: number | null) {
-  if (daysRemaining === null) {
-    return "Chưa có ngày hết hạn";
-  }
-
-  if (daysRemaining <= 0) {
-    return "Đã hết hạn";
-  }
-
-  return `Còn ${daysRemaining} ngày nữa hết hạn`;
-}
-
-function requestTypeLabel(value?: string | null) {
-  const labels: Record<string, string> = {
-    new_subscription: "Nâng cấp mới",
-    plan_change: "Đổi gói",
-    renewal: "Gia hạn",
+function providerLabel(provider: PaymentProviderId) {
+  const labels: Record<PaymentProviderId, string> = {
+    manual_bank_transfer: "Chuyển khoản",
+    payos: "payOS",
+    vietqr_manual: "VietQR thủ công",
   };
 
-  return labels[value || "new_subscription"] || "Nâng cấp mới";
+  return labels[provider];
 }
 
-function PaymentHistory({ items }: { items: PaymentRequestRecord[] }) {
-  return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-ink">Lịch sử yêu cầu nâng cấp</h2>
-          <p className="mt-2 text-base leading-7 text-slate-600">
-            Theo dõi các yêu cầu chuyển khoản thủ công, gia hạn và trạng thái xác nhận.
-          </p>
-        </div>
-      </div>
+function providerDescription(provider: PaymentProviderId) {
+  const labels: Record<PaymentProviderId, string> = {
+    manual_bank_transfer: "Tạo hướng dẫn chuyển khoản. Admin đối soát xong mới kích hoạt.",
+    payos: "Tạo checkout tự động. Webhook hợp lệ mới kích hoạt subscription.",
+    vietqr_manual: "Tạo QR nếu backend cấu hình VietQR, vẫn cần admin đối soát.",
+  };
 
-      {items.length > 0 ? (
-        <div className="mt-5 space-y-3">
-          {items.map((item) => (
-            <article
-              className="rounded-lg border border-slate-200 bg-cloud/40 p-4"
-              key={item.id}
-            >
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-ink">{item.plan_name}</h3>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-ocean">
-                      {statusLabels[item.status] || item.status}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                      {requestTypeLabel(item.request_type)}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {formatDate(item.created_at)} · {formatCurrency(item.amount_vnd)} ·{" "}
-                    {item.months ?? 1} tháng
-                  </p>
-                  <p className="mt-1 font-mono text-sm font-bold text-ink">
-                    {item.transfer_content || "Chưa có nội dung chuyển khoản"}
-                  </p>
-                </div>
-                <Link
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-                  href={`/app/billing/payment/${item.id}`}
-                >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                  Xem chi tiết
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
-          Bạn chưa có yêu cầu nâng cấp hoặc gia hạn nào.
-        </p>
-      )}
-    </section>
-  );
+  return labels[provider];
 }
 
-const gatewayStatusLabels: Record<string, string> = {
-  cancelled: "Đã hủy",
-  expired: "Hết hạn",
-  failed: "Thất bại",
-  paid: "Đã thanh toán",
-  pending: "Chờ thanh toán",
-  unknown: "Chưa rõ",
-};
-
-function BillingPaymentHistory({ items }: { items: SafeBillingPayment[] }) {
-  return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div>
-        <h2 className="text-xl font-bold text-ink">Lịch sử thanh toán</h2>
-        <p className="mt-2 text-base leading-7 text-slate-600">
-          Theo dõi payment order mới theo provider: chuyển khoản, VietQR và payOS.
-        </p>
-      </div>
-
-      {items.length > 0 ? (
-        <div className="mt-5 space-y-3">
-          {items.map((item) => (
-            <article className="rounded-lg border border-slate-200 bg-cloud/40 p-4" key={item.id}>
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-ink">
-                      {item.planId === "pro_plus" ? "Pro Plus" : "Pro"}
-                    </h3>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-ocean">
-                      {statusLabels[item.status] || item.status}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                      {item.provider}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {formatDate(item.createdAt)} · {formatCurrency(item.amount)}
-                  </p>
-                  <p className="mt-1 font-mono text-sm font-bold text-ink">
-                    {item.paymentCode || item.orderCode}
-                  </p>
-                </div>
-                <Link
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-                  href={`/app/billing/checkout?paymentId=${item.id}`}
-                >
-                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                  Xem chi tiết
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
-          Bạn chưa có payment order nào trong hệ billing mới.
-        </p>
-      )}
-    </section>
-  );
+function providerIcon(provider: PaymentProviderId) {
+  if (provider === "payos") return WalletCards;
+  if (provider === "vietqr_manual") return QrCode;
+  return Landmark;
 }
 
-function PaymentMethodsSection() {
-  return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-bold text-ink">Phương thức thanh toán</h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-ocean/20 bg-ocean/5 p-4">
-          <h3 className="font-bold text-ink">payOS / VietQR</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            payOS chỉ tự kích hoạt gói khi webhook hợp lệ. Return page không thay đổi subscription.
-          </p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-cloud/50 p-4">
-          <h3 className="font-bold text-ink">Chuyển khoản thủ công</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Giai đoạn đầu có thể dùng chuyển khoản/VietQR thủ công. Admin đối soát xong mới kích hoạt gói.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PaymentGatewayHistory({
-  items,
-}: {
-  items: PaymentGatewayTransactionRecord[];
-}) {
-  return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div>
-        <h2 className="text-xl font-bold text-ink">Lịch sử thanh toán payOS</h2>
-        <p className="mt-2 text-base leading-7 text-slate-600">
-          Theo dõi các giao dịch checkout tự động, mã đơn hàng và trạng thái webhook.
-        </p>
-      </div>
-
-      {items.length > 0 ? (
-        <div className="mt-5 space-y-3">
-          {items.map((item) => (
-            <article
-              className="rounded-lg border border-slate-200 bg-cloud/40 p-4"
-              key={item.id}
-            >
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-ink">{item.plan_name}</h3>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-ocean">
-                      {gatewayStatusLabels[item.status] || item.status}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-600">
-                      payOS
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {formatDate(item.created_at)} · {formatCurrency(item.amount_vnd)} ·{" "}
-                    {item.months ?? 1} tháng
-                  </p>
-                  <p className="mt-1 font-mono text-sm font-bold text-ink">
-                    Mã đơn hàng: {item.order_code}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  {item.checkout_url && item.status === "pending" ? (
-                    <a
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-                      href={item.checkout_url}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                      Mở checkout
-                    </a>
-                  ) : null}
-                  <Link
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
-                    href={`/app/billing/payment/return?orderCode=${item.order_code}`}
-                  >
-                    Kiểm tra
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-5 rounded-lg bg-cloud px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
-          Bạn chưa có giao dịch payOS nào.
-        </p>
-      )}
-    </section>
-  );
-}
-
-export default async function BillingPage() {
-  const [
-    subscriptionResult,
-    paymentRequests,
-    paymentGatewayTransactions,
-    upgradeEnabled,
-  ] = await Promise.all([
-    getSubscriptionStatusForCurrentUser(),
-    getMyPaymentRequests(),
-    getMyPaymentGatewayTransactions(),
-    isFeatureEnabled("upgrade_interest"),
-  ]);
-  const billingPayments = await getPaymentsForUser(
-    subscriptionResult.subscription.user_id,
-    20,
-  );
+function getProviderOptions() {
   const manualBank = getManualBankPreview();
-  const providerOptions = getAllowedBillingProviders().map((provider) => ({
+
+  return getAllowedBillingProviders().map((provider) => ({
     configured:
       provider === "payos"
         ? process.env.PAYOS_ENABLED === "true" &&
@@ -316,133 +66,181 @@ export default async function BillingPage() {
     enabled: isBillingProviderEnabled(provider),
     id: provider,
   }));
-  const quota = await getDailyUsageSnapshot(BILLING_QUOTA_ACTIONS);
-  const subscription = subscriptionResult.subscription;
-  const isFree = subscription.plan_key === "free_beta";
-  const isPaidPlan = isPaidSubscriptionPlanKey(subscription.plan_key);
-  const isExpired = subscription.status === "expired" || subscriptionResult.expired;
-  const planPrice = getSubscriptionPlan(subscription.plan_key).priceVnd;
+}
 
+function subscriptionStatusForDisplay(input: {
+  expired?: boolean;
+  planId: PlanId | string;
+  status?: string | null;
+}) {
+  if (input.expired) return "expired";
+  if (input.planId === "free") return "free";
+  return input.status || "free";
+}
+
+function PaymentMethodsSection({
+  providers,
+}: {
+  providers: ReturnType<typeof getProviderOptions>;
+}) {
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="flex items-start gap-4">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-ocean">
-          <CreditCard aria-hidden="true" className="h-6 w-6" />
+    <Card>
+      <div className="flex gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-success-soft text-emerald-700">
+          <ShieldCheck aria-hidden="true" className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ocean">
-            Billing
-          </p>
-          <h1 className="mt-2 text-3xl font-bold leading-tight text-ink sm:text-4xl">
-            Gói sử dụng
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
-            Nâng cấp hoặc gia hạn Pro/Pro Plus bằng chuyển khoản, VietQR thủ công hoặc payOS. SaleMap chỉ kích hoạt gói sau khi server xác nhận thanh toán hợp lệ.
+          <h2 className="text-xl font-bold text-text-primary">Phương thức thanh toán</h2>
+          <p className="mt-2 text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
+            SaleMap chỉ kích hoạt gói sau khi server xác nhận payment hợp lệ.
           </p>
         </div>
       </div>
 
-      {!subscriptionResult.schemaReady ? (
-        <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
-          Chưa thấy bảng subscriptions/payment_requests. Hãy chạy file SQL manual-payment-subscription và revenue-renewal-churn trong Supabase trước.
-        </div>
-      ) : null}
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        {providers.map((provider) => {
+          const Icon = providerIcon(provider.id);
 
-      <section className="mt-8 rounded-lg border border-ocean/20 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-ocean/10 text-ocean">
-              <ShieldCheck aria-hidden="true" className="h-6 w-6" />
-            </span>
-            <div>
-              <h2 className="text-xl font-bold text-ink">
-                Gói hiện tại: {subscription.plan_name}
-              </h2>
-              <p className="mt-2 text-base leading-7 text-slate-600">
-                {isExpired
-                  ? "Gói đã hết hạn. Bạn đang sử dụng quota Free."
-                  : isFree
-                    ? "Bạn đang sử dụng gói Free."
-                    : `Bạn đang sử dụng gói ${subscription.plan_name}.`}
-              </p>
-              <div className="mt-4 grid gap-3 text-sm font-semibold text-slate-600 sm:grid-cols-2">
-                <p>Bắt đầu kỳ: {formatDate(subscription.current_period_start)}</p>
-                <p>Kích hoạt: {formatDate(subscription.activated_at)}</p>
-                <p>Hết hạn: {formatDate(subscription.current_period_end)}</p>
-                <p>{formatDaysRemaining(subscriptionResult.daysRemaining)}</p>
-              </div>
-
-              {subscriptionResult.expiringSoon ? (
-                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
-                  Gói của bạn sắp hết hạn. Hãy gia hạn để tiếp tục sử dụng quota Pro.
+          return (
+            <article
+              className="rounded-control border border-border-soft bg-surface-muted px-4 py-3"
+              key={provider.id}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" />
+                    <h3 className="font-bold text-text-primary">
+                      {providerLabel(provider.id)}
+                    </h3>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">
+                    {providerDescription(provider.id)}
+                  </p>
                 </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="flex flex-col gap-3 md:items-end">
-            <div className="rounded-lg bg-mint/15 px-4 py-3 text-sm font-bold text-ocean">
-              Trạng thái: {statusLabels[isExpired ? "expired" : subscription.status] || subscription.status}
-            </div>
-            {isPaidPlan ? (
-              <RenewSubscriptionButton
-                amountVnd={planPrice}
-                disabled={!subscriptionResult.schemaReady}
-                planKey={subscription.plan_key as "pro" | "pro_plus"}
-              />
-            ) : null}
+                <Badge tone={provider.enabled && provider.configured ? "success" : "warning"}>
+                  {provider.enabled && provider.configured ? "Sẵn sàng" : "Chưa bật"}
+                </Badge>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function BillingFaq() {
+  return (
+    <Card>
+      <div className="flex gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-warning-soft text-amber-700">
+          <HelpCircle aria-hidden="true" className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-xl font-bold text-text-primary">Câu hỏi thường gặp</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {[
+              [
+                "Return page có tự kích hoạt gói không?",
+                "Không. Trang success/cancel chỉ đọc trạng thái payment từ server.",
+              ],
+              [
+                "Chuyển khoản xong có dùng Pro ngay không?",
+                "Chưa. Payment sẽ ở trạng thái chờ xác nhận cho đến khi admin đối soát.",
+              ],
+              [
+                "payOS xử lý thế nào?",
+                "Webhook hợp lệ, đúng số tiền và đúng order mới được server xử lý subscription.",
+              ],
+            ].map(([question, answer]) => (
+              <article className="rounded-control border border-border-soft bg-surface-muted px-4 py-3" key={question}>
+                <h3 className="font-bold text-text-primary">{question}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{answer}</p>
+              </article>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
+    </Card>
+  );
+}
 
-      {isPaidPlan ? (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-ink">
-                Không muốn tiếp tục sử dụng?
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Bạn có thể gửi yêu cầu hủy hoặc cho chúng tôi biết lý do bạn chưa muốn gia hạn.
-              </p>
-            </div>
+export default async function BillingPage() {
+  const [subscriptionResult, upgradeEnabled] = await Promise.all([
+    getSubscriptionStatusForCurrentUser(),
+    isFeatureEnabled("upgrade_interest"),
+  ]);
+  const subscription = subscriptionResult.subscription;
+  const planId = fromSubscriptionPlanKey(subscription.plan_key);
+  const [quota, billingPayments] = await Promise.all([
+    getDailyUsageSnapshot(BILLING_QUOTA_ACTIONS),
+    getPaymentsForUser(subscription.user_id, 20),
+  ]);
+  const providerOptions = getProviderOptions();
+  const status = subscriptionStatusForDisplay({
+    expired: subscriptionResult.expired,
+    planId,
+    status: subscription.status,
+  });
+  const showCancellation = isPaidSubscriptionPlanKey(subscription.plan_key);
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-control bg-primary-soft text-primary">
+            <CreditCard aria-hidden="true" className="h-6 w-6" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              Billing
+            </p>
+            <h1 className="mt-2 text-3xl font-bold leading-tight text-text-primary sm:text-4xl">
+              Gói dịch vụ
+            </h1>
+            <p className="mt-3 max-w-3xl text-base leading-8 text-text-secondary">
+              Quản lý gói đang sử dụng, hạn mức và lịch sử thanh toán của bạn.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <CurrentPlanCard
+        actions={
+          showCancellation ? (
             <CancellationReasonModal
               daysRemaining={subscriptionResult.daysRemaining}
               planKey={subscription.plan_key}
             />
-          </div>
-        </section>
-      ) : null}
-
-      <div className="mt-6">
-        <QuotaUsageCard
-          items={quota.items}
-          planName={subscriptionResult.plan.name}
-          schemaReady={quota.schemaReady}
-          sourcePage="billing"
-          title="Quota hôm nay"
-        />
-      </div>
-
-      <PaymentMethodsSection />
-
-      <BillingPaymentHistory items={billingPayments.map(toSafeBillingPayment)} />
-
-      <PaymentGatewayHistory items={paymentGatewayTransactions} />
-
-      <PaymentHistory
-        items={paymentRequests.filter((item) => (item.provider || "manual") === "manual")}
+          ) : null
+        }
+        currentPeriodEnd={subscription.current_period_end}
+        currentPeriodStart={subscription.current_period_start}
+        daysRemaining={subscriptionResult.daysRemaining}
+        planId={planId}
+        planName={subscription.plan_name}
+        schemaReady={subscriptionResult.schemaReady}
+        status={status}
       />
 
-      <section className="mt-8">
-        {upgradeEnabled ? (
-          <BillingPlans
-            currentPlanKey={subscription.plan_key}
-            providers={providerOptions}
-          />
-        ) : (
-          <FeatureDisabledNotice flagKey="upgrade_interest" />
-        )}
-      </section>
+      <BillingUsageSummary
+        items={quota.items}
+        planName={subscriptionResult.plan.name}
+        schemaReady={quota.schemaReady}
+      />
+
+      <PaymentMethodsSection providers={providerOptions} />
+
+      <PaymentHistory items={billingPayments.map(toSafeBillingPayment)} />
+
+      {upgradeEnabled ? (
+        <BillingPlans currentPlanKey={subscription.plan_key} providers={providerOptions} />
+      ) : (
+        <FeatureDisabledNotice flagKey="upgrade_interest" />
+      )}
+
+      <BillingFaq />
     </div>
   );
 }

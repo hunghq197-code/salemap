@@ -37,6 +37,7 @@ export type SubscriptionStatus =
 export type SubscriptionRecord = {
   activated_at?: string | null;
   auto_renew?: boolean | null;
+  billing_period?: string | null;
   cancel_reason?: string | null;
   cancelled_at?: string | null;
   cancelled_by_user_at?: string | null;
@@ -44,14 +45,18 @@ export type SubscriptionRecord = {
   current_period_end?: string | null;
   current_period_start?: string | null;
   expired_processed_at?: string | null;
+  grace_ends_at?: string | null;
   grace_period_end?: string | null;
   id?: string;
   latest_payment_request_id?: string | null;
   payment_method?: string | null;
+  plan_id?: string | null;
   plan_key: SubscriptionPlanKey;
   plan_name: string;
+  provider?: string | null;
   renewal_reminder_sent_at?: string | null;
   status: SubscriptionStatus;
+  trial_ends_at?: string | null;
   updated_at?: string | null;
   user_id: string;
 };

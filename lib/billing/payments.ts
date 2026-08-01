@@ -37,13 +37,47 @@ const MANUAL_PROVIDERS = new Set<PaymentProviderId>([
 
 const FINAL_PAYMENT_STATUSES = new Set<PaymentStatus>([
   "cancelled",
+  "expired",
   "failed",
   "paid",
   "refunded",
 ]);
 
+const PAYMENT_TRANSITIONS: Record<PaymentStatus, ReadonlySet<PaymentStatus>> = {
+  cancelled: new Set<PaymentStatus>(["cancelled"]),
+  expired: new Set<PaymentStatus>(["expired"]),
+  failed: new Set<PaymentStatus>(["failed"]),
+  paid: new Set<PaymentStatus>(["paid", "refunded"]),
+  pending: new Set<PaymentStatus>([
+    "cancelled",
+    "expired",
+    "failed",
+    "paid",
+    "processing",
+    "waiting_confirmation",
+  ]),
+  processing: new Set<PaymentStatus>(["cancelled", "failed", "paid", "processing"]),
+  refunded: new Set<PaymentStatus>(["refunded"]),
+  waiting_confirmation: new Set<PaymentStatus>([
+    "cancelled",
+    "failed",
+    "paid",
+    "waiting_confirmation",
+  ]),
+};
+
+const MUTABLE_PAYMENT_STATUSES: PaymentStatus[] = [
+  "pending",
+  "processing",
+  "waiting_confirmation",
+];
+
 function isBillingEnabled() {
   return process.env.BILLING_ENABLED === "true";
+}
+
+export function isValidPaymentTransition(from: PaymentStatus, to: PaymentStatus) {
+  return PAYMENT_TRANSITIONS[from]?.has(to) ?? false;
 }
 
 function uniqueValues<T extends string>(values: T[]) {
@@ -447,7 +481,7 @@ export async function markPaymentWaitingConfirmation(paymentId: string, userId: 
     throw new BillingError("INVALID_PAYMENT_METHOD", 400);
   }
 
-  if (payment.status !== "pending") {
+  if (!isValidPaymentTransition(payment.status, "waiting_confirmation")) {
     throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
   }
 
@@ -530,29 +564,88 @@ export async function processPaymentPaid(input: {
     throw new BillingError("NOT_FOUND", 404);
   }
 
-  if (payment.status !== "paid" && FINAL_PAYMENT_STATUSES.has(payment.status)) {
+  if (payment.status === "paid" && (await isPaymentAlreadyProcessed(payment.id))) {
+    return {
+      payment,
+      subscription: await activateSubscriptionFromPayment(input.paymentId, {
+        adminUser: input.adminUser ?? null,
+        source: input.source,
+      }),
+    };
+  }
+
+  if (!isValidPaymentTransition(payment.status, "paid")) {
     throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
+  }
+
+  const planId = normalizePlanId(payment.plan_id);
+  const expectedAmount = getPlanPrice(planId, "monthly");
+
+  if (
+    !isPaidPlan(planId) ||
+    Number(payment.amount) !== Number(expectedAmount) ||
+    String(payment.currency || "VND").toUpperCase() !== "VND"
+  ) {
+    await createPaymentEvent({
+      eventType: "payment_amount_mismatch",
+      orderCode: payment.order_code,
+      paymentId: payment.id,
+      provider: payment.provider,
+      safeEvent: {
+        currency: payment.currency || null,
+        expectedAmount,
+        planId,
+        provider: payment.provider,
+        storedAmount: payment.amount,
+      },
+      userId: payment.user_id,
+    });
+    await writeSecurityEvent({
+      eventType: "payment_amount_mismatch",
+      message: "Stored payment amount, plan, or currency does not match billing plan source.",
+      metadata: {
+        orderCode: payment.order_code,
+        planId,
+        provider: payment.provider,
+        source: input.source,
+      },
+      severity: "critical",
+      userId: payment.user_id,
+    });
+    throw new BillingError("PAYMENT_AMOUNT_MISMATCH", 409);
   }
 
   const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
+  const updatePayload: Record<string, unknown> = {
+    paid_at: payment.paid_at || now,
+    provider_payload: {
+      ...safeProviderPayload(payment.provider_payload),
+      ...safeProviderPayload(input.providerData ?? {}),
+    },
+    status: "paid",
+    updated_at: now,
+  };
+
+  if (input.source === "admin_manual") {
+    const adminNote = String(input.providerData?.adminNote || payment.admin_note || "").trim();
+    updatePayload.admin_note = adminNote || null;
+  }
+
   const { data: updated, error } = await supabase
     .from("payments")
-    .update({
-      paid_at: payment.paid_at || now,
-      provider_payload: {
-        ...safeProviderPayload(payment.provider_payload),
-        ...safeProviderPayload(input.providerData ?? {}),
-      },
-      status: "paid",
-      updated_at: now,
-    })
+    .update(updatePayload)
     .eq("id", input.paymentId)
+    .in("status", payment.status === "paid" ? ["paid"] : MUTABLE_PAYMENT_STATUSES)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (!updated) {
+    throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
   }
 
   await createPaymentEvent({
@@ -579,7 +672,7 @@ export async function processPaymentPaid(input: {
 
   if (input.source === "admin_manual" && input.adminUser) {
     await writeAdminAuditLog({
-      action: "payment_status_updated",
+      action: "manual_payment_approved",
       actorRole: input.adminUser.role,
       actorUserId: input.adminUser.userId,
       metadata: {
@@ -619,7 +712,7 @@ export async function markPaymentFailed(input: {
       updated_at: now,
     })
     .eq("id", input.paymentId)
-    .neq("status", "paid")
+    .in("status", MUTABLE_PAYMENT_STATUSES)
     .select("*")
     .maybeSingle();
 
@@ -644,7 +737,7 @@ export async function markPaymentFailed(input: {
 
   if (input.adminUser) {
     await writeAdminAuditLog({
-      action: "payment_status_updated",
+      action: "payment_marked_failed",
       actorRole: input.adminUser.role,
       actorUserId: input.adminUser.userId,
       metadata: {
@@ -678,6 +771,10 @@ export async function cancelPayment(input: {
     throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
   }
 
+  if (!isValidPaymentTransition(payment.status, "cancelled")) {
+    throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
+  }
+
   const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
   const { data, error } = await supabase
@@ -689,11 +786,16 @@ export async function cancelPayment(input: {
       updated_at: now,
     })
     .eq("id", payment.id)
+    .in("status", MUTABLE_PAYMENT_STATUSES)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (!data) {
+    throw new BillingError("PAYMENT_ALREADY_FINAL", 409);
   }
 
   await createPaymentEvent({
@@ -710,6 +812,22 @@ export async function cancelPayment(input: {
     userId: payment.user_id,
   });
 
+  if (input.adminUser) {
+    await writeAdminAuditLog({
+      action: "payment_cancelled",
+      actorRole: input.adminUser.role,
+      actorUserId: input.adminUser.userId,
+      metadata: {
+        provider: payment.provider,
+        reason: input.reason || "cancelled",
+        status: "cancelled",
+      },
+      severity: "warning",
+      targetId: payment.id,
+      targetType: "payment",
+    });
+  }
+
   return data as BillingPaymentRecord;
 }
 
@@ -718,6 +836,10 @@ async function updatePaymentFromProviderStatus(
   status: Extract<PaymentStatus, "cancelled" | "expired" | "failed">,
   providerData?: Record<string, unknown>,
 ) {
+  if (!isValidPaymentTransition(payment.status, status)) {
+    return payment;
+  }
+
   const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
   const timestampFields =
@@ -738,7 +860,7 @@ async function updatePaymentFromProviderStatus(
       updated_at: now,
     })
     .eq("id", payment.id)
-    .neq("status", "paid")
+    .in("status", MUTABLE_PAYMENT_STATUSES)
     .select("*")
     .maybeSingle();
 

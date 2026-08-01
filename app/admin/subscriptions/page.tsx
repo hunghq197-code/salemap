@@ -129,6 +129,7 @@ export default async function AdminSubscriptionsPage(props: AdminSubscriptionsPa
             "Activated at",
             "Cancelled requested",
             "Latest payment request",
+            "Detail",
             "Actions",
           ]}
         >
@@ -152,6 +153,14 @@ export default async function AdminSubscriptionsPage(props: AdminSubscriptionsPa
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(subscription.activated_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(subscription.cancelled_by_user_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600">{subscription.latest_payment_request_id || "Chưa có"}</td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <Link
+                    className="text-sm font-bold text-ocean hover:text-ink"
+                    href={`/admin/subscriptions/${subscription.id}`}
+                  >
+                    Mở detail
+                  </Link>
+                </td>
                 <td className="min-w-[360px] px-4 py-3">
                   <div className="space-y-2">
                     <form action={extendAction} className="flex gap-2">

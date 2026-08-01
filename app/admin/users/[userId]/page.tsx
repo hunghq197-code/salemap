@@ -42,6 +42,14 @@ function valueText(value: unknown) {
   return String(value);
 }
 
+function formatCurrency(value?: number | null) {
+  return new Intl.NumberFormat("vi-VN", {
+    currency: "VND",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(Number(value ?? 0));
+}
+
 function yesNo(value: boolean) {
   return value ? "Có" : "Không";
 }
@@ -118,6 +126,7 @@ export default async function AdminUserDetailPage(props: AdminUserDetailPageProp
         <AdminKpiCard label="Map search" value={user.mapSearchCount} />
         <AdminKpiCard label="AI request" value={user.aiRequestCount} />
         <AdminKpiCard label="Import job" value={user.importJobCount} />
+        <AdminKpiCard label="Billing payment" value={user.billingPaymentCount} />
         <AdminKpiCard label="Payment request" value={user.paymentRequestCount} />
         <AdminKpiCard label="Gateway payment" value={user.gatewayPaymentCount} />
         <AdminKpiCard label="Security event" value={user.securityEventCount} />
@@ -137,13 +146,75 @@ export default async function AdminUserDetailPage(props: AdminUserDetailPageProp
           ) : (
             <p className="mt-4 text-sm font-semibold text-slate-500">Chưa có subscription.</p>
           )}
-          <Link
-            className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-ink hover:border-ocean"
-            href={`/admin/subscriptions?selectedUser=${user.userId}`}
-          >
-            Xem subscription events
-            <ExternalLink aria-hidden="true" className="h-4 w-4" />
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-ink hover:border-ocean"
+              href={`/admin/subscriptions?selectedUser=${user.userId}`}
+            >
+              Xem events
+              <ExternalLink aria-hidden="true" className="h-4 w-4" />
+            </Link>
+            {user.subscription?.id ? (
+              <Link
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-ink hover:border-ocean"
+                href={`/admin/subscriptions/${user.subscription.id}`}
+              >
+                Mở subscription
+                <ExternalLink aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
+                Recent payments
+              </h3>
+              {user.recentBillingPayments.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {user.recentBillingPayments.map((payment) => (
+                    <Link
+                      className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-ocean"
+                      href={`/admin/payments/${payment.id}`}
+                      key={payment.id}
+                    >
+                      <span className="font-bold text-ink">{payment.orderCode || payment.id}</span>
+                      <span className="mt-1 block text-slate-600">
+                        {payment.provider || "provider"} · {payment.status || "status"} ·{" "}
+                        {formatCurrency(payment.amount)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                  Chưa có payment provider mới.
+                </p>
+              )}
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-slate-500">
+                Recent subscription events
+              </h3>
+              {user.recentSubscriptionEvents.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {user.recentSubscriptionEvents.map((event) => (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm" key={event.id}>
+                      <p className="font-bold text-ink">{event.eventType}</p>
+                      <p className="mt-1 text-slate-600">
+                        {event.toPlanKey || "-"} · {event.toStatus || "-"} ·{" "}
+                        {formatDate(event.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                  Chưa có subscription event mới.
+                </p>
+              )}
+            </div>
+          </div>
         </article>
 
         <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

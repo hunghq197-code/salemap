@@ -132,6 +132,18 @@ function scanFile(filePath) {
   }
 
   if (
+    relPath === "lib/billing/payments.ts" &&
+    (!content.includes("isValidPaymentTransition") ||
+      !content.includes("isPaymentAlreadyProcessed"))
+  ) {
+    addFinding(
+      filePath,
+      "billing-core-missing-idempotency-guard",
+      "Billing payment core must validate state transitions and idempotent processing.",
+    );
+  }
+
+  if (
     isApiRoute &&
     hasMutationHandler &&
     !isExternallyAuthenticatedRoute &&

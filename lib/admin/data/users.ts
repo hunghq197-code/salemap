@@ -124,6 +124,7 @@ export type AdminActivationDetail = {
 export type AdminUserDetail = AdminUserRow & {
   activation: AdminActivationDetail;
   aiRequestCount: number;
+  billingPaymentCount: number;
   cadenceCount: number;
   featureOverride: UserFeatureOverride | null;
   gatewayPaymentCount: number;
@@ -131,6 +132,23 @@ export type AdminUserDetail = AdminUserRow & {
   lastActivityAt?: string | null;
   paymentRequestCount: number;
   quotaOverride: UserQuotaOverride | null;
+  recentBillingPayments: Array<{
+    amount: number;
+    createdAt?: string | null;
+    id: string;
+    orderCode?: number | null;
+    planId?: string | null;
+    provider?: string | null;
+    status?: string | null;
+  }>;
+  recentSubscriptionEvents: Array<{
+    createdAt?: string | null;
+    eventType: string;
+    id: string;
+    paymentId?: string | null;
+    toPlanKey?: string | null;
+    toStatus?: string | null;
+  }>;
   securityEventCount: number;
   subscription: (SubscriptionRecord & { planDisplayName: string }) | null;
   supportAccessCount: number;
@@ -468,7 +486,9 @@ export async function getAdminUserDetail(
     importJobs,
     aiRequests,
     paymentRequests,
+    billingPayments,
     gatewayPayments,
+    subscriptionEvents,
     securityEvents,
     supportLogs,
     subscription,
@@ -493,7 +513,15 @@ export async function getAdminUserDetail(
     listUserIdRows("import_jobs", "user_id,created_at"),
     listUserIdRows("ai_requests", "user_id,created_at"),
     listUserIdRows("payment_requests", "user_id,created_at"),
+    listUserIdRows(
+      "payments",
+      "id,user_id,created_at,status,amount,plan_id,provider,order_code",
+    ),
     listUserIdRows("payment_gateway_transactions", "user_id,created_at"),
+    listUserIdRows(
+      "subscription_events",
+      "id,user_id,created_at,event_type,to_plan_key,to_status,payment_id",
+    ),
     listUserIdRows("security_events", "user_id,created_at"),
     listUserIdRows("support_access_logs", "target_user_id,created_at"),
     getLatestSubscription(userId),
@@ -537,6 +565,8 @@ export async function getAdminUserDetail(
     ...ownRows(importJobs),
     ...ownRows(aiRequests),
     ...ownRows(paymentRequests),
+    ...ownRows(billingPayments),
+    ...ownRows(subscriptionEvents),
   ].map((row) => String(row.created_at || ""));
 
   await writeSupportAccessLog({
@@ -567,6 +597,7 @@ export async function getAdminUserDetail(
             : "not_onboarded",
     adminRole: adminRole?.role || "",
     aiRequestCount: ownRows(aiRequests).length,
+    billingPaymentCount: ownRows(billingPayments).length,
     area: [profile?.primary_city, profile?.primary_district].filter(Boolean).join(" - "),
     cadenceCount: ownRows(cadences).length,
     createdAt: authUser.created_at,
@@ -588,6 +619,29 @@ export async function getAdminUserDetail(
     onboardingCompleted,
     paymentRequestCount: ownRows(paymentRequests).length,
     quotaOverride,
+    recentBillingPayments: ownRows(billingPayments)
+      .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
+      .slice(0, 5)
+      .map((row) => ({
+        amount: Number(row.amount ?? 0),
+        createdAt: String(row.created_at || "") || null,
+        id: String(row.id || ""),
+        orderCode: row.order_code ? Number(row.order_code) : null,
+        planId: String(row.plan_id || "") || null,
+        provider: String(row.provider || "") || null,
+        status: String(row.status || "") || null,
+      })),
+    recentSubscriptionEvents: ownRows(subscriptionEvents)
+      .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
+      .slice(0, 5)
+      .map((row) => ({
+        createdAt: String(row.created_at || "") || null,
+        eventType: String(row.event_type || ""),
+        id: String(row.id || ""),
+        paymentId: String(row.payment_id || "") || null,
+        toPlanKey: String(row.to_plan_key || "") || null,
+        toStatus: String(row.to_status || "") || null,
+      })),
     reminderCount: ownRows(reminders).length,
     roleType: profile?.role_type || "",
     routeSearchCount: Math.max(ownRows(routes).length, sumUsage(["route_search"])),

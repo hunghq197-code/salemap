@@ -8,6 +8,7 @@ export type BillingErrorCode =
   | "INVALID_PLAN"
   | "NOT_FOUND"
   | "PAYMENT_ALREADY_FINAL"
+  | "PAYMENT_AMOUNT_MISMATCH"
   | "PAYMENT_CREATE_FAILED"
   | "UNAUTHENTICATED"
   | "VALIDATION_ERROR";
@@ -20,6 +21,7 @@ const MESSAGES: Record<BillingErrorCode, string> = {
   INVALID_PLAN: "Vui lòng chọn gói thanh toán hợp lệ.",
   NOT_FOUND: "Không tìm thấy thanh toán.",
   PAYMENT_ALREADY_FINAL: "Payment này đã được xử lý trước đó.",
+  PAYMENT_AMOUNT_MISMATCH: "Payment không khớp số tiền, gói hoặc loại tiền trên server.",
   PAYMENT_CREATE_FAILED: "Không thể tạo yêu cầu thanh toán. Vui lòng thử lại.",
   UNAUTHENTICATED: "Bạn cần đăng nhập.",
   VALIDATION_ERROR: "Dữ liệu thanh toán chưa hợp lệ.",

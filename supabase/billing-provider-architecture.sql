@@ -165,6 +165,14 @@ on public.payments(payment_code);
 create index if not exists idx_payments_payment_link_id
 on public.payments(payment_link_id);
 
+create unique index if not exists idx_payments_payment_code_unique
+on public.payments(payment_code)
+where payment_code is not null;
+
+create unique index if not exists idx_payments_payment_link_id_unique
+on public.payments(payment_link_id)
+where payment_link_id is not null;
+
 create index if not exists idx_payments_created_at
 on public.payments(created_at desc);
 
@@ -261,6 +269,16 @@ on public.subscription_events(subscription_id);
 
 create index if not exists idx_subscription_events_payment_id
 on public.subscription_events(payment_id);
+
+create unique index if not exists idx_subscription_events_paid_payment_unique
+on public.subscription_events(payment_id)
+where payment_id is not null
+  and event_type in (
+    'subscription_activated',
+    'subscription_extended',
+    'subscription_plan_changed',
+    'subscription_renewed'
+  );
 
 create index if not exists idx_subscription_events_type
 on public.subscription_events(event_type);
