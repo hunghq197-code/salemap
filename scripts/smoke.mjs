@@ -414,6 +414,16 @@ const tests = [
       }),
   ],
   [
+    "admin customer API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        body: { lifecycle: "activated" },
+        method: "PATCH",
+        pathname:
+          "/api/admin/customers/00000000-0000-0000-0000-000000000000",
+      }),
+  ],
+  [
     "billing create-payment API blocks cross-origin",
     () =>
       expectCrossOriginBlocked({

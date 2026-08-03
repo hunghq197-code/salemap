@@ -1156,3 +1156,50 @@ npm run build
 Next suggested implementation step:
 
 - Subphase B: add `supabase/admin-customer-crm.sql`, extend admin permissions safely, implement `/admin/customers`, `/admin/customers/[userId]`, customer lifecycle/tags/notes, and CRM dashboard aggregates without exposing private lead data.
+
+## 2026-08-03 Update - Phase 2E2 Subphase B Admin CRM
+
+Implemented the Admin CRM foundation after the Subphase A audit.
+
+Created:
+
+- `supabase/admin-customer-crm.sql`
+- `lib/validators/customer-admin.ts`
+- `lib/admin/data/customers.ts`
+- `/admin/customers`
+- `/admin/customers/[userId]`
+- `/api/admin/customers`
+- `/api/admin/customers/[userId]`
+- `ADMIN_CRM_SUBPHASE_B_REPORT.md`
+
+Updated:
+
+- Admin permissions with customer view/detail, lifecycle, notes, and tags permissions.
+- Admin sidebar with a real `/admin/customers` route.
+- `/admin` dashboard with paid-customer, paid-revenue, and pending-payment KPI cards.
+- `SUPABASE_SQL_SETUP.md` step 28 for `supabase/admin-customer-crm.sql`.
+
+Privacy/security notes:
+
+- Customer 360 does not show lead phone, lead email, detailed lead address, lead notes, task content, cadence content, raw import rows, or raw map provider payloads.
+- Customer list pages from `user_profiles` with range pagination and fetch Auth emails only for users on the current page.
+- Customer notes audit metadata records only note id and content length, not note content.
+- Orders/Tickets/CMS remain deferred to Subphase C/D/E. No fake order or ticket data was added.
+
+Validation results:
+
+```powershell
+npm run typecheck      # passed
+npm run lint           # passed
+npm run security:scan  # passed
+npm run build          # passed
+npm run smoke          # passed 40/40 checks
+```
+
+Deployment note:
+
+- Run `supabase/admin-customer-crm.sql` in Supabase before using lifecycle, tags, and notes in production.
+
+Next suggested implementation step:
+
+- Subphase C: Orders, Product Catalog, Feature Catalog, versioned prices, add-ons, and entitlement grants.

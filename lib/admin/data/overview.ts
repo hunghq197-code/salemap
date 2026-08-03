@@ -90,6 +90,9 @@ export async function getAdminOverviewData() {
     routeCountResult,
     feedbackCountResult,
     upgradeCountResult,
+    activePaidSubscriptionsResult,
+    pendingPaymentsResult,
+    paidPaymentsResult,
     recentFeedbackResult,
     recentUpgradeResult,
     recentBetaSignupsResult,
@@ -107,6 +110,16 @@ export async function getAdminOverviewData() {
     supabase.from("routes").select("id", { count: "exact", head: true }),
     supabase.from("beta_feedback").select("id", { count: "exact", head: true }),
     supabase.from("upgrade_interests").select("id", { count: "exact", head: true }),
+    supabase
+      .from("subscriptions")
+      .select("user_id", { count: "exact", head: true })
+      .eq("status", "active")
+      .in("plan_key", ["pro", "pro_plus"]),
+    supabase
+      .from("payments")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pending", "processing", "waiting_confirmation"]),
+    supabase.from("payments").select("amount,status").eq("status", "paid").limit(10000),
     supabase
       .from("beta_feedback")
       .select("id,user_id,feedback_type,rating,title,status,created_at")
@@ -203,11 +216,16 @@ export async function getAdminOverviewData() {
   return {
     funnel,
     kpis: {
+      activePaidCustomers: activePaidSubscriptionsResult.count ?? 0,
       betaSignups: betaSignupCountResult.count ?? 0,
       feedback: feedbackCountResult.count ?? 0,
       leads: leadCountResult.count ?? 0,
       mapSearches: mapSearchCountResult.count ?? 0,
       onboardingCompleted: onboardingCount,
+      paidRevenue: ((paidPaymentsResult.data ?? []) as Array<{
+        amount?: number | null;
+      }>).reduce((total, row) => total + Number(row.amount ?? 0), 0),
+      pendingPayments: pendingPaymentsResult.count ?? 0,
       routeSearches: routeCountResult.count ?? 0,
       upgradeInterests: upgradeCountResult.count ?? 0,
       users: userCount,

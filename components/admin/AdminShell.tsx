@@ -2,6 +2,7 @@
 
 import {
   ClipboardList,
+  ContactRound,
   CreditCard,
   GaugeCircle,
   Home,
@@ -33,6 +34,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 const iconMap: Record<AdminNavIconKey, LucideIcon> = {
   audit: ClipboardList,
   billing: CreditCard,
+  customers: ContactRound,
   dashboard: LayoutDashboard,
   feedback: MessageSquareText,
   payments: CreditCard,

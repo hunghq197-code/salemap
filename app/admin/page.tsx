@@ -1,6 +1,9 @@
 import {
   Activity,
+  BadgeDollarSign,
   BellRing,
+  Clock3,
+  CreditCard,
   Flag,
   MailCheck,
   MailWarning,
@@ -32,6 +35,14 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
+function formatCurrency(value?: number | null) {
+  return new Intl.NumberFormat("vi-VN", {
+    currency: "VND",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(Number(value ?? 0));
+}
+
 export default async function AdminOverviewPage() {
   const data = await getAdminOverviewData();
 
@@ -44,6 +55,9 @@ export default async function AdminOverviewPage() {
       />
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminKpiCard icon={<CreditCard className="h-5 w-5" />} label="Khách trả phí" value={data.kpis.activePaidCustomers} />
+        <AdminKpiCard icon={<BadgeDollarSign className="h-5 w-5" />} label="Doanh thu đã trả" value={formatCurrency(data.kpis.paidRevenue)} />
+        <AdminKpiCard icon={<Clock3 className="h-5 w-5" />} label="Payment chờ xử lý" value={data.kpis.pendingPayments} />
         <AdminKpiCard icon={<UsersRound className="h-5 w-5" />} label="Tổng user app" value={data.kpis.users} />
         <AdminKpiCard icon={<UserCheck className="h-5 w-5" />} label="Onboarding hoàn tất" value={data.kpis.onboardingCompleted} />
         <AdminKpiCard icon={<Flag className="h-5 w-5" />} label="Signup landing" value={data.kpis.betaSignups} />

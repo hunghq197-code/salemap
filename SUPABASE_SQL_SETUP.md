@@ -32,6 +32,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 25. `supabase/admin-security.sql`
 26. `supabase/onboarding-activation.sql`
 27. `supabase/billing-provider-architecture.sql`
+28. `supabase/admin-customer-crm.sql`
 
 ## Khi Nào Cần Chạy Lại
 
@@ -43,6 +44,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 - Nếu `/admin` báo không đủ quyền hoặc thiếu bảng audit/security/quota override, chạy file số 25 rồi bootstrap super_admin theo `ADMIN_BOOTSTRAP.md`.
 - Nếu onboarding mới, activation checklist, demo data hoặc admin activation metadata chưa chạy, chạy file số 26.
 - Nếu `/app/billing` báo thiếu `payments/payment_events` hoặc cần manual/VietQR/payOS provider architecture, chạy file số 27.
+- Nếu `/admin/customers` báo CRM schema chưa sẵn sàng hoặc không lưu được lifecycle/notes/tags, chạy file số 28.
 - Nếu thư viện mẫu trống do thiếu bảng, chạy file số 6 rồi file số 7.
 - Nếu quota/gói sử dụng không lưu được, chạy file số 13 và 14.
 - Nếu admin dashboard thiếu dữ liệu beta/public beta, chạy file số 8 đến 12.

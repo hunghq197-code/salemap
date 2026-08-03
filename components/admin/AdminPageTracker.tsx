@@ -12,7 +12,14 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 
 type AdminPageTrackerProps = {
   filterApplied?: boolean;
-  page: "dashboard" | "feedback" | "retention" | "surveys" | "upgrade_interests" | "users";
+  page:
+    | "customers"
+    | "dashboard"
+    | "feedback"
+    | "retention"
+    | "surveys"
+    | "upgrade_interests"
+    | "users";
 };
 
 export function AdminPageTracker({ filterApplied, page }: AdminPageTrackerProps) {
@@ -23,6 +30,10 @@ export function AdminPageTracker({ filterApplied, page }: AdminPageTrackerProps)
 
     if (page === "users") {
       trackAdminUsersViewed({ filterApplied });
+    }
+
+    if (page === "customers") {
+      trackEvent("admin_customers_viewed", { filterApplied });
     }
 
     if (page === "feedback") {
