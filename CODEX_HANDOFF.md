@@ -1383,4 +1383,60 @@ Deployment note:
 
 Next suggested implementation step:
 
-- Subphase F: connect catalog orders to payOS/VietQR checkout and entitlement provisioning flow, or implement CMS category/tag/media mutation UI if content operations are the priority.
+- Subphase F: security, performance, automated tests, regression, and production readiness.
+
+## 2026-08-03 Update - Phase 2E2 Subphase F Production Readiness
+
+Implemented the Phase 2E2 security, regression, and production readiness close-out.
+
+Created:
+
+- `scripts/phase-2e2-regression.mjs`
+- `PHASE_2E2_PRODUCTION_READINESS.md`
+
+Updated:
+
+- `package.json` now includes `npm run test:phase2e2`.
+- `SECURITY_CHECKLIST.md` now includes the Phase 2E2 regression gate.
+- CMS blog pages now use `next/image` with `unoptimized` instead of suppressing the `<img>` lint rule.
+- Phase 2E2 handoff notes now identify Subphase F as the hardening/readiness gate.
+
+Regression coverage added:
+
+- Verifies required Phase 2E2 migrations, reports, and routes exist.
+- Verifies `SUPABASE_SQL_SETUP.md` lists Phase 2E2 SQL files in order 28-31.
+- Blocks broad `using (true)` / `with check (true)` RLS in new Phase 2E2 migrations.
+- Verifies Admin CRM uses aggregate lead access and does not statically select private lead PII/content.
+- Verifies order minimum amount, server-owned add-on pricing, transition guard, and entitlement idempotency invariants.
+- Verifies ticket public/internal visibility boundaries and ticket validator limits.
+- Verifies CMS publish/noindex rules, sanitizer, redirects, RSS, JSON-LD, sitemap, and cron secret invariants.
+- Verifies support role does not receive CMS/catalog/order/payment/subscription management permissions.
+
+Validation results:
+
+```powershell
+npm run typecheck      # passed
+npm run lint           # passed with 0 warnings and 0 errors
+npm run security:scan  # passed
+npm run test:phase2e2  # passed
+npm run build          # passed
+npm run smoke          # passed 47/47 checks
+```
+
+Production readiness notes:
+
+- Run SQL files 28-31 before staging/production use:
+  - `supabase/admin-customer-crm.sql`
+  - `supabase/orders-product-catalog.sql`
+  - `supabase/support-tickets.sql`
+  - `supabase/seo-cms.sql`
+- Set `CRON_SECRET` and configure CMS publish cron:
+  - `POST https://salemap.io.vn/api/cron/cms-publish`
+  - `Authorization: Bearer <CRON_SECRET>`
+- Self-serve add-on order checkout is not yet connected directly to payOS/VietQR payment creation. Current flow supports server-owned add-on orders plus admin mark-paid/provisioning. Treat automatic add-on commerce as blocked until the order-payment bridge is implemented and tested.
+- CMS media upload/storage is metadata-only in this phase. Use trusted public image URLs until Supabase Storage upload validation is added.
+- Authenticated browser E2E tests still require seeded staging accounts for super_admin/admin/support/user.
+
+Next suggested implementation step:
+
+- Staging setup and manual QA with real Supabase data/accounts, then implement the add-on order to payOS/VietQR checkout bridge if automatic add-on commerce is required.

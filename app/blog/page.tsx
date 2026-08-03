@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element -- CMS image URLs can use admin-managed remote domains. */
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { getPublishedBlogPosts } from "@/lib/cms/posts";
@@ -56,10 +56,14 @@ export default async function BlogPage() {
               key={post.id}
             >
               {post.featuredImageUrl ? (
-                <img
+                <Image
                   alt={post.featuredImageAlt || post.title}
                   className="mb-4 aspect-[16/9] w-full rounded-control object-cover"
+                  height={675}
+                  sizes="(min-width: 768px) 50vw, 100vw"
                   src={post.featuredImageUrl}
+                  unoptimized
+                  width={1200}
                 />
               ) : null}
               <p className="text-sm font-bold text-primary">

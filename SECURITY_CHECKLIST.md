@@ -42,5 +42,6 @@
 - Chạy `npm run lint`.
 - Chạy `npm run typecheck`.
 - Chạy `npm run security:scan`.
+- Chạy `npm run test:phase2e2` sau khi chạm CRM/orders/tickets/CMS.
 - Chạy `npm run build`.
 - Commit và push sau mỗi giai đoạn.

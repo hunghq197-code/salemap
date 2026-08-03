@@ -11,6 +11,7 @@
     "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:staging": "node scripts/smoke-staging.mjs",
+    "test:phase2e2": "node scripts/phase-2e2-regression.mjs",
     "security:scan": "node scripts/security-scan.mjs",
     "typecheck": "tsc --noEmit"
   },
