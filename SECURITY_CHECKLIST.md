@@ -17,6 +17,7 @@
 - Admin user detail chỉ hiển thị count/status/summary.
 - Không render note content, phone, address hoặc raw Google Maps payload mặc định.
 - Audit/security metadata đi qua sanitizer trước khi lưu/hiển thị.
+- Analytics tools chỉ nhận sanitized events/page paths; không gửi lead names, phone/Zalo, email, note content, raw Google Maps payload, hoặc query parameters nhạy cảm.
 
 ## Payment
 

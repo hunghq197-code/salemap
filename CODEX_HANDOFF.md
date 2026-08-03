@@ -794,6 +794,23 @@ git push origin main
 - Do not commit local env files or API keys.
 - The user speaks Vietnamese and prefers direct practical guidance.
 
+## 2026-08-03 Update - Google Search Console And GA4
+
+Implemented changes:
+
+- Added optional GA4 support through `NEXT_PUBLIC_GA_MEASUREMENT_ID` with a Next.js Google tag component.
+- Added SPA route pageview tracking for App Router navigation.
+- Sanitized GA page paths so only safe campaign query parameters are preserved.
+- Added optional Search Console URL-prefix HTML verification through `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.
+- Updated CSP for Google tag and Google Analytics collection domains.
+- Updated `.env.example`, deployment notes, security checklist, and privacy copy.
+
+Deployment note:
+
+- Prefer Search Console Domain property verification with DNS TXT for `salemap.vn`.
+- Set `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-...` in hosting env, redeploy, then verify in Google Analytics Realtime.
+- Use `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` only if using Search Console URL-prefix HTML tag verification.
+
 ## 2026-08-01 Update - Phase 2D Billing UI And Payment QA
 
 This phase implemented the requested Billing UI + Payment Production QA + Subscription & Quota Operations pass.

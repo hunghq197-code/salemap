@@ -51,7 +51,7 @@ const policyCopy: Record<PolicyKind, Record<"en" | "vi", PolicyCopy>> = {
         {
           title: "5. Analytics data",
           content:
-            "The website may use PostHog and Microsoft Clarity to understand actions such as CTA clicks, form starts, form submits, or FAQ opens. We do not send names, phone/Zalo numbers, or emails to PostHog.",
+            "The website may use PostHog, Microsoft Clarity, and Google Analytics to understand actions such as CTA clicks, form starts, form submits, or FAQ opens. We do not send names, phone/Zalo numbers, or emails to these analytics tools.",
         },
         {
           title: "6. Data protection",
@@ -104,7 +104,7 @@ const policyCopy: Record<PolicyKind, Record<"en" | "vi", PolicyCopy>> = {
         {
           title: "5. Dữ liệu analytics",
           content:
-            "Website có thể sử dụng PostHog và Microsoft Clarity để hiểu hành vi sử dụng như lượt click CTA, bắt đầu điền form, submit form hoặc mở FAQ. Chúng tôi không gửi họ tên, số điện thoại/Zalo hoặc email lên PostHog.",
+            "Website có thể sử dụng PostHog, Microsoft Clarity và Google Analytics để hiểu hành vi sử dụng như lượt click CTA, bắt đầu điền form, submit form hoặc mở FAQ. Chúng tôi không gửi họ tên, số điện thoại/Zalo hoặc email lên các công cụ analytics này.",
         },
         {
           title: "6. Bảo mật dữ liệu",

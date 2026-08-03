@@ -26,6 +26,7 @@ const contentSecurityPolicy = [
     "https://app.posthog.com",
     "https://*.posthog.com",
     "https://*.i.posthog.com",
+    "https://www.googletagmanager.com",
     "https://maps.googleapis.com",
     "https://maps.gstatic.com",
   ]
@@ -45,6 +46,9 @@ const contentSecurityPolicy = [
     "https://app.posthog.com",
     "https://*.posthog.com",
     "https://*.i.posthog.com",
+    "https://www.google-analytics.com",
+    "https://*.google-analytics.com",
+    "https://www.googletagmanager.com",
     isProduction ? "" : "ws://localhost:*",
     isProduction ? "" : "ws://127.0.0.1:*",
   ]

@@ -96,6 +96,17 @@ PAYOS_CHECKSUM_KEY=
 
 Google Maps chỉ bật khi đã có key staging/domain restriction.
 
+Optional Google visibility setup:
+
+```env
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=
+```
+
+- Prefer a Google Search Console Domain property with DNS TXT verification for the real domain.
+- Use `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` only for URL-prefix HTML tag verification, or when DNS verification is not practical.
+- Keep analytics page URLs sanitized; do not send lead names, phone/Zalo, email, note content, or raw map payloads to analytics tools.
+
 ## 6. Build Local
 
 ```bash
@@ -198,7 +209,7 @@ Nếu bật Sentry sau này:
 Nếu chưa bật Sentry:
 
 - Theo dõi Vercel/hosting logs.
-- Theo dõi PostHog event lỗi đã được sanitize.
+- Theo dõi PostHog/Google Analytics event lỗi đã được sanitize.
 - Ghi lỗi P0/P1 vào checklist QA trong 24h đầu.
 
 ## 12. Rollback Plan
@@ -230,6 +241,7 @@ Disable module nhanh:
 - [ ] Admin test account hoạt động.
 - [ ] AI/payment/email tắt nếu chưa có key thật.
 - [ ] Privacy/terms mở được.
-- [ ] PostHog/Clarity không gửi PII.
+- [ ] PostHog/Clarity/Google Analytics không gửi PII.
+- [ ] Search Console domain property verified and sitemap submitted.
 - [ ] Có rollback plan.
 - [ ] Có form/kênh nhận feedback.

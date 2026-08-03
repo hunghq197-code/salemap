@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense, type ReactNode } from "react";
 import { ClarityScript } from "@/components/analytics/ClarityScript";
+import { GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalyticsScript";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
 import { RouteTransitionProgress } from "@/components/navigation/RouteTransitionProgress";
 import { PostHogBootstrap } from "@/components/analytics/PostHogBootstrap";
@@ -9,9 +10,25 @@ import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
+const googleSiteVerification = getGoogleSiteVerification();
 const seoTitle = "SaleMap";
 const seoDescription =
   "Công cụ cá nhân giúp dân sale tìm khách, lưu lead và nhắc follow-up.";
+
+function getGoogleSiteVerification() {
+  const rawVerification =
+    process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "";
+  const verification = rawVerification.trim();
+
+  if (!verification) {
+    return undefined;
+  }
+
+  const contentMatch = verification.match(/content=["']([^"']+)["']/i);
+
+  return contentMatch?.[1]?.trim() || verification;
+}
+
 export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
@@ -52,6 +69,11 @@ export const metadata: Metadata = {
     description: seoDescription,
     title: seoTitle,
   },
+  verification: googleSiteVerification
+    ? {
+        google: googleSiteVerification,
+      }
+    : undefined,
 };
 
 export const viewport: Viewport = {
@@ -73,6 +95,7 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <PostHogBootstrap />
+          <GoogleAnalyticsScript />
           <Suspense fallback={null}>
             <RouteTransitionProgress />
           </Suspense>
