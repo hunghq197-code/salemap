@@ -380,7 +380,7 @@ Last updated: 2026-07-18
 - Revenue Ops + Renewal / Churn build check: pass. Build includes `/admin/revenue`, `/admin/subscriptions`, `/api/cancellation-requests`, `/api/cron/subscription-lifecycle`, and `/api/cron/revenue-snapshot`.
 - Revenue Ops + Renewal / Churn local smoke test on `http://localhost:3011`: `/`, `/login`, and `/register` return 200; unauthenticated `/app/billing`, `/admin/revenue`, and `/admin/subscriptions` redirect to `/login`; unauthenticated cancellation/payment APIs return 401; cron endpoints without `CRON_SECRET` return 401.
 - payOS Payment Gateway typecheck: pass.
-- payOS Payment Gateway build check: pass. Build includes `/api/payments/payos/create-link`, `/api/payments/payos/status`, `/api/webhooks/payos`, `/app/billing/payment/return`, `/app/billing/payment/cancel`, `/admin/payment-gateway`, and `/api/admin/payment-gateway/[id]/sync`.
+- payOS Payment Gateway build check: pass. Build includes `/api/payments/payos/create-link`, `/api/payments/payos/status`, `/api/webhooks/payos`, `/app/billing/success`, `/app/billing/cancel`, `/admin/payments`, and `/api/admin/payment-gateway/[id]/sync`.
 - payOS Payment Gateway local smoke test on `http://localhost:3013`: `/` returns 200; unauthenticated `/app/billing` and `/admin/payment-gateway` redirect to `/login`; unauthenticated payOS create/status APIs return 401; webhook with missing payOS env returns 503 instead of crashing.
 - AI Sales Assistant typecheck: pass.
 - AI Sales Assistant build check: pass. Build includes `/app/ai-assistant`, `/api/ai/generate`, `/api/ai/save-output`, `/api/ai/save-to-note`, and `/admin/ai-usage`.
@@ -445,7 +445,7 @@ Last updated: 2026-07-18
 - Test offline-lite manually on a phone: open dashboard/leads/one lead while online, turn off network, revisit cached pages, verify the offline banner and `/offline.html` fallback.
 - Test local drafts: start typing a lead, note, and follow-up, turn off network, try submit, restore network, then confirm the draft remains available for retry.
 - Fill `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, optional `PAYOS_PARTNER_CODE`, and `NEXT_PUBLIC_SITE_URL` locally/deployment before testing real payOS checkout.
-- Configure payOS webhook URL to `https://your-domain.com/api/webhooks/payos`, then test paid webhook, cancel return, idempotency, amount mismatch, and admin sync.
+- Configure payOS webhook URL to `https://salemap.io.vn/api/webhooks/payos`, then test paid webhook, cancel return, idempotency, amount mismatch, and admin sync.
 - Fill `PAYMENT_BANK_NAME`, `PAYMENT_BANK_ACCOUNT_NUMBER`, and `PAYMENT_BANK_ACCOUNT_NAME` locally and in deployment env before asking real users to transfer.
 - Test renewal end to end: set a Pro user with `current_period_end` close to today, create a renewal request from `/app/billing`, mark transferred, approve from `/admin/payment-requests`, and verify `current_period_end` is extended plus `subscription_events` has `subscription_renewed`.
 - Test cancellation reason flow: Pro user submits a reason from `/app/billing`, then admin reviews it in `/admin/revenue`.

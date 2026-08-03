@@ -807,7 +807,7 @@ Implemented changes:
 
 Deployment note:
 
-- Prefer Search Console Domain property verification with DNS TXT for `salemap.vn`.
+- Prefer Search Console Domain property verification with DNS TXT for `salemap.io.vn`.
 - Set `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-...` in hosting env, redeploy, then verify in Google Analytics Realtime.
 - Use `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` only if using Search Console URL-prefix HTML tag verification.
 

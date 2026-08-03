@@ -1,4 +1,4 @@
-export const fallbackSiteUrl = "https://salemap.vn";
+export const fallbackSiteUrl = "https://salemap.io.vn";
 
 export function getSiteUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
