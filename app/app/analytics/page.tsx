@@ -1,4 +1,5 @@
 import { RefreshCw, Target } from "lucide-react";
+import Link from "next/link";
 import { rebuildSalesAnalyticsAction } from "@/app/app/analytics/actions";
 import { ActivityTrendChart } from "@/components/analytics/ActivityTrendChart";
 import { AnalyticsFilterBar } from "@/components/analytics/AnalyticsFilterBar";
@@ -200,13 +201,13 @@ export default async function SalesAnalyticsPage(props: AnalyticsPageProps) {
       <PageHeader
         actions={
           <>
-            <a
+            <Link
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-6 py-3 text-base font-semibold text-text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary"
               href="/app/analytics/goals"
             >
               <Target aria-hidden="true" className="h-5 w-5" />
               Mục tiêu
-            </a>
+            </Link>
             <form action={rebuildSalesAnalyticsAction}>
               <button
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-control border border-border-soft bg-surface px-6 py-3 text-base font-semibold text-text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary"
@@ -238,12 +239,12 @@ export default async function SalesAnalyticsPage(props: AnalyticsPageProps) {
           <p className="mt-3 max-w-3xl text-base leading-7 text-text-secondary">
             Hãy tìm khách, lưu lead và hoàn thành các công việc chăm sóc. SaleMap sẽ tổng hợp hoạt động của bạn tại đây.
           </p>
-          <a
+          <Link
             className="mt-5 inline-flex min-h-12 items-center justify-center rounded-control bg-primary px-6 py-3 text-base font-bold text-white shadow-soft transition hover:bg-primary-hover"
             href="/app/discover"
           >
             Tìm khách đầu tiên
-          </a>
+          </Link>
         </section>
       ) : null}
 

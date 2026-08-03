@@ -77,6 +77,7 @@ export type AdminNavIconKey =
   | "audit"
   | "billing"
   | "catalog"
+  | "cms"
   | "customers"
   | "dashboard"
   | "feedback"
@@ -102,6 +103,7 @@ export const adminPrimaryNavItems: AdminNavItem[] = [
   { href: "/admin/orders", icon: "orders", label: "Đơn hàng" },
   { href: "/admin/catalog", icon: "catalog", label: "Catalog" },
   { href: "/admin/tickets", icon: "tickets", label: "Tickets" },
+  { href: "/admin/cms", icon: "cms", label: "CMS" },
   { href: "/admin/users", icon: "users", label: "Người dùng" },
   { href: "/admin/subscriptions", icon: "subscriptions", label: "Gói dịch vụ" },
   { href: "/admin/payments", icon: "payments", label: "Thanh toán" },

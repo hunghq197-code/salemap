@@ -1317,3 +1317,70 @@ Deployment note:
 Next suggested implementation step:
 
 - Subphase E: WordPress-like SEO CMS with posts, pages, categories, tags, media metadata, drafts/review/schedule/publish, redirects, sitemap integration, and content sanitization.
+
+## 2026-08-03 Update - Phase 2E2 Subphase E SEO CMS
+
+Implemented the WordPress-like SEO CMS foundation.
+
+Created:
+
+- `supabase/seo-cms.sql`
+- `lib/cms/cms-status.ts`
+- `lib/cms/posts.ts`
+- `lib/cms/sanitize-content.ts`
+- `lib/validators/cms.ts`
+- `components/cms/CmsPostForm.tsx`
+- `components/cms/CmsRedirectForm.tsx`
+- `/admin/cms`
+- `/admin/cms/posts`
+- `/admin/cms/posts/new`
+- `/admin/cms/posts/[postId]`
+- `/admin/cms/pages`
+- `/admin/cms/categories`
+- `/admin/cms/tags`
+- `/admin/cms/media`
+- `/admin/cms/redirects`
+- `/blog`
+- `/blog/[slug]`
+- `/{page-slug}` CMS page rendering through `app/[...path]/page.tsx`
+- `/rss.xml`
+- `POST /api/cron/cms-publish`
+- `SEO_CMS_SUBPHASE_E_REPORT.md`
+
+Updated:
+
+- Admin navigation now includes `/admin/cms`.
+- Admin permissions now include `VIEW_CMS` and `MANAGE_CMS`.
+- Sitemap now includes published, indexable CMS posts/pages.
+- Smoke tests now verify `/blog`, `/rss.xml`, and unauthorized CMS cron access.
+- `SUPABASE_SQL_SETUP.md` now lists `supabase/seo-cms.sql` as step 31.
+- Existing internal anchor lint errors in analytics/export were fixed with `next/link` so the quality gate stays clean.
+
+Security/SEO notes:
+
+- Public CMS reads are limited to published content whose `published_at` is due.
+- Sitemap and blog listing exclude `noindex` posts/pages.
+- Support users do not receive CMS permissions.
+- CMS content is sanitized and rendered as escaped text paragraphs, not trusted stored HTML.
+- CMS media metadata rejects SVG and non-image MIME types.
+- CMS redirect paths must be internal paths only.
+- CMS audit metadata stores ids/status/revision/content length, not full content bodies.
+- Scheduled publishing requires `Authorization: Bearer $CRON_SECRET`.
+
+Validation results:
+
+```powershell
+npm run typecheck      # passed
+npm run lint           # passed with 0 warnings and 0 errors
+npm run security:scan  # passed
+npm run build          # passed
+npm run smoke          # passed 47/47 checks
+```
+
+Deployment note:
+
+- Run `supabase/seo-cms.sql` in Supabase before using `/admin/cms`, `/blog`, CMS pages, redirects, RSS, or CMS sitemap content in production.
+
+Next suggested implementation step:
+
+- Subphase F: connect catalog orders to payOS/VietQR checkout and entitlement provisioning flow, or implement CMS category/tag/media mutation UI if content operations are the priority.

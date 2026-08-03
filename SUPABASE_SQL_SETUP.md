@@ -35,6 +35,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 28. `supabase/admin-customer-crm.sql`
 29. `supabase/orders-product-catalog.sql`
 30. `supabase/support-tickets.sql`
+31. `supabase/seo-cms.sql`
 
 ## Khi Nào Cần Chạy Lại
 
@@ -49,6 +50,7 @@ Mỗi lần chạy hãy copy toàn bộ nội dung của một file, không copy
 - Nếu `/admin/customers` báo CRM schema chưa sẵn sàng hoặc không lưu được lifecycle/notes/tags, chạy file số 28.
 - Nếu `/admin/orders`, `/admin/catalog`, `/app/billing/add-ons` hoặc `/app/billing/orders` báo thiếu schema, chạy file số 29.
 - Nếu `/admin/tickets` hoặc `/app/support/tickets` báo thiếu schema, chạy file số 30.
+- Nếu `/admin/cms`, `/blog`, `/rss.xml` hoặc sitemap CMS báo thiếu schema, chạy file số 31.
 - Nếu thư viện mẫu trống do thiếu bảng, chạy file số 6 rồi file số 7.
 - Nếu quota/gói sử dụng không lưu được, chạy file số 13 và 14.
 - Nếu admin dashboard thiếu dữ liệu beta/public beta, chạy file số 8 đến 12.

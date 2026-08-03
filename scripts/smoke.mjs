@@ -169,6 +169,16 @@ async function expectText(pathname, expectedText) {
   assert(body.includes(expectedText), `${pathname} did not include "${expectedText}"`);
 }
 
+async function expectUnauthorizedCron(pathname) {
+  const response = await fetchWithTimeout(pathname, {
+    method: "POST",
+  });
+  const payload = await response.json().catch(() => null);
+
+  assert(response.status === 401, `${pathname} expected 401 without cron secret, got ${response.status}`);
+  assert(payload?.error?.code === "UNAUTHORIZED", `${pathname} expected UNAUTHORIZED`);
+}
+
 function findHtmlTag(html, tagName, attributeName, attributeValue) {
   const tags = html.match(new RegExp(`<${tagName}\\b[^>]*>`, "gi")) ?? [];
 
@@ -267,8 +277,11 @@ const tests = [
   ["home page renders", () => expectPage("/", "SaleMap")],
   ["login page renders", () => expectPage("/login", "SaleMap")],
   ["status page renders", () => expectPage("/status", "SaleMap")],
+  ["blog page renders", () => expectPage("/blog", "Blog")],
   ["security headers are present", () => expectSecurityHeaders("/")],
   ["manifest renders", expectManifest],
+  ["RSS feed renders", () => expectText("/rss.xml", "<rss version=\"2.0\">")],
+  ["CMS publish cron requires secret", () => expectUnauthorizedCron("/api/cron/cms-publish")],
   ["home canonical is correct", () => expectCanonical("/", "/")],
   ["privacy canonical is correct", () => expectCanonical("/chinh-sach-bao-mat", "/chinh-sach-bao-mat")],
   ["terms canonical is correct", () => expectCanonical("/dieu-khoan-su-dung", "/dieu-khoan-su-dung")],

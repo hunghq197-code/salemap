@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, FileText, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { QuotaWarning } from "@/components/quota/QuotaWarning";
 import {
@@ -236,12 +237,12 @@ export function ExportLeadsForm({
           >
             Áp dụng bộ lọc
           </button>
-          <a
+          <Link
             className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-base font-bold text-ink transition hover:border-ocean"
             href="/app/export"
           >
             Xóa bộ lọc
-          </a>
+          </Link>
         </div>
       </form>
 
