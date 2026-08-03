@@ -1126,3 +1126,33 @@ Remaining UI TODO for later phases:
 - Finish admin page-level redesign for dense tables/pages under `/admin/*`; this sprint redesigned the admin shell only.
 - Add or standardize remaining form/table/drawer/modal primitives when touching those pages.
 - Perform visual responsive QA on real/browser viewports after starting the app locally, especially 360x800, 390x844, 768x1024, 1366x768, and 1440x900.
+
+## 2026-08-03 Update - Phase 2E2 Subphase A Audit
+
+This phase started the requested "Admin CRM + Customer 360 + Order Management + Support Ticketing + Modular Feature Catalog + SEO CMS" work with the required audit/data architecture gate first.
+
+Documentation added:
+
+- `ADMIN_CRM_CATALOG_TICKETS_CMS_AUDIT.md`
+  - Records existing admin routes, billing architecture, schema inventory, reusable modules, refactor needs, missing Phase 2E2 modules, security/privacy risks, performance risks, regression risks, proposed migrations, and subphase rollout.
+  - Important privacy decision: Admin CRM manages SaleMap customers only. It must not show private user lead details by default. Current `support_access_logs` is not a full break-glass workflow with super-admin-only access, reason, expiry, audit, and security event, so private lead access is out of scope.
+- `PRICING_AND_FEATURE_PACK_RECOMMENDATION.md`
+  - Records current source pricing: Free 0 VND, Pro 149,000 VND/month, Pro Plus 399,000 VND/month.
+  - Flags the prompt/code conflict where the prompt mentions Pro Plus 349,000 VND but the code currently uses 399,000 VND.
+  - Flags Google Places cost as the main margin risk because route search can fan out to up to 6 Places Text Search calls.
+  - Recommends immutable price versions, minimum paid order 50,000 VND, add-on packs, and server-side entitlement grants.
+
+No runtime code, schema, API, or UI behavior was changed in this subphase.
+
+Required validation for this documentation gate:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run build
+```
+
+Next suggested implementation step:
+
+- Subphase B: add `supabase/admin-customer-crm.sql`, extend admin permissions safely, implement `/admin/customers`, `/admin/customers/[userId]`, customer lifecycle/tags/notes, and CRM dashboard aggregates without exposing private lead data.
