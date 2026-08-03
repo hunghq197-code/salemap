@@ -49,12 +49,29 @@ type RecentBetaSignup = {
   persona_label?: string | null;
 };
 
+type RecentSupportTicket = {
+  created_at?: string | null;
+  id: string;
+  priority?: string | null;
+  status?: string | null;
+  subject?: string | null;
+  ticket_code?: string | null;
+  userLabel: string;
+};
+
 type AdminNotificationStatRow = {
   delivered_email?: boolean | null;
   metadata?: {
     emailStatus?: string;
   } | null;
   type?: string | null;
+};
+
+type AdminSupportTicketStatRow = {
+  first_response_at?: string | null;
+  first_response_due_at?: string | null;
+  resolution_due_at?: string | null;
+  status?: string | null;
 };
 
 function getPreviousRate(current: number, previous: number) {
@@ -96,6 +113,8 @@ export async function getAdminOverviewData() {
     recentFeedbackResult,
     recentUpgradeResult,
     recentBetaSignupsResult,
+    supportTicketsResult,
+    recentSupportTicketsResult,
   ] = await Promise.all([
     listUserIdRows("leads", "user_id"),
     listUserIdRows("lead_notes", "user_id"),
@@ -135,6 +154,15 @@ export async function getAdminOverviewData() {
       .select("id,full_name,persona_label,contact_status,created_at")
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("support_tickets")
+      .select("id,status,first_response_due_at,resolution_due_at,first_response_at")
+      .limit(10000),
+    supabase
+      .from("support_tickets")
+      .select("id,ticket_code,user_id,subject,status,priority,created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
   const { data: notificationStatsData } = await supabase
     .from("notifications")
@@ -142,6 +170,24 @@ export async function getAdminOverviewData() {
     .gte("created_at", startOfToday())
     .limit(10000);
   const notificationStats = (notificationStatsData ?? []) as AdminNotificationStatRow[];
+  const supportTicketStats = (supportTicketsResult.data ?? []) as AdminSupportTicketStatRow[];
+  const now = Date.now();
+  const openSupportTickets = supportTicketStats.filter(
+    (ticket) => !["cancelled", "closed", "resolved"].includes(ticket.status || ""),
+  );
+  const breachedSupportTickets = openSupportTickets.filter((ticket) => {
+    const firstResponseDue = ticket.first_response_due_at
+      ? new Date(ticket.first_response_due_at).getTime()
+      : null;
+    const resolutionDue = ticket.resolution_due_at
+      ? new Date(ticket.resolution_due_at).getTime()
+      : null;
+
+    return (
+      (!ticket.first_response_at && Boolean(firstResponseDue && firstResponseDue < now)) ||
+      Boolean(resolutionDue && resolutionDue < now)
+    );
+  });
 
   const userCount = users.length;
   const onboardingCount = profiles.filter((profile) => profile.onboarding_completed).length;
@@ -213,6 +259,21 @@ export async function getAdminOverviewData() {
     userLabel: getUserLabel(item.user_id, profileMap, emailMap),
   }));
 
+  const recentSupportTickets: RecentSupportTicket[] = ((
+    recentSupportTicketsResult.data ?? []
+  ) as Array<{
+    created_at?: string | null;
+    id: string;
+    priority?: string | null;
+    status?: string | null;
+    subject?: string | null;
+    ticket_code?: string | null;
+    user_id?: string | null;
+  }>).map((item) => ({
+    ...item,
+    userLabel: getUserLabel(item.user_id, profileMap, emailMap),
+  }));
+
   return {
     funnel,
     kpis: {
@@ -222,11 +283,13 @@ export async function getAdminOverviewData() {
       leads: leadCountResult.count ?? 0,
       mapSearches: mapSearchCountResult.count ?? 0,
       onboardingCompleted: onboardingCount,
+      openSupportTickets: openSupportTickets.length,
       paidRevenue: ((paidPaymentsResult.data ?? []) as Array<{
         amount?: number | null;
       }>).reduce((total, row) => total + Number(row.amount ?? 0), 0),
       pendingPayments: pendingPaymentsResult.count ?? 0,
       routeSearches: routeCountResult.count ?? 0,
+      breachedSupportTickets: breachedSupportTickets.length,
       upgradeInterests: upgradeCountResult.count ?? 0,
       users: userCount,
       userProfiles: userProfiles.size,
@@ -244,6 +307,7 @@ export async function getAdminOverviewData() {
     recent: {
       betaSignups: (recentBetaSignupsResult.data ?? []) as RecentBetaSignup[],
       feedback: recentFeedback,
+      supportTickets: recentSupportTickets,
       upgradeInterests: recentUpgradeInterests,
       users: recentUsers,
     },

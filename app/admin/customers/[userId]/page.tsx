@@ -121,6 +121,7 @@ export default async function AdminCustomerDetailPage(
         <AdminKpiCard label="AI request" value={customer.aiRequestCount} />
         <AdminKpiCard label="Import job" value={customer.importJobCount} />
         <AdminKpiCard label="Payments" value={customer.billingPaymentCount} />
+        <AdminKpiCard label="Tickets mở" value={customer.openTicketCount} />
         <AdminKpiCard label="Notifications" value={customer.notificationCount} />
         <AdminKpiCard label="Security events" value={customer.securityEventCount} />
         <AdminKpiCard label="Support access" value={customer.supportAccessCount} />

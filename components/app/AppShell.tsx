@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   Search,
   Settings,
+  TicketCheck,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +50,7 @@ const iconMap: Record<AppNavIconKey, LucideIcon> = {
   leads: UsersRound,
   pipeline: BarChart3,
   settings: Settings,
+  support: TicketCheck,
   tasks: ListTodo,
   templates: BookOpenText,
 };

@@ -9,6 +9,7 @@ export type AppNavIconKey =
   | "leads"
   | "pipeline"
   | "settings"
+  | "support"
   | "tasks"
   | "templates";
 
@@ -47,6 +48,7 @@ export const appNavGroups: AppNavGroup[] = [
     label: "Tài khoản",
     items: [
       { href: "/app/billing", icon: "billing", label: "Gói dịch vụ" },
+      { href: "/app/support/tickets", icon: "support", label: "Hỗ trợ" },
       { href: "/app/settings", icon: "settings", label: "Cài đặt" },
       { href: "/app/feedback", icon: "feedback", label: "Góp ý / Trợ giúp" },
     ],
@@ -66,6 +68,7 @@ export const mobileMoreNavItems: AppNavItem[] = [
   { href: "/app/import", icon: "import", label: "Import dữ liệu" },
   { href: "/app/analytics", icon: "analytics", label: "Phân tích" },
   { href: "/app/billing", icon: "billing", label: "Gói dịch vụ" },
+  { href: "/app/support/tickets", icon: "support", label: "Hỗ trợ" },
   { href: "/app/settings", icon: "settings", label: "Cài đặt" },
   { href: "/app/feedback", icon: "feedback", label: "Góp ý / Trợ giúp" },
 ];
@@ -83,6 +86,7 @@ export type AdminNavIconKey =
   | "settings"
   | "subscriptions"
   | "system"
+  | "tickets"
   | "usage"
   | "users";
 
@@ -97,6 +101,7 @@ export const adminPrimaryNavItems: AdminNavItem[] = [
   { href: "/admin/customers", icon: "customers", label: "Khách hàng" },
   { href: "/admin/orders", icon: "orders", label: "Đơn hàng" },
   { href: "/admin/catalog", icon: "catalog", label: "Catalog" },
+  { href: "/admin/tickets", icon: "tickets", label: "Tickets" },
   { href: "/admin/users", icon: "users", label: "Người dùng" },
   { href: "/admin/subscriptions", icon: "subscriptions", label: "Gói dịch vụ" },
   { href: "/admin/payments", icon: "payments", label: "Thanh toán" },

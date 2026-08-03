@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   BadgeDollarSign,
   BellRing,
   Clock3,
@@ -10,6 +11,7 @@ import {
   MapPinned,
   MessageSquareText,
   Route,
+  TicketCheck,
   TrendingUp,
   UserCheck,
   UsersRound,
@@ -64,6 +66,8 @@ export default async function AdminOverviewPage() {
         <AdminKpiCard icon={<Activity className="h-5 w-5" />} label="Tổng lead" value={data.kpis.leads} />
         <AdminKpiCard icon={<MapPinned className="h-5 w-5" />} label="Map search" value={data.kpis.mapSearches} />
         <AdminKpiCard icon={<Route className="h-5 w-5" />} label="Route search" value={data.kpis.routeSearches} />
+        <AdminKpiCard icon={<TicketCheck className="h-5 w-5" />} label="Ticket mở" value={data.kpis.openSupportTickets} />
+        <AdminKpiCard icon={<AlertTriangle className="h-5 w-5" />} label="Ticket quá SLA" value={data.kpis.breachedSupportTickets} />
         <AdminKpiCard icon={<MessageSquareText className="h-5 w-5" />} label="Feedback" value={data.kpis.feedback} />
         <AdminKpiCard icon={<TrendingUp className="h-5 w-5" />} label="Upgrade interest" value={data.kpis.upgradeInterests} />
         <AdminKpiCard icon={<BellRing className="h-5 w-5" />} label="Notifications hôm nay" value={data.kpis.notificationsCreatedToday} />
@@ -127,6 +131,35 @@ export default async function AdminOverviewPage() {
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{feedback.feedback_type}</td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <AdminStatusBadge value={feedback.status} />
+                </td>
+              </tr>
+            ))}
+          </AdminTable>
+        </article>
+
+        <article>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold text-ink">Ticket cần xử lý</h2>
+            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/tickets">
+              Xem tất cả
+            </Link>
+          </div>
+          <AdminTable empty={data.recent.supportTickets.length === 0} headers={["Ngày", "Ticket", "User", "Status", "Priority"]}>
+            {data.recent.supportTickets.map((ticket) => (
+              <tr key={ticket.id}>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(ticket.created_at || undefined)}</td>
+                <td className="min-w-[200px] px-4 py-3">
+                  <Link className="font-bold text-ocean hover:text-ink" href={`/admin/tickets/${ticket.id}`}>
+                    {ticket.subject || ticket.ticket_code || ticket.id}
+                  </Link>
+                  <p className="mt-1 font-mono text-xs text-slate-500">{ticket.ticket_code}</p>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{ticket.userLabel}</td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <AdminStatusBadge value={ticket.status} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <AdminStatusBadge value={ticket.priority} />
                 </td>
               </tr>
             ))}

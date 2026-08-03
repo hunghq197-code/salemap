@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ServerCog,
   ShieldCheck,
+  TicketCheck,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -45,6 +46,7 @@ const iconMap: Record<AdminNavIconKey, LucideIcon> = {
   settings: LockKeyhole,
   subscriptions: RefreshCw,
   system: ServerCog,
+  tickets: TicketCheck,
   usage: GaugeCircle,
   users: UsersRound,
 };

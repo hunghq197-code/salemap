@@ -424,6 +424,42 @@ const tests = [
       }),
   ],
   [
+    "support ticket create API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        body: { description: "Smoke ticket payload", subject: "Smoke ticket" },
+        pathname: "/api/support/tickets",
+      }),
+  ],
+  [
+    "support ticket reply API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        body: { body: "Smoke reply" },
+        pathname:
+          "/api/support/tickets/00000000-0000-0000-0000-000000000000/messages",
+      }),
+  ],
+  [
+    "admin ticket update API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        body: { priority: "normal", status: "open" },
+        method: "PATCH",
+        pathname:
+          "/api/admin/tickets/00000000-0000-0000-0000-000000000000",
+      }),
+  ],
+  [
+    "admin ticket reply API blocks cross-origin",
+    () =>
+      expectCrossOriginBlocked({
+        body: { body: "Smoke admin reply", visibility: "public" },
+        pathname:
+          "/api/admin/tickets/00000000-0000-0000-0000-000000000000/messages",
+      }),
+  ],
+  [
     "billing create-payment API blocks cross-origin",
     () =>
       expectCrossOriginBlocked({

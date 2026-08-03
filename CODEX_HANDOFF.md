@@ -1257,3 +1257,63 @@ Deployment note:
 Next suggested implementation step:
 
 - Subphase D: Support ticketing and customer support workflows, with strict user ownership, admin/support access controls, and sanitized audit metadata.
+
+## 2026-08-03 Update - Phase 2E2 Subphase D Support Tickets
+
+Implemented the Support Ticket System foundation.
+
+Created:
+
+- `supabase/support-tickets.sql`
+- `lib/tickets/tickets.ts`
+- `lib/tickets/ticket-status.ts`
+- `lib/validators/tickets.ts`
+- `components/tickets/SupportTicketCreateForm.tsx`
+- `components/tickets/SupportTicketReplyForm.tsx`
+- `components/tickets/AdminTicketUpdateForm.tsx`
+- `components/tickets/AdminTicketReplyForm.tsx`
+- `/app/support/tickets`
+- `/app/support/tickets/[ticketId]`
+- `/admin/tickets`
+- `/admin/tickets/[ticketId]`
+- `POST /api/support/tickets`
+- `POST /api/support/tickets/[ticketId]/messages`
+- `PATCH /api/admin/tickets/[ticketId]`
+- `POST /api/admin/tickets/[ticketId]/messages`
+- `SUPPORT_TICKETS_SUBPHASE_D_REPORT.md`
+
+Updated:
+
+- User navigation now includes `/app/support/tickets`.
+- Admin navigation now includes `/admin/tickets`.
+- Admin permissions now include `VIEW_TICKETS` and `MANAGE_TICKETS`.
+- Admin Dashboard now shows open ticket and breached SLA KPIs plus recent ticket queue.
+- Customer CRM list/detail now show open ticket counts as aggregate only.
+- Smoke tests now verify ticket mutation APIs block cross-origin requests.
+- `SUPABASE_SQL_SETUP.md` now lists `supabase/support-tickets.sql` as step 30.
+
+Security/privacy notes:
+
+- Users can only view and reply to their own tickets.
+- Users cannot see internal admin notes.
+- Support/admin can manage support tickets but this does not grant access to private lead details.
+- Ticket audit metadata stores state, priority, visibility, ticket id/code, and body length only; it does not log full ticket content.
+- API mutations use same-origin and rate-limit guards.
+
+Validation results:
+
+```powershell
+npm run typecheck      # passed
+npm run lint           # passed
+npm run security:scan  # passed
+npm run build          # passed
+npm run smoke          # passed 44/44 checks
+```
+
+Deployment note:
+
+- Run `supabase/support-tickets.sql` in Supabase before using tickets in production.
+
+Next suggested implementation step:
+
+- Subphase E: WordPress-like SEO CMS with posts, pages, categories, tags, media metadata, drafts/review/schedule/publish, redirects, sitemap integration, and content sanitization.

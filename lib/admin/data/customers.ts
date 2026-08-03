@@ -387,6 +387,32 @@ async function getCountsByUser(table: string, userIds: string[], userColumn = "u
   return counts;
 }
 
+async function getOpenTicketCountsByUser(userIds: string[]) {
+  if (userIds.length === 0) return new Map<string, number>();
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("support_tickets")
+    .select("user_id,status")
+    .in("user_id", userIds)
+    .limit(10000);
+
+  if (error) return new Map<string, number>();
+
+  const counts = new Map<string, number>();
+  ((data ?? []) as Array<{ status?: string | null; user_id?: string | null }>).forEach(
+    (row) => {
+      if (!row.user_id || ["cancelled", "closed", "resolved"].includes(row.status || "")) {
+        return;
+      }
+
+      counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+    },
+  );
+
+  return counts;
+}
+
 async function getLatestActivityMap(userIds: string[]) {
   if (userIds.length === 0) return new Map<string, string>();
 
@@ -648,6 +674,7 @@ function buildCustomerRow(input: {
   lastActivityAt?: string | null;
   leadCount: number;
   mapSearchCount: number;
+  openTicketCount: number;
   paidTotal: number;
   profile: CustomerProfileRow;
   subscription?: SubscriptionRecord | null;
@@ -675,7 +702,7 @@ function buildCustomerRow(input: {
     lifecycle,
     lifecycleLabel: customerLifecycleLabels[lifecycle],
     mapSearchCount: input.mapSearchCount,
-    openTicketCount: 0,
+    openTicketCount: input.openTicketCount,
     subscriptionEndAt: input.subscription?.current_period_end ?? null,
     subscriptionStatus: input.subscription?.status || "free",
     tags: input.tags,
@@ -780,6 +807,7 @@ export async function getAdminCustomers(
     leadCounts,
     taskCounts,
     mapCounts,
+    openTicketCounts,
     latestActivity,
     tagsResult,
   ] = await Promise.all([
@@ -790,6 +818,7 @@ export async function getAdminCustomers(
     getCountsByUser("leads", userIds),
     getCountsByUser("reminders", userIds),
     getCountsByUser("map_searches", userIds),
+    getOpenTicketCountsByUser(userIds),
     getLatestActivityMap(userIds),
     getTagsForUsers(userIds),
   ]);
@@ -807,6 +836,7 @@ export async function getAdminCustomers(
       lastActivityAt: latestActivity.get(profile.user_id),
       leadCount: leadCounts.get(profile.user_id) ?? 0,
       mapSearchCount: mapCounts.get(profile.user_id) ?? 0,
+      openTicketCount: openTicketCounts.get(profile.user_id) ?? 0,
       paidTotal: paidTotals.get(profile.user_id) ?? 0,
       profile,
       subscription: subscriptionMap.get(profile.user_id),
@@ -1065,6 +1095,7 @@ export async function getAdminCustomerDetail(
     notificationCounts,
     securityCounts,
     supportCounts,
+    openTicketCounts,
     latestActivity,
     tagsResult,
     notesResult,
@@ -1086,6 +1117,7 @@ export async function getAdminCustomerDetail(
     getCountsByUser("notifications", [userId]),
     getCountsByUser("security_events", [userId]),
     getCountsByUser("support_access_logs", [userId], "target_user_id"),
+    getOpenTicketCountsByUser([userId]),
     getLatestActivityMap([userId]),
     getTagsForUsers([userId]),
     getCustomerNotes(userId),
@@ -1108,6 +1140,7 @@ export async function getAdminCustomerDetail(
     lastActivityAt: latestActivity.get(userId),
     leadCount: leadCounts.get(userId) ?? 0,
     mapSearchCount: mapCounts.get(userId) ?? 0,
+    openTicketCount: openTicketCounts.get(userId) ?? 0,
     paidTotal: paidTotals.get(userId) ?? 0,
     profile: syntheticProfile,
     subscription,

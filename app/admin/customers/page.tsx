@@ -205,6 +205,7 @@ export default async function AdminCustomersPage(props: AdminCustomersPageProps)
             "Plan",
             "Subscription",
             "Tổng chi tiêu",
+            "Tickets",
             "Usage",
             "Tags",
             "Đăng ký",
@@ -236,6 +237,12 @@ export default async function AdminCustomersPage(props: AdminCustomersPageProps)
               </td>
               <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">
                 {formatCurrency(customer.totalPaid)}
+              </td>
+              <td className="whitespace-nowrap px-4 py-3">
+                <AdminStatusBadge
+                  tone={customer.openTicketCount > 0 ? "yellow" : "green"}
+                  value={`${customer.openTicketCount} mở`}
+                />
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                 {customer.leadCount} lead · {customer.taskCount} task ·{" "}
