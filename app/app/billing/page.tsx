@@ -1,10 +1,20 @@
-import { CreditCard, HelpCircle, Landmark, QrCode, ShieldCheck, WalletCards } from "lucide-react";
+import {
+  CreditCard,
+  FileText,
+  HelpCircle,
+  Landmark,
+  PackagePlus,
+  QrCode,
+  ShieldCheck,
+  WalletCards,
+} from "lucide-react";
 import { BillingPlans } from "@/components/billing/BillingPlans";
 import { BillingUsageSummary } from "@/components/billing/BillingUsageSummary";
 import { CancellationReasonModal } from "@/components/billing/CancellationReasonModal";
 import { CurrentPlanCard } from "@/components/billing/CurrentPlanCard";
 import { PaymentHistory } from "@/components/billing/PaymentHistory";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { FeatureDisabledNotice } from "@/components/ui/FeatureDisabledNotice";
 import {
@@ -94,6 +104,24 @@ function PaymentMethodsSection({
           <p className="mt-2 text-sm leading-6 text-text-secondary sm:text-base sm:leading-7">
             SaleMap chỉ kích hoạt gói sau khi server xác nhận payment hợp lệ.
           </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            href="/app/billing/add-ons"
+            icon={<PackagePlus aria-hidden="true" className="h-4 w-4" />}
+            iconPosition="left"
+            variant="secondary"
+          >
+            Add-ons
+          </Button>
+          <Button
+            href="/app/billing/orders"
+            icon={<FileText aria-hidden="true" className="h-4 w-4" />}
+            iconPosition="left"
+            variant="outline"
+          >
+            Orders
+          </Button>
         </div>
       </div>
 

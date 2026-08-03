@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { DailyQuotaAction } from "@/lib/constants/quota";
+import {
+  applyEntitlementGrants,
+  getActiveEntitlementGrants,
+} from "@/lib/billing/entitlement-grants";
 import { getPlanEntitlements } from "@/lib/billing/plans";
 import { getSubscriptionStatus } from "@/lib/billing/subscriptions";
 import type { BillingEntitlements } from "@/lib/billing/types";
@@ -80,16 +84,20 @@ export async function getUserEntitlements(userId: string) {
   const supabase = createSupabaseAdminClient();
   const status = await getSubscriptionStatus(userId);
   const entitlements = getPlanEntitlements(status.planId);
-  const { data: override } = await supabase
-    .from("user_quota_overrides")
-    .select(
-      "map_search_daily_limit,route_search_daily_limit,ai_daily_limit,export_daily_limit,import_monthly_limit,lead_limit",
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
+  const [{ data: override }, grants] = await Promise.all([
+    supabase
+      .from("user_quota_overrides")
+      .select(
+        "map_search_daily_limit,route_search_daily_limit,ai_daily_limit,export_daily_limit,import_monthly_limit,lead_limit",
+      )
+      .eq("user_id", userId)
+      .maybeSingle(),
+    getActiveEntitlementGrants(userId),
+  ]);
+  const withGrants = applyEntitlementGrants(entitlements, grants);
 
   return {
-    entitlements: applyQuotaOverrides(entitlements, override as Record<string, unknown> | null),
+    entitlements: applyQuotaOverrides(withGrants, override as Record<string, unknown> | null),
     plan: status.plan,
     planId: status.planId,
     subscription: status.subscription,

@@ -1203,3 +1203,57 @@ Deployment note:
 Next suggested implementation step:
 
 - Subphase C: Orders, Product Catalog, Feature Catalog, versioned prices, add-ons, and entitlement grants.
+
+## 2026-08-03 Update - Phase 2E2 Subphase C Orders And Catalog
+
+Implemented the order, product catalog, feature catalog, add-on, and entitlement grant foundation.
+
+Created:
+
+- `supabase/orders-product-catalog.sql`
+- `lib/catalog/products.ts`
+- `lib/orders/orders.ts`
+- `lib/orders/order-status.ts`
+- `lib/billing/entitlement-grants.ts`
+- `lib/validators/catalog.ts`
+- `lib/validators/orders.ts`
+- `/app/billing/add-ons`
+- `/app/billing/orders`
+- `/admin/catalog`
+- `/admin/orders`
+- `/admin/orders/[orderId]`
+- `ORDERS_CATALOG_SUBPHASE_C_REPORT.md`
+
+Updated:
+
+- `/app/billing` now links directly to add-ons and order history.
+- Billing entitlements now include active `entitlement_grants` on top of plan entitlements and quota overrides.
+- Admin permissions now include catalog/order view/manage permissions.
+- Admin shell/navigation now exposes Catalog and Orders.
+- `SUPABASE_SQL_SETUP.md` now lists `supabase/orders-product-catalog.sql` as step 29.
+
+Security/billing notes:
+
+- Add-on order creation accepts only `priceId` from the client. Amount, currency, product, and entitlement templates are loaded server-side from active catalog rows.
+- Paid add-on orders enforce a minimum amount of 50,000 VND.
+- Entitlement provisioning is idempotent by `order_item:<itemId>:<featureKey>`.
+- Support can view catalog/orders, but only admin/super_admin can manage them.
+- payOS/VietQR catalog-order checkout is intentionally deferred until the order state model is stable.
+
+Validation results:
+
+```powershell
+npm run typecheck      # passed
+npm run lint           # passed
+npm run security:scan  # passed
+npm run build          # passed
+npm run smoke          # passed 40/40 checks
+```
+
+Deployment note:
+
+- Run `supabase/orders-product-catalog.sql` in Supabase before using add-ons, orders, catalog, or entitlement grants in production.
+
+Next suggested implementation step:
+
+- Subphase D: Support ticketing and customer support workflows, with strict user ownership, admin/support access controls, and sanitized audit metadata.

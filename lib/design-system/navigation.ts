@@ -73,10 +73,12 @@ export const mobileMoreNavItems: AppNavItem[] = [
 export type AdminNavIconKey =
   | "audit"
   | "billing"
+  | "catalog"
   | "customers"
   | "dashboard"
   | "feedback"
   | "payments"
+  | "orders"
   | "security"
   | "settings"
   | "subscriptions"
@@ -93,6 +95,8 @@ export type AdminNavItem = {
 export const adminPrimaryNavItems: AdminNavItem[] = [
   { href: "/admin", icon: "dashboard", label: "Tổng quan hệ thống" },
   { href: "/admin/customers", icon: "customers", label: "Khách hàng" },
+  { href: "/admin/orders", icon: "orders", label: "Đơn hàng" },
+  { href: "/admin/catalog", icon: "catalog", label: "Catalog" },
   { href: "/admin/users", icon: "users", label: "Người dùng" },
   { href: "/admin/subscriptions", icon: "subscriptions", label: "Gói dịch vụ" },
   { href: "/admin/payments", icon: "payments", label: "Thanh toán" },
