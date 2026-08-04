@@ -198,6 +198,11 @@ function checkCmsSecurityAndSeo() {
   mustContain("app/admin/cms/ai-agent/page.tsx", "MANAGE_CMS");
   mustContain("app/admin/cms/actions.ts", "createSeoCmsDraftAction");
   mustContain("lib/cms/seo-agent.ts", "getAIProvider");
+  mustContain("lib/providers/ai/default-provider.ts", "GEMINI_API_KEY");
+  mustContain("lib/providers/ai/default-provider.ts", "generateGeminiText");
+  mustContain("lib/providers/ai/default-provider.ts", "GEMINI_GENERATE_CONTENT_URL");
+  mustContain("lib/providers/ai/default-provider.ts", "responseMimeType");
+  mustContain("lib/providers/ai/default-provider.ts", "x-goog-api-key");
   mustContain("lib/cms/seo-agent.ts", "MIN_REVIEW_SCORE");
   mustContain("lib/cms/seo-agent.ts", 'formData.set("status", status)');
   mustContain("lib/cms/seo-agent.ts", 'source: "cms_seo_agent"');

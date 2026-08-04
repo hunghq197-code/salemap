@@ -61,7 +61,12 @@ const ENV_CHECKS: Array<{
   },
   {
     key: "AI_API_KEY",
-    message: "AI provider key cho trợ lý AI.",
+    message: "OpenAI provider key cho trợ lý AI khi AI_PROVIDER=openai.",
+    risk: "medium",
+  },
+  {
+    key: "GEMINI_API_KEY",
+    message: "Gemini provider key cho trợ lý AI khi AI_PROVIDER=gemini.",
     risk: "medium",
   },
   {

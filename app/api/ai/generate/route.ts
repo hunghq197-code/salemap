@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     if (error instanceof AIConfigError) {
       return errorResponse(
         "AI_NOT_CONFIGURED",
-        "Chưa cấu hình AI. Vui lòng thêm AI_API_KEY hoặc thử lại sau.",
+        "Chưa cấu hình AI. Vui lòng thêm AI_API_KEY hoặc GEMINI_API_KEY rồi thử lại sau.",
         503,
       );
     }

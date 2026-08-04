@@ -507,6 +507,7 @@ export async function createSeoCmsDraftPost(input: {
       searchIntent: parsed.searchIntent,
       source: "cms_seo_agent",
     },
+    responseMimeType: "application/json",
     systemPrompt: buildSystemPrompt(),
     temperature: 0.42,
     userPrompt: buildUserPrompt(parsed),

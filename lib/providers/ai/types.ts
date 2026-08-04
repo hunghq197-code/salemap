@@ -1,6 +1,7 @@
 export type GenerateTextInput = {
   maxTokens?: number;
   metadata?: Record<string, unknown>;
+  responseMimeType?: "application/json" | "text/plain";
   systemPrompt: string;
   temperature?: number;
   userPrompt: string;

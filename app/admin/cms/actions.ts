@@ -17,7 +17,12 @@ function cmsAgentErrorCode(error: unknown) {
   }
 
   if (error instanceof Error) {
-    if (error.message === "AI_PROVIDER_REQUEST_FAILED") {
+    if (
+      error.name === "AbortError" ||
+      error.message === "AI_PROVIDER_EMPTY_OUTPUT" ||
+      error.message === "AI_PROVIDER_NOT_SUPPORTED" ||
+      error.message === "AI_PROVIDER_REQUEST_FAILED"
+    ) {
       return "ai_request_failed";
     }
 
@@ -27,6 +32,18 @@ function cmsAgentErrorCode(error: unknown) {
   }
 
   return "agent_failed";
+}
+
+function logCmsAgentError(error: unknown) {
+  if (error instanceof Error) {
+    console.error("CMS SEO Agent failed", {
+      message: error.message,
+      name: error.name,
+    });
+    return;
+  }
+
+  console.error("CMS SEO Agent failed", { message: "UNKNOWN_ERROR" });
 }
 
 export async function createCmsPostAction(formData: FormData) {
@@ -82,6 +99,7 @@ export async function createSeoCmsDraftAction(formData: FormData) {
     revalidatePath("/admin/cms/posts");
     revalidatePath("/blog");
   } catch (error) {
+    logCmsAgentError(error);
     redirect(`/admin/cms/ai-agent?error=${cmsAgentErrorCode(error)}`);
   }
 

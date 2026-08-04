@@ -14,8 +14,8 @@ type CmsSeoAgentPageProps = {
 
 const errorMessages: Record<string, string> = {
   agent_failed: "AI Agent chưa tạo được draft lúc này. Vui lòng thử lại sau.",
-  ai_not_configured: "Chưa cấu hình AI_API_KEY cho server.",
-  ai_request_failed: "AI provider chưa phản hồi thành công. Vui lòng kiểm tra AI_API_KEY/AI_MODEL.",
+  ai_not_configured: "Chưa cấu hình AI key cho server. Nếu dùng Gemini, thêm GEMINI_API_KEY.",
+  ai_request_failed: "AI provider chưa phản hồi thành công. Vui lòng kiểm tra AI_PROVIDER, API key và model.",
   invalid_ai_output: "AI trả về nội dung chưa đúng định dạng CMS. Hãy thử lại với chủ đề cụ thể hơn.",
   invalid_input: "Thông tin đầu vào chưa hợp lệ.",
 };

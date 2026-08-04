@@ -9,7 +9,7 @@
 ## Secrets
 
 - Không dùng `SUPABASE_SERVICE_ROLE_KEY` trong client component.
-- Không đưa `GOOGLE_MAPS_API_KEY`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `AI_API_KEY`, `AI_IMAGE_API_KEY` vào `NEXT_PUBLIC_*`.
+- Không đưa `GOOGLE_MAPS_API_KEY`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `AI_API_KEY`, `GEMINI_API_KEY`, `AI_IMAGE_API_KEY` vào `NEXT_PUBLIC_*`.
 - `/admin/system` chỉ hiển thị present/missing, không hiển thị secret value.
 
 ## Data Privacy
