@@ -36,9 +36,24 @@ function cmsAgentErrorCode(error: unknown) {
 
 function logCmsAgentError(error: unknown) {
   if (error instanceof Error) {
+    const details = error as {
+      provider?: unknown;
+      providerCode?: unknown;
+      providerMessage?: unknown;
+      status?: unknown;
+    };
+
     console.error("CMS SEO Agent failed", {
       message: error.message,
       name: error.name,
+      provider: typeof details.provider === "string" ? details.provider : undefined,
+      providerCode:
+        typeof details.providerCode === "string" ? details.providerCode : undefined,
+      providerMessage:
+        typeof details.providerMessage === "string"
+          ? details.providerMessage
+          : undefined,
+      status: typeof details.status === "number" ? details.status : undefined,
     });
     return;
   }

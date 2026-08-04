@@ -1762,18 +1762,19 @@ Runtime behavior:
 - Set `GEMINI_API_KEY` to the key from Google AI Studio.
 - `GEMINI_MODEL` controls the Gemini model.
 - If `GEMINI_MODEL` is empty, `AI_MODEL` is used as a fallback.
-- If both are empty, the provider defaults to `gemini-3.6-flash`.
+- If both are empty, the provider defaults to `gemini-2.5-flash`.
 - The OpenAI path still works with `AI_PROVIDER=openai` and `AI_API_KEY`.
 - Gemini text generation uses the Google Gemini `models.generateContent` API.
 - CMS SEO Agent requests `application/json` output when the provider supports it.
 - AI image generation is unchanged and still uses OpenAI Images API via `AI_IMAGE_API_KEY` or `AI_API_KEY`; keep `CMS_AI_IMAGE_GENERATION_ENABLED=false` when running text-only Gemini.
+- `gemini-2.5-flash` is the recommended starter model because Gemini pricing docs list a free tier for it. `gemini-3.6-flash` may require higher tier/billing access for some projects.
 
 Recommended Gemini env:
 
 ```env
 AI_PROVIDER=gemini
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-2.5-flash
 AI_MODEL=
 CMS_AI_IMAGE_GENERATION_ENABLED=false
 ```

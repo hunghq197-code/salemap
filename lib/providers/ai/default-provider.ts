@@ -15,7 +15,28 @@ export class AIConfigError extends Error {
   }
 }
 
-const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
+export class AIProviderRequestError extends Error {
+  provider: string;
+  providerCode?: string;
+  providerMessage?: string;
+  status: number;
+
+  constructor(input: {
+    provider: string;
+    providerCode?: string;
+    providerMessage?: string;
+    status: number;
+  }) {
+    super("AI_PROVIDER_REQUEST_FAILED");
+    this.name = "AIProviderRequestError";
+    this.provider = input.provider;
+    this.providerCode = input.providerCode;
+    this.providerMessage = input.providerMessage;
+    this.status = input.status;
+  }
+}
+
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
 const GEMINI_GENERATE_CONTENT_URL = "https://generativelanguage.googleapis.com/v1beta";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
@@ -127,6 +148,24 @@ function parseGeminiUsage(raw: unknown) {
   };
 }
 
+function parseProviderError(raw: unknown) {
+  const error =
+    raw && typeof raw === "object"
+      ? (raw as { error?: Record<string, unknown> }).error
+      : null;
+
+  return {
+    providerCode:
+      typeof error?.status === "string"
+        ? error.status
+        : typeof error?.code === "number"
+          ? String(error.code)
+          : undefined,
+    providerMessage:
+      typeof error?.message === "string" ? error.message.slice(0, 220) : undefined,
+  };
+}
+
 function shouldSendGeminiTemperature(model: string) {
   return !model.toLowerCase().startsWith("gemini-3");
 }
@@ -166,7 +205,11 @@ async function generateOpenAIText(
   const raw = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error("AI_PROVIDER_REQUEST_FAILED");
+    throw new AIProviderRequestError({
+      provider: "openai",
+      status: response.status,
+      ...parseProviderError(raw),
+    });
   }
 
   const text = parseOpenAIOutputText(raw);
@@ -203,8 +246,13 @@ async function generateGeminiText(
     generationConfig.temperature = input.temperature;
   }
 
-  const response = await fetch(
+  const url = new URL(
     `${GEMINI_GENERATE_CONTENT_URL}/${geminiModelPath(config.model)}:generateContent`,
+  );
+  url.searchParams.set("key", config.apiKey);
+
+  const response = await fetch(
+    url,
     {
       body: JSON.stringify({
         contents: [
@@ -220,7 +268,6 @@ async function generateGeminiText(
       }),
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": config.apiKey,
       },
       method: "POST",
       signal,
@@ -229,7 +276,11 @@ async function generateGeminiText(
   const raw = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error("AI_PROVIDER_REQUEST_FAILED");
+    throw new AIProviderRequestError({
+      provider: "gemini",
+      status: response.status,
+      ...parseProviderError(raw),
+    });
   }
 
   const text = parseGeminiOutputText(raw);
