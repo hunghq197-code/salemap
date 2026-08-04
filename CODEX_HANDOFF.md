@@ -1486,3 +1486,65 @@ npm run test:phase2e2
 npm run build
 npm run smoke
 ```
+
+## 2026-08-04 Update - Public Beta Gate Follow-Up
+
+This follow-up supplemented missing release gate artifacts and reran the local gates. No production deploy, production migration, production payment enablement, or production data mutation was performed.
+
+Created:
+
+- `PUBLIC_BETA_RELEASE_REPORT.md`
+- `PUBLIC_BETA_FEATURE_MATRIX.md`
+- `PUBLIC_BETA_ENV_CHECKLIST.md`
+- `PUBLIC_BETA_MIGRATION_PLAN.md`
+- `PUBLIC_BETA_BACKUP_PLAN.md`
+- `PUBLIC_BETA_DEPLOYMENT_CHECKLIST.md`
+- `PUBLIC_BETA_SECURITY_REVIEW.md`
+- `PUBLIC_BETA_PAYMENT_CHECKLIST.md`
+- `PUBLIC_BETA_ACCESS_PLAN.md`
+- `PUBLIC_BETA_SUPPORT_PLAYBOOK.md`
+- `PUBLIC_BETA_DATA_RETENTION.md`
+- `PUBLIC_BETA_PERFORMANCE_REPORT.md`
+- `PUBLIC_BETA_BROWSER_MATRIX.md`
+- `PUBLIC_BETA_INCIDENT_PLAN.md`
+- `PUBLIC_BETA_ROLLBACK_PLAN.md`
+- `PUBLIC_BETA_RELEASE_RUNBOOK.md`
+- `PUBLIC_BETA_RELEASE_NOTES.md`
+- `MOBILE_RELEASE_GATE.md`
+- `MOBILE_RECOVERY_AUDIT.md`
+- `MOBILE_STABILIZATION_RELEASE_REPORT.md`
+- `UI_PHASE_2E1_SETTINGS_NOTIFICATIONS_REPORT.md`
+- `scripts/mobile-release-gate.mjs`
+
+Updated:
+
+- `package.json`
+  - Added `npm run test`.
+  - Added `npm run test:e2e`.
+  - Added `npm run test:mobile`.
+  - Added `npm run test:release`.
+- `package-lock.json`
+  - `npm audit fix --cache .npm-cache` updated transitive vulnerable packages and brought npm audit to 0 vulnerabilities.
+
+Validation rerun:
+
+```powershell
+npm ci --cache .npm-cache                         # passed, 0 vulnerabilities
+npm audit --cache .npm-cache --audit-level=moderate # passed, 0 vulnerabilities
+npm run lint                                      # passed
+npm run typecheck                                 # passed
+npm run security:scan                             # passed
+npm run test                                      # passed
+npm run test:e2e                                  # passed, local HTTP smoke 47/47
+npm run build                                     # passed
+npm run smoke                                     # passed 47/47
+```
+
+Current Public Beta gate decision remains `FAIL`, but for a smaller and more honest reason set:
+
+- Backup existence and restore drill are still not verified.
+- Production/staging migration and latest RLS application evidence is still missing.
+- Authenticated browser E2E for normal user/support/admin/super_admin is still missing.
+- Production payment-disabled evidence or full payment checklist pass is still missing.
+- Production monitoring/alert routing evidence is still missing.
+- Manual owner approvals are still missing.

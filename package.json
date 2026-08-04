@@ -9,9 +9,13 @@
     "lint": "eslint .",
     "seed:staging": "node scripts/seed-staging.mjs",
     "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
+    "test": "npm run test:release",
+    "test:e2e": "npm run smoke",
+    "test:mobile": "node scripts/mobile-release-gate.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:staging": "node scripts/smoke-staging.mjs",
     "test:phase2e2": "node scripts/phase-2e2-regression.mjs",
+    "test:release": "npm run test:phase2e2 && npm run test:mobile",
     "security:scan": "node scripts/security-scan.mjs",
     "typecheck": "tsc --noEmit"
   },
