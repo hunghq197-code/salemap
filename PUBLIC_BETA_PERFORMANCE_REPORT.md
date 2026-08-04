@@ -19,6 +19,7 @@ Local build and smoke passed, but Public Beta performance cannot be approved wit
 | Static page generation | 102/102 pages in 2.4s |
 | Route tree | Built successfully |
 | Local smoke | 47/47 checks passed |
+| Domain smoke | `https://salemap.io.vn` smoke passed |
 | Mobile source gate | `MOBILE RELEASE GATE PASS` |
 
 ## Performance Risks

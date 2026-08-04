@@ -83,9 +83,10 @@ if (failures.length > 0) {
   for (const failure of failures) {
     console.error(`- ${failure}`);
   }
-  process.exitCode = 1;
+  process.exit(1);
 } else {
   console.log("Smoke test passed.");
+  process.exit(0);
 }
 
 function normalizeBaseUrl(value) {

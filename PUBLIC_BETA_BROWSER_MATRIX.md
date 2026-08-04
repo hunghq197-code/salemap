@@ -14,6 +14,7 @@ No full browser/device matrix was executed during this gate. Local smoke uses No
 | Evidence | Result |
 | --- | --- |
 | Local fetch smoke | Passed 47/47 checks. |
+| Domain fetch smoke | `https://salemap.io.vn` passed public routes, protected/admin redirects, security headers, and manifest. |
 | Production build | Passed. |
 | Service worker sensitive route skip | Confirmed by source review. |
 | Mobile dashboard release gate | Source gate passes via `npm run test:mobile`. |

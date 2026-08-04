@@ -1548,3 +1548,22 @@ Current Public Beta gate decision remains `FAIL`, but for a smaller and more hon
 - Production payment-disabled evidence or full payment checklist pass is still missing.
 - Production monitoring/alert routing evidence is still missing.
 - Manual owner approvals are still missing.
+
+## 2026-08-04 Update - Domain Smoke Execution
+
+After the Public Beta gate commit was pushed, the deployed domain was smoke-tested read-only:
+
+```powershell
+npm run smoke:staging -- https://salemap.io.vn
+```
+
+Result:
+
+- Public routes passed.
+- Protected app routes redirected to `/login`.
+- Admin routes redirected to `/login`.
+- Security headers passed.
+- PWA manifest passed.
+- `scripts/smoke-staging.mjs` was updated to call `process.exit(0)` / `process.exit(1)` explicitly after reporting so CI does not hang after a completed smoke run.
+
+This does not replace authenticated staging QA, Supabase migration proof, backup/restore drill, payment safety verification, or monitoring verification.

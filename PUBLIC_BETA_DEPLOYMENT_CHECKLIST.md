@@ -25,6 +25,7 @@ Local build and smoke pass, but deployment readiness requires production/staging
 | `npm run test:mobile` | Passed. |
 | `npm run build` | Passed. |
 | `npm run smoke` | Passed 47/47 local checks. |
+| `npm run smoke:staging -- https://salemap.io.vn` | Passed public routes, protected/admin redirects, security headers, and PWA manifest. |
 
 ## Deployment Checklist
 
@@ -39,7 +40,8 @@ Local build and smoke pass, but deployment readiness requires production/staging
 - [ ] Confirm Sentry/log alert routing.
 - [ ] Confirm payment is disabled unless payment checklist passes.
 - [ ] Confirm beta access is invite-only or capped.
-- [ ] Run staging smoke against deployed URL.
+- [x] Run unauthenticated smoke against deployed domain `https://salemap.io.vn`.
+- [ ] Run authenticated staging/browser QA against deployed URL.
 - [ ] Run authenticated QA with beta test accounts.
 - [ ] Get manual approval from product/security/data/payment owners.
 

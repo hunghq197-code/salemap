@@ -28,6 +28,7 @@ SaleMap is not ready for Public Beta today. The source builds and passes local s
 | `npm run test:mobile` | Pass | Mobile source gate completed with `MOBILE RELEASE GATE PASS`. |
 | `npm run build` | Pass | Next.js production build completed; 102 static pages generated. |
 | `npm run smoke` | Pass | Local smoke completed 47/47 checks. |
+| `npm run smoke:staging -- https://salemap.io.vn` | Pass | Domain smoke passed public routes, protected/admin redirects, security headers, and PWA manifest. |
 
 ## Blockers
 
@@ -44,7 +45,7 @@ SaleMap is not ready for Public Beta today. The source builds and passes local s
 
 ## Major
 
-1. Staging smoke was not run against `https://salemap.io.vn`.
+1. Domain smoke passed on `https://salemap.io.vn`, but authenticated browser QA was not run.
 2. Mobile source gate passes, but real iOS/Android visual/browser matrix is not complete.
 3. Desktop visual/browser matrix is not complete.
 4. No restore runbook execution record or database point-in-time recovery evidence was found.
@@ -91,7 +92,7 @@ SaleMap is not ready for Public Beta today. The source builds and passes local s
 | Release decision | `FAIL` |
 | Blocker | Backup/restore missing; authenticated staging/production user isolation E2E missing. |
 | Critical | Migration/RLS not verified; payment readiness unverified; monitoring unverified; production payment-disabled evidence missing. |
-| Major | Staging URL smoke not run; mobile/desktop browser matrix incomplete; admin scale risks; no runtime pin files found. |
+| Major | Domain unauthenticated smoke pass; authenticated browser QA, mobile/desktop browser matrix, admin scale review, and runtime pin files remain incomplete. |
 | Minor | Public template category policy needs review; analytics/search env missing locally; approvals not recorded. |
 | Feature disabled | Billing/payOS/VietQR, open registration, automatic add-on commerce, CMS upload storage, AI unless controlled. |
 | Provider enabled | Supabase, Google Maps, AI, Resend, Sentry, PostHog, Clarity appear configured locally by key presence only. |
