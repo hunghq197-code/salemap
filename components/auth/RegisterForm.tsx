@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AuthDivider } from "@/components/auth/AuthDivider";
+import { GoogleOAuthButton } from "@/components/auth/GoogleOAuthButton";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import {
   trackInviteCodeRedeemed,
@@ -35,6 +37,7 @@ type InviteValidateResponse = {
 };
 
 type RegisterFormProps = {
+  authErrorCode?: string;
   inviteOnly?: boolean;
 };
 
@@ -46,9 +49,15 @@ const registerCopy = {
     confirmPassword: "Confirm password",
     confirmPasswordPlaceholder: "Re-enter password",
     createError: "Could not create an account right now. Please try again later.",
+    divider: "or",
     email: "Email",
     fullName: "Full name",
     fullNamePlaceholder: "Nguyen Van A",
+    googleCancelled: "Google login was cancelled. Please try again when you are ready.",
+    googleInviteRequired:
+      "This beta is currently invite-only. Please create an account with an invite code first.",
+    googleLoginFailed:
+      "Could not complete Google login. Please check the Supabase Google provider settings and try again.",
     inviteHint: "You need a valid invite code to create an account.",
     inviteInvalid: "The invite code is invalid or has no uses left.",
     inviteLabel: "Invite code",
@@ -70,6 +79,12 @@ const registerCopy = {
     unknownCatch: "Could not register right now. Please try again later.",
   },
   vi: {
+    divider: "hoặc",
+    googleCancelled: "Bạn đã hủy đăng nhập Google. Hãy thử lại khi sẵn sàng.",
+    googleInviteRequired:
+      "Beta hiện đang yêu cầu mã mời. Hãy tạo tài khoản bằng mã mời trước.",
+    googleLoginFailed:
+      "Chưa thể hoàn tất đăng nhập Google. Hãy kiểm tra cấu hình Google provider trong Supabase rồi thử lại.",
     accountPrompt: "Đã có tài khoản?",
     betaNote:
       "Tài khoản sẽ được tạo để đăng nhập ngay. Xác thực email sẽ bật lại sau khi cấu hình SMTP ổn định.",
@@ -101,6 +116,8 @@ const registerCopy = {
   },
 } as const;
 
+type RegisterCopy = (typeof registerCopy)[keyof typeof registerCopy];
+
 function inputClasses() {
   return "mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-slate-400 focus:border-ocean focus:ring-2 focus:ring-ocean/25 disabled:cursor-not-allowed disabled:bg-slate-50";
 }
@@ -113,7 +130,7 @@ function getApiErrorMessage(payload: BetaRegisterResponse, fallback: string) {
   return fallback;
 }
 
-function getLoginAfterRegisterErrorMessage(errorMessage: string, copy: (typeof registerCopy)[keyof typeof registerCopy]) {
+function getLoginAfterRegisterErrorMessage(errorMessage: string, copy: RegisterCopy) {
   const message = errorMessage.toLowerCase();
 
   if (message.includes("invalid login credentials")) {
@@ -123,11 +140,32 @@ function getLoginAfterRegisterErrorMessage(errorMessage: string, copy: (typeof r
   return copy.loginAfterRegisterUnknown;
 }
 
-export function RegisterForm({ inviteOnly = false }: RegisterFormProps) {
+function getAuthRedirectErrorMessage(errorCode: string | undefined, copy: RegisterCopy) {
+  if (errorCode === "google-cancelled") {
+    return copy.googleCancelled;
+  }
+
+  if (errorCode === "google-invite-required") {
+    return copy.googleInviteRequired;
+  }
+
+  if (errorCode === "google-login-failed") {
+    return copy.googleLoginFailed;
+  }
+
+  return "";
+}
+
+export function RegisterForm({
+  authErrorCode,
+  inviteOnly = false,
+}: RegisterFormProps) {
   const router = useRouter();
   const { locale } = useLanguage();
   const copy = registerCopy[locale];
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() =>
+    getAuthRedirectErrorMessage(authErrorCode, copy),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -249,6 +287,13 @@ export function RegisterForm({ inviteOnly = false }: RegisterFormProps) {
         {copy.betaNote}
         {inviteOnly ? copy.inviteNote : ""}
       </div>
+
+      {!inviteOnly ? (
+        <>
+          <GoogleOAuthButton disabled={isSubmitting} source="register" />
+          <AuthDivider label={copy.divider} />
+        </>
+      ) : null}
 
       <div>
         <label className="text-sm font-bold text-ink" htmlFor="register-name">

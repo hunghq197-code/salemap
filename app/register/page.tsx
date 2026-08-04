@@ -11,12 +11,24 @@ export const metadata: Metadata = {
   title: "Đăng ký tài khoản - SaleMap",
 };
 
-export default function RegisterPage() {
+type RegisterPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+function getString(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function RegisterPage(props: RegisterPageProps) {
+  const searchParams = await props.searchParams;
   const inviteOnly = process.env.NEXT_PUBLIC_BETA_INVITE_ONLY === "true";
 
   return (
     <AuthShell screen="register">
-      <RegisterForm inviteOnly={inviteOnly} />
+      <RegisterForm
+        authErrorCode={getString(searchParams?.authError)}
+        inviteOnly={inviteOnly}
+      />
     </AuthShell>
   );
 }

@@ -1567,3 +1567,50 @@ Result:
 - `scripts/smoke-staging.mjs` was updated to call `process.exit(0)` / `process.exit(1)` explicitly after reporting so CI does not hang after a completed smoke run.
 
 This does not replace authenticated staging QA, Supabase migration proof, backup/restore drill, payment safety verification, or monitoring verification.
+
+## 2026-08-04 Update - Google/Gmail Login
+
+Implemented source support for Google/Gmail login through Supabase OAuth. No production dashboard setting, production deploy, or database mutation was performed in this step.
+
+Changed:
+
+- `components/auth/GoogleOAuthButton.tsx`
+  - Adds a reusable Google OAuth button using `supabase.auth.signInWithOAuth({ provider: "google" })`.
+  - Uses `/auth/callback?provider=google&source=...` as the PKCE callback.
+- `components/auth/AuthDivider.tsx`
+  - Adds a small shared auth divider for login/register forms.
+- `components/auth/LoginForm.tsx`
+  - Adds Gmail login to the login form.
+  - Shows friendly OAuth callback errors.
+- `components/auth/RegisterForm.tsx`
+  - Adds Gmail registration only when `NEXT_PUBLIC_BETA_INVITE_ONLY` is not true.
+  - Keeps invite-only registration gated behind invite code.
+- `app/auth/callback/route.ts`
+  - Handles Google OAuth callback errors separately from password reset errors.
+  - Exchanges the PKCE code, creates/updates `user_profiles.full_name` from Google metadata, and redirects to the safe next path.
+  - Blocks brand-new Google OAuth users when invite-only mode is enabled and no `user_profiles` row exists.
+- `app/login/page.tsx`, `app/register/page.tsx`
+  - Pass `authError` query params into auth forms.
+- `.env.example`
+  - Documents that Google OAuth secrets belong in Supabase provider settings, not frontend env/source.
+- `GOOGLE_OAUTH_SETUP.md`
+  - Adds dashboard setup steps for Supabase and Google Cloud using `https://salemap.io.vn`.
+
+Validation:
+
+```powershell
+npm run typecheck                               # passed
+npm run lint                                    # passed
+npm run security:scan                           # passed
+npm run test                                    # passed
+npm run build                                   # passed
+npm run smoke                                   # passed 47/47
+npm audit --cache .npm-cache --audit-level=moderate # passed, 0 vulnerabilities
+```
+
+Required before real Gmail login works:
+
+- Enable Google provider in Supabase Auth.
+- Create Google OAuth Web Client.
+- Add `https://salemap.io.vn/auth/callback` to Supabase Auth Redirect URLs.
+- Add the Supabase Auth callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`) to Google OAuth Authorized redirect URIs.

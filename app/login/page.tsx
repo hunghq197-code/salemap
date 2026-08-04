@@ -11,10 +11,20 @@ export const metadata: Metadata = {
   title: "Đăng nhập - SaleMap",
 };
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+function getString(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function LoginPage(props: LoginPageProps) {
+  const searchParams = await props.searchParams;
+
   return (
     <AuthShell screen="login">
-      <LoginForm />
+      <LoginForm authErrorCode={getString(searchParams?.authError)} />
     </AuthShell>
   );
 }

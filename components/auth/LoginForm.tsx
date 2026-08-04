@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AuthDivider } from "@/components/auth/AuthDivider";
+import { GoogleOAuthButton } from "@/components/auth/GoogleOAuthButton";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { trackUserLoggedIn } from "@/lib/analytics/client";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -12,8 +14,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 const loginCopy = {
   en: {
     accountPrompt: "No account yet?",
+    divider: "or",
     emailNotConfirmed:
       "This email has not been confirmed, so Supabase is blocking login. For internal testing, turn off Confirm Email in Supabase or confirm the user manually in Authentication > Users.",
+    googleCancelled: "Google login was cancelled. Please try again when you are ready.",
+    googleInviteRequired:
+      "This Google account is not in the beta yet. Please create an account with an invite code first, or contact the SaleMap admin.",
+    googleLoginFailed:
+      "Could not complete Google login. Please check the Supabase Google provider settings and try again.",
     invalidCredentials:
       "Email or password is incorrect. Use Forgot password if you no longer remember it.",
     forgotPassword: "Forgot password?",
@@ -33,6 +41,12 @@ const loginCopy = {
     unknownCatch: "Could not log in right now. Please try again later.",
   },
   vi: {
+    divider: "hoặc",
+    googleCancelled: "Bạn đã hủy đăng nhập Google. Hãy thử lại khi sẵn sàng.",
+    googleInviteRequired:
+      "Tài khoản Google này chưa nằm trong beta. Hãy đăng ký bằng mã mời trước, hoặc liên hệ admin SaleMap.",
+    googleLoginFailed:
+      "Chưa thể hoàn tất đăng nhập Google. Hãy kiểm tra cấu hình Google provider trong Supabase rồi thử lại.",
     accountPrompt: "Chưa có tài khoản?",
     emailNotConfirmed:
       "Email này chưa được xác nhận nên Supabase chưa cho đăng nhập. Khi test nội bộ, hãy tắt Confirm Email trong Supabase hoặc vào Authentication > Users để confirm user thủ công.",
@@ -58,6 +72,10 @@ const loginCopy = {
 } as const;
 
 type LoginCopy = (typeof loginCopy)[keyof typeof loginCopy];
+
+type LoginFormProps = {
+  authErrorCode?: string;
+};
 
 function inputClasses() {
   return "mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-slate-400 focus:border-ocean focus:ring-2 focus:ring-ocean/25 disabled:cursor-not-allowed disabled:bg-slate-50";
@@ -113,11 +131,29 @@ function getUnexpectedLoginErrorMessage(
   return copy.unknownCatch;
 }
 
-export function LoginForm() {
+function getAuthRedirectErrorMessage(errorCode: string | undefined, copy: LoginCopy) {
+  if (errorCode === "google-cancelled") {
+    return copy.googleCancelled;
+  }
+
+  if (errorCode === "google-invite-required") {
+    return copy.googleInviteRequired;
+  }
+
+  if (errorCode === "google-login-failed") {
+    return copy.googleLoginFailed;
+  }
+
+  return "";
+}
+
+export function LoginForm({ authErrorCode }: LoginFormProps) {
   const router = useRouter();
   const { locale } = useLanguage();
   const copy = loginCopy[locale];
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() =>
+    getAuthRedirectErrorMessage(authErrorCode, copy),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -177,6 +213,13 @@ export function LoginForm() {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      <GoogleOAuthButton
+        disabled={isSubmitting || isRedirecting}
+        source="login"
+      />
+
+      <AuthDivider label={copy.divider} />
+
       <div>
         <label className="text-sm font-bold text-ink" htmlFor="login-email">
           Email
