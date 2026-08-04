@@ -9,6 +9,17 @@ export const cmsSeoAgentSearchIntentValues = [
   "local",
 ] as const;
 
+export const cmsSeoAgentFormSearchIntentValues = [
+  "auto",
+  ...cmsSeoAgentSearchIntentValues,
+] as const;
+
+const optionalAgentText = (maxLength: number) =>
+  z.preprocess(
+    (value) => sanitizeCmsText(value, maxLength),
+    z.string().trim().max(maxLength).optional(),
+  );
+
 const slugSchema = z
   .string()
   .trim()
@@ -54,24 +65,17 @@ export const cmsSeoAgentFormSchema = z.object({
     (value) => sanitizeCmsText(value, 220),
     z.string().trim().min(3).max(220),
   ),
-  notes: z.preprocess(
-    (value) => sanitizeCmsText(value, 1200),
-    z.string().max(1200).optional(),
+  businessGoal: z.preprocess(
+    (value) => sanitizeCmsText(value, 220),
+    z.string().trim().min(5).max(220),
   ),
+  generateImage: z.boolean().optional(),
+  notes: optionalAgentText(1200),
   primaryCategoryId: z.string().uuid().optional().or(z.literal("")),
-  primaryKeyword: z.preprocess(
-    (value) => sanitizeCmsText(value, 120),
-    z.string().trim().min(2).max(120),
-  ),
-  searchIntent: z.enum(cmsSeoAgentSearchIntentValues),
-  secondaryKeywords: z.preprocess(
-    (value) => sanitizeCmsText(value, 260),
-    z.string().max(260).optional(),
-  ),
-  topic: z.preprocess(
-    (value) => sanitizeCmsText(value, 180),
-    z.string().trim().min(5).max(180),
-  ),
+  primaryKeyword: optionalAgentText(120),
+  searchIntent: z.enum(cmsSeoAgentFormSearchIntentValues),
+  secondaryKeywords: optionalAgentText(260),
+  topic: optionalAgentText(180),
 });
 
 export type CmsPostFormInput = z.infer<typeof cmsPostFormSchema>;

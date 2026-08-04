@@ -198,8 +198,14 @@ function checkCmsSecurityAndSeo() {
   mustContain("app/admin/cms/ai-agent/page.tsx", "MANAGE_CMS");
   mustContain("app/admin/cms/actions.ts", "createSeoCmsDraftAction");
   mustContain("lib/cms/seo-agent.ts", "getAIProvider");
-  mustContain("lib/cms/seo-agent.ts", 'formData.set("status", "review")');
+  mustContain("lib/cms/seo-agent.ts", "MIN_REVIEW_SCORE");
+  mustContain("lib/cms/seo-agent.ts", 'formData.set("status", status)');
   mustContain("lib/cms/seo-agent.ts", 'source: "cms_seo_agent"');
+  mustContain("lib/cms/seo-agent.ts", "CMS_AI_IMAGE_GENERATION_ENABLED");
+  mustContain("lib/cms/seo-agent.ts", "generateFeaturedImage");
+  mustContain("lib/validators/cms.ts", "cmsSeoAgentFormSearchIntentValues");
+  mustContain("components/cms/CmsSeoAgentForm.tsx", "businessGoal");
+  mustContain("components/cms/CmsSeoAgentForm.tsx", "generateImage");
   mustContain("components/cms/CmsContentRenderer.tsx", "parseCmsContentBlocks");
   mustContain("app/rss.xml/route.ts", "application/rss+xml");
   mustContain("app/api/cron/cms-publish/route.ts", "CRON_SECRET");

@@ -1677,3 +1677,77 @@ npm run security:scan
 npm run test
 npm run build
 ```
+
+## 2026-08-04 Update - CMS AI SEO Agent Automation Upgrade
+
+Upgraded the CMS AI SEO Agent from guided drafting to an automated planning pipeline. It still does not auto-publish.
+
+Changed:
+
+- The `/admin/cms/ai-agent` form now supports auto keyword/topic planning from:
+  - business goal;
+  - optional topic seed;
+  - optional primary/secondary keyword seeds;
+  - audience;
+  - optional preferred search intent.
+- `lib/cms/seo-agent.ts` now asks AI for a strict JSON payload containing:
+  - keyword plan;
+  - selected keyword;
+  - search intent;
+  - article draft;
+  - SEO metadata;
+  - Open Graph metadata;
+  - image prompt.
+- Added deterministic SEO QA gate:
+  - content depth;
+  - SEO title length;
+  - SEO description length;
+  - semantic H2/list structure;
+  - keyword usage;
+  - unsupported strong-claim guard.
+- Draft status behavior:
+  - QA score >= 80 creates `review`;
+  - lower score creates `draft`;
+  - no auto `published` status is created by the agent.
+- Added optional AI hero image generation:
+  - gated by `CMS_AI_IMAGE_GENERATION_ENABLED=true`;
+  - uses `AI_IMAGE_API_KEY` or falls back to `AI_API_KEY`;
+  - model defaults to `gpt-image-1-mini`;
+  - uploads generated image to Supabase Storage bucket `CMS_MEDIA_BUCKET` (default `cms-media`);
+  - inserts a `cms_media` metadata row;
+  - sets CMS featured image and OG image URL when upload succeeds.
+- Updated `.env.example`, system health checks, security scan secret list, security checklist, and Phase 2E2 regression gate.
+
+Required env for text generation:
+
+```env
+AI_API_KEY=
+AI_MODEL=
+AI_PROVIDER=
+```
+
+Optional env for image generation:
+
+```env
+CMS_AI_IMAGE_GENERATION_ENABLED=true
+AI_IMAGE_API_KEY=
+AI_IMAGE_MODEL=gpt-image-1-mini
+AI_IMAGE_SIZE=1536x1024
+CMS_MEDIA_BUCKET=cms-media
+```
+
+Operational notes:
+
+- Create a public Supabase Storage bucket matching `CMS_MEDIA_BUCKET` before enabling image generation.
+- Keep `CMS_AI_IMAGE_GENERATION_ENABLED=false` until storage and OpenAI image billing are verified.
+- For Google Search Console keyword data, a separate OAuth/service-account integration is still required. Current auto keyword planning is AI-assisted ideation, not live GSC query import.
+
+Validation target:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run test
+npm run build
+```

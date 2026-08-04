@@ -65,6 +65,16 @@ const ENV_CHECKS: Array<{
     risk: "medium",
   },
   {
+    key: "AI_IMAGE_API_KEY",
+    message: "Optional AI image provider key cho CMS SEO Agent.",
+    risk: "low",
+  },
+  {
+    key: "CMS_MEDIA_BUCKET",
+    message: "Supabase Storage bucket cho media CMS/AI hero image.",
+    risk: "low",
+  },
+  {
     key: "RESEND_API_KEY",
     message: "Email provider key cho reminder/digest.",
     risk: "low",
