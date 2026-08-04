@@ -6,6 +6,10 @@ import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics/client";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import {
+  isVietnamProvinceName,
+  VIETNAM_PROVINCES,
+} from "@/lib/constants/vietnam-administrative";
+import {
   ONBOARDING_INDUSTRY_OPTIONS,
   ONBOARDING_PRIMARY_GOAL_OPTIONS,
   ONBOARDING_ROLE_OPTIONS,
@@ -37,6 +41,10 @@ type ApiResponse = {
   success?: boolean;
 };
 
+type OnboardingFormProps = {
+  initialPrimaryCity?: string | null;
+};
+
 function optionClasses(isSelected: boolean) {
   return [
     "min-h-12 rounded-lg border px-4 py-3 text-left text-sm font-semibold leading-6 transition",
@@ -46,9 +54,8 @@ function optionClasses(isSelected: boolean) {
   ].join(" ");
 }
 
-function inputClasses() {
-  return "mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-ink outline-none transition placeholder:text-slate-400 focus:border-ocean focus:ring-2 focus:ring-ocean/25 disabled:cursor-not-allowed disabled:bg-slate-50";
-}
+const selectClasses =
+  "mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-base text-ink outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/25 disabled:cursor-not-allowed disabled:bg-slate-50";
 
 async function parseApiResponse(response: Response) {
   const payload = (await response.json().catch(() => ({}))) as ApiResponse;
@@ -58,14 +65,18 @@ async function parseApiResponse(response: Response) {
   }
 }
 
-export function OnboardingForm() {
+function normalizeInitialPrimaryCity(value?: string | null) {
+  return isVietnamProvinceName(value) ? value : "";
+}
+
+export function OnboardingForm({ initialPrimaryCity }: OnboardingFormProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState("");
   const [submitAction, setSubmitAction] = useState<SubmitAction>(null);
   const [formState, setFormState] = useState<OnboardingState>({
     industry: "",
-    primaryCity: "",
+    primaryCity: normalizeInitialPrimaryCity(initialPrimaryCity),
     primaryDistrict: "",
     primaryGoal: "",
     role: "",
@@ -99,8 +110,8 @@ export function OnboardingForm() {
       return "Vui lòng chọn ngành đang bán.";
     }
 
-    if (step === 2 && (!formState.primaryCity || !formState.primaryDistrict)) {
-      return "Vui lòng nhập tỉnh/thành và quận/huyện hoặc khu vực chính.";
+    if (step === 2 && !formState.primaryCity) {
+      return "Vui lòng chọn tỉnh/thành hoạt động chính.";
     }
 
     if (step === 3 && !formState.primaryGoal) {
@@ -292,30 +303,23 @@ export function OnboardingForm() {
             <h2 className="text-2xl font-bold text-ink">
               Khu vực bạn thường đi sale?
             </h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="mt-5">
               <label className="text-sm font-bold text-ink">
-                Tỉnh/thành
-                <input
-                  className={inputClasses()}
+                Tỉnh/thành hoạt động chính
+                <select
+                  autoComplete="address-level1"
+                  className={selectClasses}
                   disabled={isSubmitting}
                   onChange={(event) => setField("primaryCity", event.target.value)}
-                  placeholder="Ví dụ: TP.HCM, Bình Dương, Ninh Thuận..."
-                  type="text"
                   value={formState.primaryCity}
-                />
-              </label>
-              <label className="text-sm font-bold text-ink">
-                Quận/huyện hoặc khu vực chính
-                <input
-                  className={inputClasses()}
-                  disabled={isSubmitting}
-                  onChange={(event) =>
-                    setField("primaryDistrict", event.target.value)
-                  }
-                  placeholder="Ví dụ: Quận 7, Dĩ An, Phan Rang..."
-                  type="text"
-                  value={formState.primaryDistrict}
-                />
+                >
+                  <option value="">Chọn tỉnh/thành</option>
+                  {VIETNAM_PROVINCES.map((province) => (
+                    <option key={province.name} value={province.name}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
           </div>

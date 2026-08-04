@@ -40,7 +40,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("full_name,role_type,industry,primary_city,primary_district")
+    .select("full_name,role_type,industry,primary_city")
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
   const [notificationSettings, emailNotificationsEnabled, sampleDataEnabled] =
@@ -82,7 +82,6 @@ export default async function SettingsPage(props: SettingsPageProps) {
               ["Vai trò", profile?.role_type || "Chưa thiết lập"],
               ["Ngành", profile?.industry || "Chưa thiết lập"],
               ["Tỉnh/thành", profile?.primary_city || "Chưa thiết lập"],
-              ["Quận/huyện", profile?.primary_district || "Chưa thiết lập"],
             ].map(([label, value]) => (
               <div className="rounded-lg bg-cloud px-4 py-3" key={label}>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">

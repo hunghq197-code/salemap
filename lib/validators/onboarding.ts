@@ -7,6 +7,7 @@ import {
   ONBOARDING_ROLE_VALUES,
   ONBOARDING_SALES_MODEL_VALUES,
 } from "@/lib/constants/onboarding";
+import { isVietnamProvinceName } from "@/lib/constants/vietnam-administrative";
 
 const emptyToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
@@ -20,7 +21,13 @@ const optionalText = (maxLength: number) =>
 export const onboardingProfileInputSchema = z.object({
   industry: z.enum(ONBOARDING_INDUSTRY_VALUES),
   mainRegion: z.string().trim().min(2).max(180),
-  primaryCity: optionalText(100),
+  primaryCity: z
+    .string()
+    .trim()
+    .refine(
+      isVietnamProvinceName,
+      "Vui lòng chọn tỉnh/thành từ danh sách.",
+    ),
   primaryDistrict: optionalText(120),
   primaryGoal: z.enum(ONBOARDING_PRIMARY_GOAL_VALUES),
   role: z.enum(ONBOARDING_ROLE_VALUES),

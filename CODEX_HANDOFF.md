@@ -1,6 +1,6 @@
 # Codex Handoff - SaleMap
 
-Last updated: 2026-07-22, Asia/Saigon.
+Last updated: 2026-08-04, Asia/Saigon.
 
 This file is a handoff note for continuing SaleMap work across the company PC and the home PC. Read this before starting a new Codex session on another machine so work does not get repeated.
 
@@ -1614,3 +1614,27 @@ Required before real Gmail login works:
 - Create Google OAuth Web Client.
 - Add `https://salemap.io.vn/auth/callback` to Supabase Auth Redirect URLs.
 - Add the Supabase Auth callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`) to Google OAuth Authorized redirect URIs.
+
+## 2026-08-04 Update - Vietnam Province/City Registration Selector
+
+Implemented source support so users select a Vietnam province/city from a controlled system list instead of typing free-form location text.
+
+Changed:
+
+- Added `lib/constants/vietnam-administrative.ts` with the current 34 Vietnam province-level units used by the app.
+- `/register` now requires `primaryCity` and shows a province/city dropdown.
+- `/api/auth/beta-register` validates `primaryCity` against the shared list and stores it in `user_profiles.primary_city` plus auth metadata.
+- Public beta signup now uses the same province/city dropdown for `mainArea`, and `/api/beta-signup` rejects values outside the list through the shared validator.
+- Onboarding now shows a province/city dropdown instead of free-form province/district inputs, preloading `user_profiles.primary_city` when available.
+- Settings profile summary now shows only the province/city area because district-level free text is no longer collected in this flow.
+- Register-page Google OAuth now redirects new users to `/onboarding`, so Google signups still complete the province/city selection before entering the app.
+
+Validation:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run test
+npm run build
+```

@@ -12,6 +12,7 @@ import {
   trackBetaFormSubmitClicked,
   trackBetaFormSubmitted,
 } from "@/lib/analytics/client";
+import { VIETNAM_PROVINCES } from "@/lib/constants/vietnam-administrative";
 
 type BetaSignupData = {
   betaReadiness: string;
@@ -70,8 +71,8 @@ const betaFormCopy = {
     industryPlaceholder: "Choose industry",
     intro:
       "Leave your details. We will help you get started with SaleMap.",
-    mainAreaLabel: "Main sales area",
-    mainAreaPlaceholder: "E.g. District 7, Nha Be, Binh Chanh",
+    mainAreaLabel: "Main sales province/city",
+    mainAreaPlaceholder: "Choose province/city",
     phoneLabel: "Phone/Zalo",
     phonePlaceholder: "09xx xxx xxx",
     privacy:
@@ -141,8 +142,8 @@ const betaFormCopy = {
     industryPlaceholder: "Chọn ngành",
     intro:
       "Để lại thông tin của bạn. Chúng tôi sẽ liên hệ hỗ trợ bạn bắt đầu dùng SaleMap.",
-    mainAreaLabel: "Khu vực hoạt động chính",
-    mainAreaPlaceholder: "VD: Quận 7, Nhà Bè, Bình Chánh",
+    mainAreaLabel: "Tỉnh/thành hoạt động chính",
+    mainAreaPlaceholder: "Chọn tỉnh/thành",
     phoneLabel: "Số điện thoại/Zalo",
     phonePlaceholder: "09xx xxx xxx",
     privacy:
@@ -282,7 +283,7 @@ export function BetaFormSection() {
     if (!data.phoneZalo) nextErrors.phoneZalo = copy.requiredMessage;
     if (!data.currentRole) nextErrors.currentRole = copy.selectMessage;
     if (!data.industry) nextErrors.industry = copy.selectMessage;
-    if (!data.mainArea) nextErrors.mainArea = copy.requiredMessage;
+    if (!data.mainArea) nextErrors.mainArea = copy.selectMessage;
     if (data.desiredFeatures.length === 0) {
       nextErrors.desiredFeatures = copy.featureRequired;
     }
@@ -480,15 +481,22 @@ export function BetaFormSection() {
 
             <label className="text-sm font-bold text-ink sm:text-base">
               {copy.mainAreaLabel}
-              <input
+              <select
                 aria-invalid={Boolean(errors.mainArea)}
+                autoComplete="address-level1"
                 className={fieldClasses(Boolean(errors.mainArea))}
+                defaultValue=""
                 disabled={isSubmitting}
                 name="mainArea"
-                placeholder={copy.mainAreaPlaceholder}
                 required
-                type="text"
-              />
+              >
+                <option value="">{copy.mainAreaPlaceholder}</option>
+                {VIETNAM_PROVINCES.map((province) => (
+                  <option key={province.name} value={province.name}>
+                    {province.name}
+                  </option>
+                ))}
+              </select>
               {errorText(errors.mainArea)}
             </label>
           </div>

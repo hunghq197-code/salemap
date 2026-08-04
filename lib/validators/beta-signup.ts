@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isVietnamProvinceName } from "@/lib/constants/vietnam-administrative";
 
 const optionalTrimmedString = (maxLength: number) =>
   z.preprocess(
@@ -56,12 +57,13 @@ export const betaSignupSchema = z.object({
   currentRole: requiredTrimmedString("Vui lòng chọn vai trò hiện tại."),
   industry: requiredTrimmedString("Vui lòng chọn ngành đang bán."),
   mainArea: z.preprocess(
-    (value) => (typeof value === "string" ? value : ""),
+    (value) => (typeof value === "string" ? value.trim() : ""),
     z
       .string()
-      .trim()
-    .min(2, "Khu vực hoạt động cần có ít nhất 2 ký tự.")
-    .max(150, "Khu vực hoạt động không được vượt quá 150 ký tự."),
+      .refine(
+        isVietnamProvinceName,
+        "Vui lòng chọn tỉnh/thành từ danh sách.",
+      ),
   ),
   desiredFeatures: z.preprocess(
     (value) => (Array.isArray(value) ? value : []),

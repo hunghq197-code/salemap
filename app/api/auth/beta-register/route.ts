@@ -12,12 +12,20 @@ import {
   validateBetaInviteCode,
 } from "@/lib/data/beta-invites";
 import { enforceSameOrigin, rateLimit } from "@/lib/security/request";
+import { isVietnamProvinceName } from "@/lib/constants/vietnam-administrative";
 
 const betaRegisterSchema = z.object({
   email: z.string().trim().email().max(160),
   fullName: z.string().trim().min(2).max(160),
   inviteCode: z.string().trim().max(80).optional(),
   password: z.string().min(8).max(128),
+  primaryCity: z
+    .string()
+    .trim()
+    .refine(
+      isVietnamProvinceName,
+      "Vui lòng chọn tỉnh/thành từ danh sách.",
+    ),
 });
 
 function errorResponse(code: string, message: string, status = 400) {
@@ -78,13 +86,13 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return errorResponse(
       "VALIDATION_ERROR",
-      "Vui lòng kiểm tra lại họ tên, email và mật khẩu.",
+      "Vui lòng kiểm tra lại họ tên, email, tỉnh/thành và mật khẩu.",
     );
   }
 
   try {
     const supabase = createSupabaseAdminClient();
-    const { email, fullName, password } = parsed.data;
+    const { email, fullName, password, primaryCity } = parsed.data;
     const inviteCode = normalizeInviteCode(parsed.data.inviteCode);
     const inviteRequired = isBetaInviteOnlyMode();
 
@@ -106,6 +114,7 @@ export async function POST(request: Request) {
       user_metadata: {
         beta_signup: true,
         full_name: fullName,
+        primary_city: primaryCity,
       },
     });
 
@@ -136,6 +145,7 @@ export async function POST(request: Request) {
     const { error: profileError } = await supabase.from("user_profiles").upsert(
       {
         full_name: fullName,
+        primary_city: primaryCity,
         user_id: data.user.id,
       },
       {

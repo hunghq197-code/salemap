@@ -14,6 +14,7 @@ import {
   trackInviteCodeValidationFailed,
   trackUserRegistered,
 } from "@/lib/analytics/client";
+import { VIETNAM_PROVINCES } from "@/lib/constants/vietnam-administrative";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type BetaRegisterResponse = {
@@ -73,6 +74,8 @@ const registerCopy = {
     passwordMismatch: "Password confirmation does not match.",
     passwordPlaceholder: "Minimum 8 characters",
     passwordTooShort: "Password must be at least 8 characters.",
+    primaryCity: "Main sales province/city",
+    primaryCityPlaceholder: "Choose province/city",
     requiredInvite: "Please enter an invite code to create an account.",
     submit: "Create account and log in",
     submitting: "Creating account...",
@@ -109,6 +112,8 @@ const registerCopy = {
     passwordMismatch: "Mật khẩu xác nhận chưa khớp.",
     passwordPlaceholder: "Tối thiểu 8 ký tự",
     passwordTooShort: "Mật khẩu cần có ít nhất 8 ký tự.",
+    primaryCity: "Tỉnh/thành hoạt động chính",
+    primaryCityPlaceholder: "Chọn tỉnh/thành",
     requiredInvite: "Vui lòng nhập mã mời để tạo tài khoản.",
     submit: "Tạo tài khoản và đăng nhập",
     submitting: "Đang tạo tài khoản...",
@@ -182,10 +187,11 @@ export function RegisterForm({
     const fullName = String(formData.get("fullName") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const inviteCode = String(formData.get("inviteCode") ?? "").trim().toUpperCase();
+    const primaryCity = String(formData.get("primaryCity") ?? "").trim();
     const password = String(formData.get("password") ?? "");
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-    if (!fullName || !email || !password || !confirmPassword) {
+    if (!fullName || !email || !primaryCity || !password || !confirmPassword) {
       setError(copy.missingFields);
       setIsSubmitting(false);
       return;
@@ -244,6 +250,7 @@ export function RegisterForm({
           fullName,
           inviteCode,
           password,
+          primaryCity,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -290,7 +297,11 @@ export function RegisterForm({
 
       {!inviteOnly ? (
         <>
-          <GoogleOAuthButton disabled={isSubmitting} source="register" />
+          <GoogleOAuthButton
+            disabled={isSubmitting}
+            nextPath="/onboarding"
+            source="register"
+          />
           <AuthDivider label={copy.divider} />
         </>
       ) : null}
@@ -323,6 +334,28 @@ export function RegisterForm({
           placeholder="ban@email.com"
           type="email"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-bold text-ink" htmlFor="register-primary-city">
+          {copy.primaryCity}
+        </label>
+        <select
+          autoComplete="address-level1"
+          className={inputClasses()}
+          defaultValue=""
+          disabled={isSubmitting}
+          id="register-primary-city"
+          name="primaryCity"
+          required
+        >
+          <option value="">{copy.primaryCityPlaceholder}</option>
+          {VIETNAM_PROVINCES.map((province) => (
+            <option key={province.name} value={province.name}>
+              {province.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {inviteOnly ? (

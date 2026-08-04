@@ -36,7 +36,7 @@ export default async function OnboardingPage(props: OnboardingPageProps) {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("onboarding_completed")
+    .select("onboarding_completed,primary_city")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -77,7 +77,7 @@ export default async function OnboardingPage(props: OnboardingPageProps) {
               </div>
             </section>
           ) : (
-            <OnboardingForm />
+            <OnboardingForm initialPrimaryCity={profile?.primary_city} />
           )}
         </div>
       </div>
