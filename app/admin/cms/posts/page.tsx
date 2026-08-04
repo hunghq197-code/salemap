@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
 import { AdminTable } from "@/components/admin/AdminTable";
@@ -25,9 +26,15 @@ export default async function AdminCmsPostsPage() {
         title="CMS Posts"
       />
       <div className="mt-6">
-        <Link className="inline-flex min-h-11 items-center rounded-lg bg-ocean px-4 py-2 text-sm font-bold text-white" href="/admin/cms/posts/new">
-          Tạo post
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link className="inline-flex min-h-11 items-center rounded-lg bg-ocean px-4 py-2 text-sm font-bold text-white" href="/admin/cms/posts/new">
+            Tạo post
+          </Link>
+          <Link className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-ocean/30 px-4 py-2 text-sm font-bold text-ocean" href="/admin/cms/ai-agent">
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            AI SEO Agent
+          </Link>
+        </div>
       </div>
       {!posts.schemaReady ? (
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">

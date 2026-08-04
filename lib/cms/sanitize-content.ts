@@ -35,3 +35,48 @@ export function splitCmsParagraphs(content: string) {
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 }
+
+export type CmsContentBlock =
+  | {
+      text: string;
+      type: "h2" | "h3" | "paragraph";
+    }
+  | {
+      items: string[];
+      type: "list";
+    };
+
+export function parseCmsContentBlocks(content: string): CmsContentBlock[] {
+  return splitCmsParagraphs(content).map((block) => {
+    if (block.startsWith("### ")) {
+      return {
+        text: block.replace(/^###\s+/, "").trim(),
+        type: "h3",
+      };
+    }
+
+    if (block.startsWith("## ")) {
+      return {
+        text: block.replace(/^##\s+/, "").trim(),
+        type: "h2",
+      };
+    }
+
+    const lines = block
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (lines.length > 1 && lines.every((line) => line.startsWith("- "))) {
+      return {
+        items: lines.map((line) => line.replace(/^-\s+/, "").trim()),
+        type: "list",
+      };
+    }
+
+    return {
+      text: block,
+      type: "paragraph",
+    };
+  });
+}

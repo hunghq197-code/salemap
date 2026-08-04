@@ -2,6 +2,13 @@ import { z } from "zod";
 import { cmsContentTypeValues, cmsPostStatusValues } from "@/lib/cms/cms-status";
 import { sanitizeCmsText } from "@/lib/cms/sanitize-content";
 
+export const cmsSeoAgentSearchIntentValues = [
+  "commercial",
+  "comparison",
+  "informational",
+  "local",
+] as const;
+
 const slugSchema = z
   .string()
   .trim()
@@ -42,5 +49,31 @@ export const cmsRedirectSchema = z.object({
   statusCode: z.enum(["301", "302"]).transform((value) => Number(value) as 301 | 302),
 });
 
+export const cmsSeoAgentFormSchema = z.object({
+  audience: z.preprocess(
+    (value) => sanitizeCmsText(value, 220),
+    z.string().trim().min(3).max(220),
+  ),
+  notes: z.preprocess(
+    (value) => sanitizeCmsText(value, 1200),
+    z.string().max(1200).optional(),
+  ),
+  primaryCategoryId: z.string().uuid().optional().or(z.literal("")),
+  primaryKeyword: z.preprocess(
+    (value) => sanitizeCmsText(value, 120),
+    z.string().trim().min(2).max(120),
+  ),
+  searchIntent: z.enum(cmsSeoAgentSearchIntentValues),
+  secondaryKeywords: z.preprocess(
+    (value) => sanitizeCmsText(value, 260),
+    z.string().max(260).optional(),
+  ),
+  topic: z.preprocess(
+    (value) => sanitizeCmsText(value, 180),
+    z.string().trim().min(5).max(180),
+  ),
+});
+
 export type CmsPostFormInput = z.infer<typeof cmsPostFormSchema>;
 export type CmsRedirectInput = z.infer<typeof cmsRedirectSchema>;
+export type CmsSeoAgentInput = z.infer<typeof cmsSeoAgentFormSchema>;

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { CmsContentRenderer } from "@/components/cms/CmsContentRenderer";
 import {
   absoluteCmsUrl,
   getPublishedBlogPostBySlug,
 } from "@/lib/cms/posts";
-import { splitCmsParagraphs } from "@/lib/cms/sanitize-content";
 
 export const dynamic = "force-dynamic";
 
@@ -115,13 +115,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
             width={1200}
           />
         ) : null}
-        <div className="mt-8 space-y-5 text-base leading-8 text-text-primary">
-          {splitCmsParagraphs(post.contentText).map((paragraph) => (
-            <p className="whitespace-pre-wrap" key={paragraph.slice(0, 80)}>
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <CmsContentRenderer content={post.contentText} />
       </article>
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

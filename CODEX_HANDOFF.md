@@ -1638,3 +1638,42 @@ npm run security:scan
 npm run test
 npm run build
 ```
+
+## 2026-08-04 Update - CMS AI SEO Agent
+
+Implemented an admin-only AI SEO Agent for CMS content creation. The agent creates review drafts only; it does not auto-publish public content.
+
+Changed:
+
+- Added `/admin/cms/ai-agent` with a structured prompt form for topic, primary keyword, secondary keywords, audience, search intent, category, and editorial notes.
+- Added `components/cms/CmsSeoAgentForm.tsx`.
+- Added `lib/cms/seo-agent.ts`.
+  - Uses the existing server-side AI provider (`AI_API_KEY`, `AI_MODEL`, `AI_PROVIDER`).
+  - Requests strict JSON from the AI provider.
+  - Sanitizes generated title, excerpt, content, SEO title/description, Open Graph fields, slug, and canonical path.
+  - Creates CMS content as `content_type=post` and `status=review`.
+  - Adds safe audit metadata with `source: "cms_seo_agent"`, keyword, intent, model, and token counts.
+- Updated CMS dashboard and posts list with an `AI SEO Agent` entry point.
+- Updated CMS public rendering:
+  - Added `components/cms/CmsContentRenderer.tsx`.
+  - Added `parseCmsContentBlocks` so plain CMS content can render markdown-style `##`, `###`, and dash-list blocks as semantic headings/lists.
+- Updated `scripts/phase-2e2-regression.mjs` to guard the agent route, MANAGE_CMS requirement, review-only output status, AI provider use, safe source metadata, and CMS renderer.
+
+Operational notes:
+
+- Required server env for real generation:
+  - `AI_API_KEY`
+  - optional `AI_MODEL`
+  - optional `AI_PROVIDER`
+- The output is intentionally a review draft. Admin must inspect facts, tone, internal links, and SEO metadata before publishing.
+- The agent follows Google Search Central's people-first SEO posture: useful content first, no keyword stuffing, no unsupported claims.
+
+Validation target:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run test
+npm run build
+```

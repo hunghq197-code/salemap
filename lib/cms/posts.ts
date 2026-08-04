@@ -472,7 +472,11 @@ export async function getAdminCmsPost(postId: string) {
   };
 }
 
-export async function createCmsPost(input: { formData: FormData; request?: Request }) {
+export async function createCmsPost(input: {
+  auditMetadata?: Record<string, unknown>;
+  formData: FormData;
+  request?: Request;
+}) {
   const admin = await requirePermission(ADMIN_PERMISSIONS.MANAGE_CMS);
   const parsed = cmsPostFormSchema.parse(formDataToObject(input.formData));
   const dates = statusDates({
@@ -519,6 +523,7 @@ export async function createCmsPost(input: { formData: FormData; request?: Reque
     eventType: "cms_post_created",
     postId: String(post.id),
     safeMetadata: {
+      ...(input.auditMetadata ?? {}),
       contentLength: parsed.contentText.length,
       contentType: parsed.contentType,
     },
@@ -529,6 +534,7 @@ export async function createCmsPost(input: { formData: FormData; request?: Reque
     actorRole: admin.role,
     actorUserId: admin.userId,
     metadata: {
+      ...(input.auditMetadata ?? {}),
       contentLength: parsed.contentText.length,
       contentType: parsed.contentType,
       status: parsed.status,

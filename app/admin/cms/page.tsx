@@ -4,6 +4,7 @@ import {
   ImageIcon,
   Layers3,
   Link2,
+  Sparkles,
   Tags,
 } from "lucide-react";
 import Link from "next/link";
@@ -56,6 +57,10 @@ export default async function AdminCmsPage() {
       <section className="mt-6 flex flex-wrap gap-2">
         <Link className="inline-flex min-h-11 items-center rounded-lg bg-ocean px-4 py-2 text-sm font-bold text-white" href="/admin/cms/posts/new">
           Tạo nội dung
+        </Link>
+        <Link className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-ocean/30 px-4 py-2 text-sm font-bold text-ocean" href="/admin/cms/ai-agent">
+          <Sparkles aria-hidden="true" className="h-4 w-4" />
+          AI SEO Agent
         </Link>
         <Link className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-ink" href="/admin/cms/posts">
           Posts

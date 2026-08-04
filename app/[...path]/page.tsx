@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import Link from "next/link";
+import { CmsContentRenderer } from "@/components/cms/CmsContentRenderer";
 import {
   absoluteCmsUrl,
   getCmsRedirectForPath,
   getPublishedPageBySlug,
 } from "@/lib/cms/posts";
-import { splitCmsParagraphs } from "@/lib/cms/sanitize-content";
 
 export const dynamic = "force-dynamic";
 
@@ -88,13 +88,7 @@ export default async function CmsCatchAllPage(props: CmsCatchAllPageProps) {
           {page.title}
         </h1>
         <p className="mt-5 text-lg leading-8 text-text-secondary">{page.excerpt}</p>
-        <div className="mt-8 space-y-5 text-base leading-8 text-text-primary">
-          {splitCmsParagraphs(page.contentText).map((paragraph) => (
-            <p className="whitespace-pre-wrap" key={paragraph.slice(0, 80)}>
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <CmsContentRenderer content={page.contentText} />
       </article>
       <script
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

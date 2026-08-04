@@ -83,6 +83,7 @@ function checkRequiredFiles() {
     "app/admin/cms/posts/page.tsx",
     "app/admin/cms/posts/new/page.tsx",
     "app/admin/cms/posts/[postId]/page.tsx",
+    "app/admin/cms/ai-agent/page.tsx",
     "app/admin/cms/pages/page.tsx",
     "app/admin/cms/categories/page.tsx",
     "app/admin/cms/tags/page.tsx",
@@ -100,6 +101,8 @@ function checkRequiredFiles() {
     "app/blog/[slug]/page.tsx",
     "app/rss.xml/route.ts",
     "app/api/cron/cms-publish/route.ts",
+    "components/cms/CmsSeoAgentForm.tsx",
+    "lib/cms/seo-agent.ts",
   ].forEach(mustExist);
 }
 
@@ -192,6 +195,12 @@ function checkCmsSecurityAndSeo() {
   mustContain("app/blog/[slug]/page.tsx", "JSON.stringify(jsonLd)");
   mustContain("app/[...path]/page.tsx", "getCmsRedirectForPath");
   mustContain("app/[...path]/page.tsx", "getPublishedPageBySlug");
+  mustContain("app/admin/cms/ai-agent/page.tsx", "MANAGE_CMS");
+  mustContain("app/admin/cms/actions.ts", "createSeoCmsDraftAction");
+  mustContain("lib/cms/seo-agent.ts", "getAIProvider");
+  mustContain("lib/cms/seo-agent.ts", 'formData.set("status", "review")');
+  mustContain("lib/cms/seo-agent.ts", 'source: "cms_seo_agent"');
+  mustContain("components/cms/CmsContentRenderer.tsx", "parseCmsContentBlocks");
   mustContain("app/rss.xml/route.ts", "application/rss+xml");
   mustContain("app/api/cron/cms-publish/route.ts", "CRON_SECRET");
   mustContain("app/api/cron/cms-publish/route.ts", 'headers.get("authorization")');
