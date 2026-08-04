@@ -1,10 +1,11 @@
-import { Ban, CheckCircle2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   suspendUserAction,
   unsuspendUserAction,
 } from "@/app/admin/users/actions";
+import { AdminConfirmSubmitButton } from "@/components/admin/AdminConfirmSubmitButton";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminStatusBadge } from "@/components/admin/AdminStatusBadge";
@@ -54,6 +55,9 @@ function yesNo(value: boolean) {
   return value ? "Có" : "Không";
 }
 
+const reasonInputClass =
+  "min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/15";
+
 export default async function AdminUserDetailPage(props: AdminUserDetailPageProps) {
   const { userId } = await props.params;
   const user = await getAdminUserDetail(userId);
@@ -88,32 +92,47 @@ export default async function AdminUserDetailPage(props: AdminUserDetailPageProp
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-72">
           <Link
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-bold text-ink hover:border-ocean"
             href="/admin/users"
           >
             Về danh sách
           </Link>
           {user.accountStatus === "suspended" ? (
-            <form action={unsuspendAction}>
-              <button
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white"
-                type="submit"
-              >
-                <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-                Mở khóa
-              </button>
+            <form action={unsuspendAction} className="space-y-2">
+              <input
+                className={reasonInputClass}
+                maxLength={240}
+                name="reason"
+                placeholder="Reason optional"
+              />
+              <AdminConfirmSubmitButton
+                className="min-h-11 w-full text-sm"
+                confirmMessage="Mo khoa tai khoan nay?"
+                icon="check"
+                label="Mo khoa"
+                pendingLabel="Dang mo khoa"
+                variant="success"
+              />
             </form>
           ) : (
-            <form action={suspendAction}>
-              <button
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-bold text-white"
-                type="submit"
-              >
-                <Ban aria-hidden="true" className="h-4 w-4" />
-                Khóa user
-              </button>
+            <form action={suspendAction} className="space-y-2">
+              <input
+                className={reasonInputClass}
+                maxLength={240}
+                name="reason"
+                placeholder="Reason bat buoc"
+                required
+              />
+              <AdminConfirmSubmitButton
+                className="min-h-11 w-full text-sm"
+                confirmMessage="Ban co chac muon tam khoa tai khoan nay? User se khong the thuc hien cac thao tac duoc bao ve cho den khi duoc kich hoat lai."
+                icon="ban"
+                label="Khoa user"
+                pendingLabel="Dang khoa"
+                variant="danger"
+              />
             </form>
           )}
         </div>

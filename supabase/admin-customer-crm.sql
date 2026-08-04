@@ -169,8 +169,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage customer admin profiles" on public.customer_admin_profiles;
 create policy "Admins can manage customer admin profiles"
 on public.customer_admin_profiles for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Admins can view customer tags" on public.customer_tags;
 create policy "Admins can view customer tags"
@@ -180,8 +180,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage customer tags" on public.customer_tags;
 create policy "Admins can manage customer tags"
 on public.customer_tags for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Admins can view customer tag assignments" on public.customer_tag_assignments;
 create policy "Admins can view customer tag assignments"
@@ -191,8 +191,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage customer tag assignments" on public.customer_tag_assignments;
 create policy "Admins can manage customer tag assignments"
 on public.customer_tag_assignments for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Admins can view customer notes" on public.customer_notes;
 create policy "Admins can view customer notes"
@@ -202,8 +202,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage customer notes" on public.customer_notes;
 create policy "Admins can manage customer notes"
 on public.customer_notes for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Admins can view customer lifecycle events" on public.customer_lifecycle_events;
 create policy "Admins can view customer lifecycle events"
@@ -213,4 +213,4 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can insert customer lifecycle events" on public.customer_lifecycle_events;
 create policy "Admins can insert customer lifecycle events"
 on public.customer_lifecycle_events for insert
-with check (public.is_admin_user(array['super_admin','admin','support']));
+with check (public.is_admin_user(array['super_admin','admin']));

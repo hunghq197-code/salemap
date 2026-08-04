@@ -15,6 +15,13 @@ const CLIENT_SECRET_ENVS = [
   "CRON_SECRET",
 ];
 const FINDINGS = [];
+const DELEGATED_ADMIN_ROUTE_HELPERS = [
+  "approvePaymentRequest",
+  "rejectPaymentRequest",
+  "replyToTicketAsAdmin",
+  "syncAdminPaymentGatewayTransaction",
+  "updateSupportTicketAsAdmin",
+];
 
 function walk(dir) {
   if (!existsSync(dir)) {
@@ -64,6 +71,8 @@ function scanFile(filePath) {
   const relPath = relative(filePath);
   const clientFile = isClientFile(relPath, content);
   const isApiRoute = /^app\/api\/.*\/route\.(ts|js)$/.test(relPath);
+  const isAdminApiRoute = /^app\/api\/admin\/.*\/route\.(ts|js)$/.test(relPath);
+  const isAdminSurface = /^(app\/admin|components\/admin)\//.test(relPath);
   const hasMutationHandler =
     /export\s+(?:async\s+)?function\s+(POST|PUT|PATCH|DELETE)\b/.test(content) ||
     /export\s+const\s+(POST|PUT|PATCH|DELETE)\b/.test(content);
@@ -73,6 +82,15 @@ function scanFile(filePath) {
     content.includes("guardMutationRequest") ||
     (content.includes("enforceSameOrigin") && content.includes("rateLimit")) ||
     content.includes("handleAdminApi");
+  const hasAdminApiGuard =
+    content.includes("handleAdminApi") ||
+    content.includes("requirePermission") ||
+    content.includes("requireAdmin") ||
+    content.includes("requireAdminForApi") ||
+    content.includes("assertAdmin");
+  const hasDelegatedAdminGuard = DELEGATED_ADMIN_ROUTE_HELPERS.some((helperName) =>
+    content.includes(helperName),
+  );
 
   if (clientFile && /createSupabaseAdminClient|service_role|serviceRole/i.test(content)) {
     addFinding(
@@ -153,6 +171,37 @@ function scanFile(filePath) {
       filePath,
       "mutation-route-missing-guard",
       "Mutation API route must enforce same-origin and rate limiting.",
+    );
+  }
+
+  if (isAdminApiRoute && !hasAdminApiGuard && !hasDelegatedAdminGuard) {
+    addFinding(
+      filePath,
+      "admin-api-missing-server-guard",
+      "Admin API route must call an admin guard or a reviewed admin helper.",
+    );
+  }
+
+  if (
+    isAdminSurface &&
+    /dangerouslySetInnerHTML/.test(content) &&
+    /(feedback|security|audit|payment|subscription|user)/i.test(relPath)
+  ) {
+    addFinding(
+      filePath,
+      "admin-dangerous-html-render",
+      "Sensitive admin surfaces must not render unsanitized HTML.",
+    );
+  }
+
+  if (
+    isAdminSurface &&
+    /(raw_webhook|rawWebhook|raw_payload|rawPayload|provider_payload|providerPayload|auth_metadata|service_metadata|access_token|refresh_token|password_hash)/i.test(content)
+  ) {
+    addFinding(
+      filePath,
+      "admin-raw-sensitive-render",
+      "Admin UI must not render raw auth/provider payloads or token-like fields.",
     );
   }
 

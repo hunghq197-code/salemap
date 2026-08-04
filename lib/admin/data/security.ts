@@ -100,7 +100,7 @@ export async function getAdminAuditLogs(params?: AdminSearchParams) {
 }
 
 export async function getAdminSecurityEvents(params?: AdminSearchParams) {
-  await requirePermission(ADMIN_PERMISSIONS.VIEW_AUDIT_LOGS);
+  await requirePermission(ADMIN_PERMISSIONS.VIEW_SECURITY_EVENTS);
 
   const { from, limit, page, to } = getPaging(params);
   const eventType = getParam(params, "eventType") || "";
@@ -142,7 +142,7 @@ export async function getAdminSecurityEvents(params?: AdminSearchParams) {
 }
 
 export async function resolveSecurityEvent(eventId: string, request?: Request) {
-  const admin = await requirePermission(ADMIN_PERMISSIONS.VIEW_AUDIT_LOGS);
+  const admin = await requirePermission(ADMIN_PERMISSIONS.RESOLVE_SECURITY_EVENTS);
 
   if (!eventId) {
     throw new SafeError("VALIDATION_ERROR", 400);

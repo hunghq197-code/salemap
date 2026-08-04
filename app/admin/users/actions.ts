@@ -7,9 +7,15 @@ import {
   type UserAccountStatus,
 } from "@/lib/admin/data/users";
 
-async function updateStatus(userId: string, status: UserAccountStatus) {
+async function updateStatus(
+  userId: string,
+  status: UserAccountStatus,
+  formData?: FormData,
+) {
   try {
-    await updateAdminUserAccountStatus(userId, status);
+    await updateAdminUserAccountStatus(userId, status, {
+      reason: String(formData?.get("reason") || ""),
+    });
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
   } catch {
@@ -19,10 +25,10 @@ async function updateStatus(userId: string, status: UserAccountStatus) {
   redirect(`/admin/users/${userId}?updated=status`);
 }
 
-export async function suspendUserAction(userId: string) {
-  await updateStatus(userId, "suspended");
+export async function suspendUserAction(userId: string, formData: FormData) {
+  await updateStatus(userId, "suspended", formData);
 }
 
-export async function unsuspendUserAction(userId: string) {
-  await updateStatus(userId, "active");
+export async function unsuspendUserAction(userId: string, formData: FormData) {
+  await updateStatus(userId, "active", formData);
 }

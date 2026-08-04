@@ -30,7 +30,11 @@ import {
   type AdminNavIconKey,
   type AdminNavItem,
 } from "@/lib/design-system/navigation";
-import type { AdminRole } from "@/lib/admin/admin-permissions";
+import {
+  hasPermission,
+  type AdminPermission,
+  type AdminRole,
+} from "@/lib/admin/admin-permissions";
 import { clearUserOfflineData } from "@/lib/offline/clear-user-offline-data";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -53,6 +57,77 @@ const iconMap: Record<AdminNavIconKey, LucideIcon> = {
   users: UsersRound,
 };
 
+const securityEventsNavItem: AdminNavItem = {
+  href: "/admin/security-events",
+  icon: "security",
+  label: "Security events",
+  permission: "VIEW_SECURITY_EVENTS",
+};
+
+const adminNavSectionDefinitions = [
+  {
+    hrefs: ["/admin"],
+    label: "TONG QUAN",
+  },
+  {
+    hrefs: [
+      "/admin/users",
+      "/admin/payments",
+      "/admin/subscriptions",
+      "/admin/usage",
+      "/admin/quotas",
+      "/admin/feedback",
+    ],
+    label: "VAN HANH",
+  },
+  {
+    hrefs: ["/admin/security-events", "/admin/audit-logs"],
+    label: "AN TOAN",
+  },
+  {
+    hrefs: ["/admin/system", "/admin/settings"],
+    label: "HE THONG",
+  },
+  {
+    hrefs: [
+      "/admin/customers",
+      "/admin/orders",
+      "/admin/catalog",
+      "/admin/tickets",
+      "/admin/cms",
+      "/admin/payment-requests",
+    ],
+    label: "MO RONG",
+  },
+] as const;
+
+const mobileAdminNavOrder = [
+  "/admin",
+  "/admin/users",
+  "/admin/payments",
+  "/admin/security-events",
+];
+
+const adminNavPermissionByHref: Record<string, AdminPermission> = {
+  "/admin": "VIEW_ADMIN_DASHBOARD",
+  "/admin/audit-logs": "VIEW_AUDIT_LOGS",
+  "/admin/catalog": "VIEW_CATALOG",
+  "/admin/cms": "VIEW_CMS",
+  "/admin/customers": "VIEW_CUSTOMERS",
+  "/admin/feedback": "VIEW_FEEDBACK",
+  "/admin/orders": "VIEW_ORDERS",
+  "/admin/payment-requests": "VIEW_PAYMENTS",
+  "/admin/payments": "VIEW_PAYMENTS",
+  "/admin/quotas": "VIEW_USAGE",
+  "/admin/security-events": "VIEW_SECURITY_EVENTS",
+  "/admin/settings": "MANAGE_SYSTEM_SETTINGS",
+  "/admin/subscriptions": "VIEW_SUBSCRIPTIONS",
+  "/admin/system": "VIEW_SYSTEM_HEALTH",
+  "/admin/tickets": "VIEW_TICKETS",
+  "/admin/usage": "VIEW_USAGE",
+  "/admin/users": "VIEW_USERS",
+};
+
 type AdminShellProps = {
   children: ReactNode;
   email: string | null;
@@ -72,10 +147,53 @@ function getEnvironmentLabel() {
   return "Local";
 }
 
-function findActiveItem(pathname: string) {
-  return [...adminPrimaryNavItems, ...adminSecondaryNavItems].find((item) =>
+function injectSecurityEventsNav(items: AdminNavItem[]) {
+  if (items.some((item) => item.href === securityEventsNavItem.href)) {
+    return items;
+  }
+
+  return items.flatMap((item) =>
+    item.href === "/admin/audit-logs" ? [securityEventsNavItem, item] : [item],
+  );
+}
+
+function getVisibleAdminNavItems(role: AdminRole, items: AdminNavItem[]) {
+  return injectSecurityEventsNav(items).filter((item) => {
+    const permission = item.permission ?? adminNavPermissionByHref[item.href];
+
+    return permission ? hasPermission(role, permission) : true;
+  });
+}
+
+function findActiveItem(pathname: string, items: AdminNavItem[]) {
+  return items.find((item) =>
     isActivePath(pathname, item.href),
   );
+}
+
+function getAdminNavSections(items: AdminNavItem[]) {
+  const itemByHref = new Map(items.map((item) => [item.href, item]));
+
+  return adminNavSectionDefinitions
+    .map((section) => ({
+      ...section,
+      items: section.hrefs
+        .map((href) => itemByHref.get(href))
+        .filter((item): item is AdminNavItem => Boolean(item)),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
+function getMobileAdminNavItems(items: AdminNavItem[]) {
+  const itemByHref = new Map(items.map((item) => [item.href, item]));
+  const preferredItems = mobileAdminNavOrder
+    .map((href) => itemByHref.get(href))
+    .filter((item): item is AdminNavItem => Boolean(item));
+  const fallbackItems = items.filter(
+    (item) => !mobileAdminNavOrder.includes(item.href),
+  );
+
+  return [...preferredItems, ...fallbackItems].slice(0, 4);
 }
 
 function AdminNavLink({ item, pathname }: { item: AdminNavItem; pathname: string }) {
@@ -101,14 +219,20 @@ function AdminNavLink({ item, pathname }: { item: AdminNavItem; pathname: string
   );
 }
 
-function AdminMobileNav({ pathname }: { pathname: string }) {
+function AdminMobileNav({
+  items,
+  pathname,
+}: {
+  items: AdminNavItem[];
+  pathname: string;
+}) {
   return (
     <nav
       aria-label="Admin mobile navigation"
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-soft bg-surface/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.09)] backdrop-blur lg:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
-        {adminPrimaryNavItems.slice(0, 4).map((item) => {
+        {items.slice(0, 4).map((item) => {
           const Icon = iconMap[item.icon];
           const active = isActivePath(pathname, item.href);
 
@@ -136,7 +260,12 @@ export function AdminShell({ children, email, fullName, role }: AdminShellProps)
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const environmentLabel = getEnvironmentLabel();
-  const activeItem = findActiveItem(pathname);
+  const primaryNavItems = getVisibleAdminNavItems(role, adminPrimaryNavItems);
+  const secondaryNavItems = getVisibleAdminNavItems(role, adminSecondaryNavItems);
+  const visibleNavItems = [...primaryNavItems, ...secondaryNavItems];
+  const activeItem = findActiveItem(pathname, visibleNavItems);
+  const navSections = getAdminNavSections(visibleNavItems);
+  const mobileNavItems = getMobileAdminNavItems(visibleNavItems);
 
   async function handleLogout() {
     if (isSigningOut) {
@@ -198,23 +327,18 @@ export function AdminShell({ children, email, fullName, role }: AdminShellProps)
           </div>
 
           <nav aria-label="Admin navigation" className="flex-1 overflow-y-auto px-3 py-5">
-            <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-              Vận hành chính
-            </p>
-            <div className="space-y-1">
-              {adminPrimaryNavItems.map((item) => (
-                <AdminNavLink item={item} key={item.href} pathname={pathname} />
-              ))}
-            </div>
-
-            <p className="px-3 pb-2 pt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
-              Bổ sung
-            </p>
-            <div className="space-y-1">
-              {adminSecondaryNavItems.map((item) => (
-                <AdminNavLink item={item} key={item.href} pathname={pathname} />
-              ))}
-            </div>
+            {navSections.map((section, index) => (
+              <div className={index === 0 ? "" : "pt-5"} key={section.label}>
+                <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                  {section.label}
+                </p>
+                <div className="space-y-1">
+                  {section.items.map((item) => (
+                    <AdminNavLink item={item} key={item.href} pathname={pathname} />
+                  ))}
+                </div>
+              </div>
+            ))}
           </nav>
 
           <div className="border-t border-white/10 p-4">
@@ -280,7 +404,7 @@ export function AdminShell({ children, email, fullName, role }: AdminShellProps)
         </div>
       </div>
 
-      <AdminMobileNav pathname={pathname} />
+      <AdminMobileNav items={mobileNavItems} pathname={pathname} />
     </div>
   );
 }

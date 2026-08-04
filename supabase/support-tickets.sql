@@ -169,8 +169,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage support tickets" on public.support_tickets;
 create policy "Admins can manage support tickets"
 on public.support_tickets for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Users can view public messages on own tickets" on public.support_ticket_messages;
 create policy "Users can view public messages on own tickets"
@@ -206,8 +206,8 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can manage support ticket messages" on public.support_ticket_messages;
 create policy "Admins can manage support ticket messages"
 on public.support_ticket_messages for all
-using (public.is_admin_user(array['super_admin','admin','support']))
-with check (public.is_admin_user(array['super_admin','admin','support']));
+using (public.is_admin_user(array['super_admin','admin']))
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Users can view own support ticket events" on public.support_ticket_events;
 create policy "Users can view own support ticket events"
@@ -228,7 +228,7 @@ using (public.is_admin_user(array['super_admin','admin','support']));
 drop policy if exists "Admins can insert support ticket events" on public.support_ticket_events;
 create policy "Admins can insert support ticket events"
 on public.support_ticket_events for insert
-with check (public.is_admin_user(array['super_admin','admin','support']));
+with check (public.is_admin_user(array['super_admin','admin']));
 
 insert into public.support_ticket_categories (
   slug,

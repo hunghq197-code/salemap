@@ -1,4 +1,8 @@
-import { writeAdminAuditLog, writeSupportAccessLog } from "@/lib/admin/audit-log";
+import {
+  writeAdminAuditLog,
+  writeSecurityEvent,
+  writeSupportAccessLog,
+} from "@/lib/admin/audit-log";
 import { ADMIN_PERMISSIONS } from "@/lib/admin/admin-permissions";
 import { requirePermission } from "@/lib/admin/auth";
 import {
@@ -163,6 +167,26 @@ export type AdminUserDetail = AdminUserRow & {
 };
 
 export type UserAccountStatus = "active" | "deleted" | "suspended";
+
+const MAX_ADMIN_REASON_LENGTH = 240;
+
+function normalizeAdminReason(value?: string | null, required = false) {
+  const reason = String(value ?? "").trim();
+
+  if (required && reason.length === 0) {
+    throw new SafeError("VALIDATION_ERROR", 400);
+  }
+
+  if (reason.length > MAX_ADMIN_REASON_LENGTH) {
+    throw new SafeError("VALIDATION_ERROR", 400);
+  }
+
+  if (/(password|secret|token|bearer|service_role|checksum|sk_live|sk_test)/i.test(reason)) {
+    throw new SafeError("VALIDATION_ERROR", 400);
+  }
+
+  return reason || null;
+}
 
 function matchesDateRange(value: string | undefined, from?: string, to?: string) {
   if (!value) {
@@ -660,7 +684,7 @@ export async function getAdminUserDetail(
 export async function updateAdminUserAccountStatus(
   userId: string,
   status: UserAccountStatus,
-  request?: Request,
+  input?: Request | { reason?: string | null; request?: Request },
 ) {
   const admin = await requirePermission(ADMIN_PERMISSIONS.UPDATE_USER_STATUS);
 
@@ -672,7 +696,36 @@ export async function updateAdminUserAccountStatus(
     throw new SafeError("VALIDATION_ERROR", 400);
   }
 
+  const request = input instanceof Request ? input : input?.request;
+  const reason = normalizeAdminReason(
+    input instanceof Request ? null : input?.reason,
+    status === "suspended",
+  );
   const supabase = createSupabaseAdminClient();
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("account_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { data: adminRole } = await supabase
+    .from("admin_users")
+    .select("role,is_active")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (status === "suspended" && adminRole?.role === "super_admin" && adminRole.is_active) {
+    const { count } = await supabase
+      .from("admin_users")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "super_admin")
+      .eq("is_active", true)
+      .neq("user_id", userId);
+
+    if ((count ?? 0) === 0) {
+      throw new SafeError("VALIDATION_ERROR", 400);
+    }
+  }
+
   const now = new Date().toISOString();
   const { error } = await supabase.from("user_profiles").upsert(
     {
@@ -692,6 +745,8 @@ export async function updateAdminUserAccountStatus(
     actorRole: admin.role,
     actorUserId: admin.userId,
     metadata: {
+      previousStatus: profile?.account_status || "active",
+      reason,
       status,
     },
     request,
@@ -699,6 +754,21 @@ export async function updateAdminUserAccountStatus(
     targetId: userId,
     targetType: "user",
   });
+
+  if (status === "suspended") {
+    await writeSecurityEvent({
+      eventType: "admin_user_suspended",
+      message: "Admin suspended a user account.",
+      metadata: {
+        actorRole: admin.role,
+        reason,
+        targetUserId: userId,
+      },
+      request,
+      severity: "warning",
+      userId,
+    });
+  }
 
   return {
     status,

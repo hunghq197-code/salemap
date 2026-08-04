@@ -67,6 +67,7 @@ function checkRequiredFiles() {
     "ORDERS_CATALOG_SUBPHASE_C_REPORT.md",
     "SUPPORT_TICKETS_SUBPHASE_D_REPORT.md",
     "SEO_CMS_SUBPHASE_E_REPORT.md",
+    "ADMIN_OPERATIONS_AUDIT.md",
     "supabase/admin-customer-crm.sql",
     "supabase/orders-product-catalog.sql",
     "supabase/support-tickets.sql",
@@ -87,6 +88,10 @@ function checkRequiredFiles() {
     "app/admin/cms/tags/page.tsx",
     "app/admin/cms/media/page.tsx",
     "app/admin/cms/redirects/page.tsx",
+    "app/admin/security-events/page.tsx",
+    "components/admin/AdminConfirmSubmitButton.tsx",
+    "components/admin/dashboard/AdminAlertCenter.tsx",
+    "components/admin/dashboard/AdminAlertItem.tsx",
     "app/app/billing/add-ons/page.tsx",
     "app/app/billing/orders/page.tsx",
     "app/app/support/tickets/page.tsx",
@@ -219,6 +224,8 @@ function checkPermissions() {
     "VIEW_TICKETS",
     "MANAGE_TICKETS",
     "VIEW_CMS",
+    "VIEW_SECURITY_EVENTS",
+    "RESOLVE_SECURITY_EVENTS",
     "MANAGE_CMS",
   ].forEach((permission) => {
     if (!permissions.includes(permission)) {
@@ -232,12 +239,87 @@ function checkPermissions() {
     "MANAGE_ORDERS",
     "UPDATE_PAYMENT_STATUS",
     "UPDATE_SUBSCRIPTION",
+    "UPDATE_USER_STATUS",
+    "UPDATE_QUOTA",
+    "RESOLVE_SECURITY_EVENTS",
     "VIEW_CMS",
+    "MANAGE_ADMIN_USERS",
+    "MANAGE_CUSTOMER_LIFECYCLE",
+    "MANAGE_CUSTOMER_NOTES",
+    "MANAGE_CUSTOMER_TAGS",
+    "MANAGE_TICKETS",
+    "MANAGE_SYSTEM_SETTINGS",
   ].forEach((permission) => {
     if (supportBlock.includes(permission)) {
       addFinding("lib/admin/admin-permissions.ts", `Support role must not include ${permission}.`);
     }
   });
+}
+
+function checkAdminOperationsCompletion() {
+  mustContain("app/admin/page.tsx", "AdminAlertCenter");
+  mustContain("app/admin/page.tsx", "operationKpis");
+  mustNotMatch(
+    "app/admin/page.tsx",
+    /revenue|monthlyRecurringRevenue|totalRevenue/i,
+    "Admin dashboard must not show unreliable revenue KPI.",
+  );
+
+  mustContain("lib/admin/data/overview.ts", "alerts:");
+  mustContain("lib/admin/data/overview.ts", "operationKpis");
+  mustContain("lib/admin/data/overview.ts", "unresolvedSecurityEvents");
+  mustContain("lib/admin/data/overview.ts", "operationFailures");
+
+  mustContain("app/admin/security-events/page.tsx", "getAdminSecurityEvents");
+  mustContain("app/admin/security-events/page.tsx", "AdminConfirmSubmitButton");
+  mustContain(
+    "app/admin/security-events/page.tsx",
+    "resolveSecurityEventFromSecurityPageAction",
+  );
+  mustContain("lib/admin/data/security.ts", "VIEW_SECURITY_EVENTS");
+  mustContain("lib/admin/data/security.ts", "RESOLVE_SECURITY_EVENTS");
+
+  mustContain("components/admin/AdminShell.tsx", "hasPermission");
+  mustContain("components/admin/AdminShell.tsx", "mobileAdminNavOrder");
+  mustContain("components/admin/AdminShell.tsx", "/admin/security-events");
+
+  mustContain("lib/admin/data/users.ts", "MAX_ADMIN_REASON_LENGTH");
+  mustContain("lib/admin/data/users.ts", "previousStatus");
+  mustContain("lib/admin/data/users.ts", "admin_user_suspended");
+  mustContain("lib/admin/data/users.ts", ".neq(\"user_id\", userId)");
+  mustContain("app/admin/users/[userId]/page.tsx", "AdminConfirmSubmitButton");
+  mustContain("app/admin/users/[userId]/page.tsx", "required");
+  mustContain("app/api/admin/users/[userId]/suspend/route.ts", "reason");
+  mustNotMatch(
+    "supabase/admin-customer-crm.sql",
+    /on public\.customer_(admin_profiles|tags|tag_assignments|notes) for all[\s\S]{0,120}support/,
+    "Support must not have CRM write RLS policies.",
+  );
+  mustNotMatch(
+    "supabase/support-tickets.sql",
+    /on public\.support_(tickets|ticket_messages) for all[\s\S]{0,120}support/,
+    "Support must not have support-ticket write RLS policies.",
+  );
+  [
+    "supabase/admin-security.sql",
+    "supabase/admin-customer-crm.sql",
+    "supabase/orders-product-catalog.sql",
+    "supabase/support-tickets.sql",
+    "supabase/seo-cms.sql",
+  ].forEach((relPath) => {
+    mustNotMatch(
+      relPath,
+      /with check \(public\.is_admin_user\(array\['super_admin','admin','support'\]\)\)/,
+      "Support must not be included in admin write RLS policies.",
+    );
+  });
+
+  mustContain("app/admin/payments/page.tsx", "AdminConfirmSubmitButton");
+  mustContain("app/admin/payments/page.tsx", "markBillingPaymentPaidAction");
+  mustContain("app/admin/subscriptions/[subscriptionId]/page.tsx", "AdminConfirmSubmitButton");
+  mustContain("app/admin/quotas/page.tsx", "AdminConfirmSubmitButton");
+  mustContain("scripts/security-scan.mjs", "admin-api-missing-server-guard");
+  mustContain("scripts/security-scan.mjs", "admin-raw-sensitive-render");
 }
 
 function checkSmokeCoverage() {
@@ -256,6 +338,7 @@ checkOrdersAndEntitlements();
 checkTickets();
 checkCmsSecurityAndSeo();
 checkPermissions();
+checkAdminOperationsCompletion();
 checkSmokeCoverage();
 
 if (findings.length > 0) {

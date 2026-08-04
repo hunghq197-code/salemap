@@ -1,3 +1,5 @@
+import type { AdminPermission } from "@/lib/admin/admin-permissions";
+
 export type AppNavIconKey =
   | "analytics"
   | "billing"
@@ -95,26 +97,28 @@ export type AdminNavItem = {
   href: string;
   icon: AdminNavIconKey;
   label: string;
+  permission?: AdminPermission;
 };
 
 export const adminPrimaryNavItems: AdminNavItem[] = [
-  { href: "/admin", icon: "dashboard", label: "Tổng quan hệ thống" },
-  { href: "/admin/customers", icon: "customers", label: "Khách hàng" },
-  { href: "/admin/orders", icon: "orders", label: "Đơn hàng" },
-  { href: "/admin/catalog", icon: "catalog", label: "Catalog" },
-  { href: "/admin/tickets", icon: "tickets", label: "Tickets" },
-  { href: "/admin/cms", icon: "cms", label: "CMS" },
-  { href: "/admin/users", icon: "users", label: "Người dùng" },
-  { href: "/admin/subscriptions", icon: "subscriptions", label: "Gói dịch vụ" },
-  { href: "/admin/payments", icon: "payments", label: "Thanh toán" },
-  { href: "/admin/usage", icon: "usage", label: "Quota & Usage" },
+  { href: "/admin", icon: "dashboard", label: "Tong quan he thong" },
+  { href: "/admin/users", icon: "users", label: "Nguoi dung" },
+  { href: "/admin/payments", icon: "payments", label: "Thanh toan" },
+  { href: "/admin/subscriptions", icon: "subscriptions", label: "Goi dich vu" },
+  { href: "/admin/usage", icon: "usage", label: "Usage" },
+  { href: "/admin/quotas", icon: "usage", label: "Quota overrides" },
   { href: "/admin/feedback", icon: "feedback", label: "Feedback" },
-  { href: "/admin/audit-logs", icon: "security", label: "Bảo mật & Nhật ký" },
-  { href: "/admin/system", icon: "system", label: "Hệ thống" },
-  { href: "/admin/settings", icon: "settings", label: "Cài đặt" },
+  { href: "/admin/security-events", icon: "security", label: "Security events" },
+  { href: "/admin/audit-logs", icon: "audit", label: "Audit logs" },
+  { href: "/admin/system", icon: "system", label: "System health" },
+  { href: "/admin/settings", icon: "settings", label: "Settings" },
 ];
 
 export const adminSecondaryNavItems: AdminNavItem[] = [
-  { href: "/admin/payment-requests", icon: "billing", label: "Yêu cầu thanh toán" },
-  { href: "/admin/quotas", icon: "usage", label: "Quota overrides" },
+  { href: "/admin/customers", icon: "customers", label: "Customers" },
+  { href: "/admin/orders", icon: "orders", label: "Orders" },
+  { href: "/admin/catalog", icon: "catalog", label: "Catalog" },
+  { href: "/admin/tickets", icon: "tickets", label: "Tickets" },
+  { href: "/admin/cms", icon: "cms", label: "CMS" },
+  { href: "/admin/payment-requests", icon: "billing", label: "Payment requests" },
 ];

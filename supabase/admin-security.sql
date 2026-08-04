@@ -207,7 +207,7 @@ using (public.is_admin_user(array['super_admin','admin']));
 drop policy if exists "Admins can insert audit logs" on public.admin_audit_logs;
 create policy "Admins can insert audit logs"
 on public.admin_audit_logs for insert
-with check (public.is_admin_user(array['super_admin','admin','support']));
+with check (public.is_admin_user(array['super_admin','admin']));
 
 drop policy if exists "Admins can view security events" on public.security_events;
 create policy "Admins can view security events"
@@ -250,6 +250,6 @@ using (public.is_admin_user(array['super_admin','admin']));
 drop policy if exists "Admins can insert support access logs" on public.support_access_logs;
 create policy "Admins can insert support access logs"
 on public.support_access_logs for insert
-with check (public.is_admin_user(array['super_admin','admin','support']));
+with check (public.is_admin_user(array['super_admin','admin']));
 
 commit;

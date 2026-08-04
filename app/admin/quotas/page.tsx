@@ -4,6 +4,7 @@ import {
   saveFeatureOverrideAction,
   saveQuotaOverrideAction,
 } from "@/app/admin/quotas/actions";
+import { AdminConfirmSubmitButton } from "@/components/admin/AdminConfirmSubmitButton";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminFilterBar } from "@/components/admin/AdminFilterBar";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -100,9 +101,13 @@ export default async function AdminQuotasPage(props: AdminQuotasPageProps) {
           <AdminField label="Lý do">
             <input className={inputClass} name="reason" placeholder="Ví dụ: beta customer, hỗ trợ demo" />
           </AdminField>
-          <button className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 py-2.5 text-sm font-bold text-white" type="submit">
-            Lưu quota override
-          </button>
+          <AdminConfirmSubmitButton
+            className="mt-4 min-h-11 text-sm"
+            confirmMessage="Luu quota override cho user nay?"
+            icon="shield"
+            label="Luu quota override"
+            variant="neutral"
+          />
         </form>
 
         <form action={saveFeatureOverrideAction} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -131,9 +136,13 @@ export default async function AdminQuotasPage(props: AdminQuotasPageProps) {
           <AdminField label="Lý do">
             <input className={inputClass} name="reason" placeholder="Ví dụ: chặn lạm dụng, mở beta" />
           </AdminField>
-          <button className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 py-2.5 text-sm font-bold text-white" type="submit">
-            Lưu feature override
-          </button>
+          <AdminConfirmSubmitButton
+            className="mt-4 min-h-11 text-sm"
+            confirmMessage="Luu feature override cho user nay?"
+            icon="shield"
+            label="Luu feature override"
+            variant="neutral"
+          />
         </form>
       </section>
 
@@ -199,14 +208,18 @@ export default async function AdminQuotasPage(props: AdminQuotasPageProps) {
                 <td className="min-w-56 px-4 py-3">
                   <div className="flex flex-col gap-2">
                     <form action={removeQuota}>
-                      <button className="min-h-9 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-ink hover:border-ocean" type="submit">
-                        Xóa quota override
-                      </button>
+                      <AdminConfirmSubmitButton
+                        confirmMessage="Xoa quota override cua user nay?"
+                        icon="x"
+                        label="Xoa quota override"
+                      />
                     </form>
                     <form action={removeFeature}>
-                      <button className="min-h-9 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-ink hover:border-ocean" type="submit">
-                        Xóa feature override
-                      </button>
+                      <AdminConfirmSubmitButton
+                        confirmMessage="Xoa feature override cua user nay?"
+                        icon="x"
+                        label="Xoa feature override"
+                      />
                     </form>
                   </div>
                 </td>

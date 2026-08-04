@@ -1,22 +1,14 @@
 import {
   Activity,
   AlertTriangle,
-  BadgeDollarSign,
-  BellRing,
   Clock3,
   CreditCard,
-  Flag,
-  MailCheck,
-  MailWarning,
-  MapPinned,
-  MessageSquareText,
-  Route,
-  TicketCheck,
-  TrendingUp,
+  ShieldCheck,
   UserCheck,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import { AdminAlertCenter } from "@/components/admin/dashboard/AdminAlertCenter";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPageTracker } from "@/components/admin/AdminPageTracker";
@@ -26,23 +18,15 @@ import { getAdminOverviewData } from "@/lib/admin/data/overview";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) {
-    return "Chưa có";
+    return "Chua co";
   }
 
   return new Intl.DateTimeFormat("vi-VN", {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
-}
-
-function formatCurrency(value?: number | null) {
-  return new Intl.NumberFormat("vi-VN", {
-    currency: "VND",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(Number(value ?? 0));
 }
 
 export default async function AdminOverviewPage() {
@@ -52,102 +36,63 @@ export default async function AdminOverviewPage() {
     <div className="mx-auto max-w-7xl">
       <AdminPageTracker page="dashboard" />
       <AdminPageHeader
-        description="Theo dõi user, feedback, usage và tín hiệu nâng cấp của SaleMap."
-        title="Tổng quan hệ thống"
+        description="Tinh trang nguoi dung, thanh toan, usage va cac canh bao can chu y."
+        title="Tong quan he thong"
       />
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminKpiCard icon={<CreditCard className="h-5 w-5" />} label="Khách trả phí" value={data.kpis.activePaidCustomers} />
-        <AdminKpiCard icon={<BadgeDollarSign className="h-5 w-5" />} label="Doanh thu đã trả" value={formatCurrency(data.kpis.paidRevenue)} />
-        <AdminKpiCard icon={<Clock3 className="h-5 w-5" />} label="Payment chờ xử lý" value={data.kpis.pendingPayments} />
-        <AdminKpiCard icon={<UsersRound className="h-5 w-5" />} label="Tổng user app" value={data.kpis.users} />
-        <AdminKpiCard icon={<UserCheck className="h-5 w-5" />} label="Onboarding hoàn tất" value={data.kpis.onboardingCompleted} />
-        <AdminKpiCard icon={<Flag className="h-5 w-5" />} label="Signup landing" value={data.kpis.betaSignups} />
-        <AdminKpiCard icon={<Activity className="h-5 w-5" />} label="Tổng lead" value={data.kpis.leads} />
-        <AdminKpiCard icon={<MapPinned className="h-5 w-5" />} label="Map search" value={data.kpis.mapSearches} />
-        <AdminKpiCard icon={<Route className="h-5 w-5" />} label="Route search" value={data.kpis.routeSearches} />
-        <AdminKpiCard icon={<TicketCheck className="h-5 w-5" />} label="Ticket mở" value={data.kpis.openSupportTickets} />
-        <AdminKpiCard icon={<AlertTriangle className="h-5 w-5" />} label="Ticket quá SLA" value={data.kpis.breachedSupportTickets} />
-        <AdminKpiCard icon={<MessageSquareText className="h-5 w-5" />} label="Feedback" value={data.kpis.feedback} />
-        <AdminKpiCard icon={<TrendingUp className="h-5 w-5" />} label="Upgrade interest" value={data.kpis.upgradeInterests} />
-        <AdminKpiCard icon={<BellRing className="h-5 w-5" />} label="Notifications hôm nay" value={data.kpis.notificationsCreatedToday} />
-        <AdminKpiCard icon={<MailCheck className="h-5 w-5" />} label="Reminder email hôm nay" value={data.kpis.reminderEmailsSentToday} />
-        <AdminKpiCard icon={<MailCheck className="h-5 w-5" />} label="Daily digest hôm nay" value={data.kpis.dailyDigestSentToday} />
-        <AdminKpiCard icon={<MailWarning className="h-5 w-5" />} label="Email failures" value={data.kpis.emailFailuresToday} />
+      <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <AdminKpiCard
+          icon={<UsersRound className="h-5 w-5" />}
+          label="Nguoi dung active"
+          value={data.operationKpis.activeUsers}
+        />
+        <AdminKpiCard
+          icon={<UserCheck className="h-5 w-5" />}
+          label="Dang ky moi 7 ngay"
+          value={data.operationKpis.newUsers7d}
+        />
+        <AdminKpiCard
+          icon={<CreditCard className="h-5 w-5" />}
+          label="Subscription paid active"
+          value={data.operationKpis.activePaidSubscriptions}
+        />
+        <AdminKpiCard
+          icon={<Clock3 className="h-5 w-5" />}
+          label="Payment cho xac nhan"
+          value={data.operationKpis.pendingPayments}
+        />
+        <AdminKpiCard
+          icon={<ShieldCheck className="h-5 w-5" />}
+          label="Security event open"
+          value={data.operationKpis.unresolvedSecurityEvents}
+        />
+        <AdminKpiCard
+          icon={<AlertTriangle className="h-5 w-5" />}
+          label="Operation failures"
+          value={data.operationKpis.operationFailures}
+        />
       </section>
 
-      <section className="mt-8">
-        <h2 className="mb-3 text-xl font-bold text-ink">Activation funnel</h2>
-        <AdminTable
-          headers={[
-            "Bước",
-            "User",
-            "Tỷ lệ so với bước trước",
-            "Tỷ lệ so với tổng user",
-          ]}
-        >
-          {data.funnel.map((item) => (
-            <tr key={item.label}>
-              <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{item.label}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{item.users}</td>
-              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{item.rateFromPrevious}%</td>
-              <td className="whitespace-nowrap px-4 py-3 text-slate-700">{item.rateFromTotal}%</td>
-            </tr>
-          ))}
-        </AdminTable>
-      </section>
+      <AdminAlertCenter alerts={data.alerts} />
 
       <section className="mt-8 grid gap-5 xl:grid-cols-2">
         <article>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">User mới gần đây</h2>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/users">
-              Xem tất cả
-            </Link>
-          </div>
-          <AdminTable empty={data.recent.users.length === 0} headers={["Ngày", "User", "Email"]}>
-            {data.recent.users.map((user) => (
-              <tr key={user.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(user.createdAt)}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{user.fullName || "Chưa có tên"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{user.email || "Chưa có email"}</td>
-              </tr>
-            ))}
-          </AdminTable>
-        </article>
-
-        <article>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Feedback mới nhất</h2>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/feedback">
-              Xem tất cả
-            </Link>
-          </div>
-          <AdminTable empty={data.recent.feedback.length === 0} headers={["Ngày", "User", "Type", "Status"]}>
-            {data.recent.feedback.map((feedback) => (
-              <tr key={feedback.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(feedback.created_at)}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{feedback.userLabel}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{feedback.feedback_type}</td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <AdminStatusBadge value={feedback.status} />
-                </td>
-              </tr>
-            ))}
-          </AdminTable>
-        </article>
-
-        <article>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Ticket cần xử lý</h2>
+            <div>
+              <h2 className="text-xl font-bold text-ink">Ticket can xu ly</h2>
+              <p className="mt-1 text-sm text-slate-600">Queue gan nhat, khong hien internal note.</p>
+            </div>
             <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/tickets">
-              Xem tất cả
+              Xem tat ca
             </Link>
           </div>
-          <AdminTable empty={data.recent.supportTickets.length === 0} headers={["Ngày", "Ticket", "User", "Status", "Priority"]}>
+          <AdminTable
+            empty={data.recent.supportTickets.length === 0}
+            headers={["Ngay", "Ticket", "User", "Status", "Priority"]}
+          >
             {data.recent.supportTickets.map((ticket) => (
               <tr key={ticket.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(ticket.created_at || undefined)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(ticket.created_at)}</td>
                 <td className="min-w-[200px] px-4 py-3">
                   <Link className="font-bold text-ocean hover:text-ink" href={`/admin/tickets/${ticket.id}`}>
                     {ticket.subject || ticket.ticket_code || ticket.id}
@@ -156,10 +101,10 @@ export default async function AdminOverviewPage() {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{ticket.userLabel}</td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <AdminStatusBadge value={ticket.status} />
+                  <AdminStatusBadge value={ticket.status || "unknown"} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <AdminStatusBadge value={ticket.priority} />
+                  <AdminStatusBadge value={ticket.priority || "normal"} />
                 </td>
               </tr>
             ))}
@@ -168,19 +113,28 @@ export default async function AdminOverviewPage() {
 
         <article>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Upgrade interest mới nhất</h2>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/upgrade-interests">
-              Xem tất cả
+            <div>
+              <h2 className="text-xl font-bold text-ink">Audit gan day</h2>
+              <p className="mt-1 text-sm text-slate-600">Admin actions da sanitize metadata.</p>
+            </div>
+            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/audit-logs">
+              Xem audit
             </Link>
           </div>
-          <AdminTable empty={data.recent.upgradeInterests.length === 0} headers={["Ngày", "User", "Plan", "Status"]}>
-            {data.recent.upgradeInterests.map((interest) => (
-              <tr key={interest.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(interest.created_at)}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{interest.userLabel}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{interest.plan_name}</td>
+          <AdminTable
+            empty={data.recent.auditLogs.length === 0}
+            headers={["Time", "Role", "Action", "Target", "Severity"]}
+          >
+            {data.recent.auditLogs.map((log) => (
+              <tr key={log.id}>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(log.created_at)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.actor_role || "system"}</td>
+                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{log.action}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">
+                  {log.target_type || "-"} / {log.target_id || "-"}
+                </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <AdminStatusBadge value={interest.status} />
+                  <AdminStatusBadge value={log.severity || "info"} />
                 </td>
               </tr>
             ))}
@@ -189,23 +143,44 @@ export default async function AdminOverviewPage() {
 
         <article>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-ink">Đăng ký mới nhất</h2>
-            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/beta-signups">
-              Xem tất cả
+            <div>
+              <h2 className="text-xl font-bold text-ink">User moi gan day</h2>
+              <p className="mt-1 text-sm text-slate-600">Chi hien email va profile summary an toan.</p>
+            </div>
+            <Link className="text-sm font-bold text-ocean hover:text-ink" href="/admin/users">
+              Xem users
             </Link>
           </div>
-          <AdminTable empty={data.recent.betaSignups.length === 0} headers={["Ngày", "Tên", "Persona", "Status"]}>
-            {data.recent.betaSignups.map((signup) => (
-              <tr key={signup.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(signup.created_at)}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{signup.full_name}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{signup.persona_label || "Chưa phân loại"}</td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <AdminStatusBadge value={signup.contact_status} />
-                </td>
+          <AdminTable empty={data.recent.users.length === 0} headers={["Ngay", "User", "Email"]}>
+            {data.recent.users.map((user) => (
+              <tr key={user.id}>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(user.createdAt)}</td>
+                <td className="whitespace-nowrap px-4 py-3 font-bold text-ink">{user.fullName || "Chua co ten"}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{user.email || "Chua co email"}</td>
               </tr>
             ))}
           </AdminTable>
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-ink">
+              <Activity aria-hidden="true" className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-ink">System health</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Provider/env status, audit count va unresolved security count nam trong trang System.
+                Trang dashboard chi hien canh bao tom tat de tranh qua tai.
+              </p>
+              <Link
+                className="mt-4 inline-flex min-h-10 items-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-ink hover:border-ocean"
+                href="/admin/system"
+              >
+                Mo system health
+              </Link>
+            </div>
+          </div>
         </article>
       </section>
     </div>

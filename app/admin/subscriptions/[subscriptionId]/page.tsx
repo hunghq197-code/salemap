@@ -7,6 +7,7 @@ import {
   grantTrialAction,
   markSubscriptionCancelledAction,
 } from "@/app/admin/subscriptions/actions";
+import { AdminConfirmSubmitButton } from "@/components/admin/AdminConfirmSubmitButton";
 import { SubscriptionEventTimeline } from "@/components/admin/billing/SubscriptionEventTimeline";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";
@@ -165,9 +166,13 @@ export default async function AdminSubscriptionDetailPage(
                   <AdminField label="Ghi chú extend">
                     <input className={inputClass} name="note" placeholder="Gia hạn theo đối soát" />
                   </AdminField>
-                  <button className="min-h-10 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white" type="submit">
-                    Extend 1 tháng
-                  </button>
+                  <AdminConfirmSubmitButton
+                    className="min-h-10 w-full text-sm"
+                    confirmMessage="Xac nhan extend subscription nay them 1 thang?"
+                    icon="check"
+                    label="Extend 1 thang"
+                    variant="success"
+                  />
                 </form>
                 <form action={trialAction} className="grid gap-2 sm:grid-cols-[0.6fr_1fr]">
                   <input className={inputClass} name="days" placeholder="14" />
@@ -175,21 +180,33 @@ export default async function AdminSubscriptionDetailPage(
                     <option value="pro">Pro</option>
                     <option value="pro_plus">Pro Plus</option>
                   </select>
-                  <button className="min-h-10 rounded-lg bg-ocean px-3 py-2 text-sm font-bold text-white sm:col-span-2" type="submit">
-                    Grant trial
-                  </button>
+                  <AdminConfirmSubmitButton
+                    className="min-h-10 w-full text-sm sm:col-span-2"
+                    confirmMessage="Grant trial cho subscription nay?"
+                    icon="shield"
+                    label="Grant trial"
+                    variant="neutral"
+                  />
                 </form>
                 <form action={downgradeAction} className="space-y-2">
                   <input className={inputClass} name="reason" placeholder="Lý do downgrade" />
-                  <button className="min-h-10 w-full rounded-lg bg-amber-600 px-3 py-2 text-sm font-bold text-white" type="submit">
-                    Downgrade Free
-                  </button>
+                  <AdminConfirmSubmitButton
+                    className="min-h-10 w-full text-sm"
+                    confirmMessage="Downgrade subscription nay ve Free?"
+                    icon="warning"
+                    label="Downgrade Free"
+                    variant="warning"
+                  />
                 </form>
                 <form action={cancelAction} className="space-y-2">
                   <input className={inputClass} name="note" placeholder="Ghi chú cancel" />
-                  <button className="min-h-10 w-full rounded-lg bg-rose-600 px-3 py-2 text-sm font-bold text-white" type="submit">
-                    Mark cancelled
-                  </button>
+                  <AdminConfirmSubmitButton
+                    className="min-h-10 w-full text-sm"
+                    confirmMessage="Mark subscription nay la cancelled?"
+                    icon="x"
+                    label="Mark cancelled"
+                    variant="danger"
+                  />
                 </form>
               </div>
             )}

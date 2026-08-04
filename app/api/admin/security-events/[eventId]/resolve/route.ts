@@ -9,7 +9,7 @@ type AdminSecurityEventRouteProps = {
 };
 
 export async function POST(request: Request, props: AdminSecurityEventRouteProps) {
-  return handleAdminApi(request, ADMIN_PERMISSIONS.VIEW_AUDIT_LOGS, async () => {
+  return handleAdminApi(request, ADMIN_PERMISSIONS.RESOLVE_SECURITY_EVENTS, async () => {
     const { eventId } = await props.params;
     await resolveSecurityEvent(eventId, request);
 

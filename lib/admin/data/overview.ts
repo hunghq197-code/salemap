@@ -59,6 +59,27 @@ type RecentSupportTicket = {
   userLabel: string;
 };
 
+type RecentAdminAuditLog = {
+  action?: string | null;
+  actor_role?: string | null;
+  created_at?: string | null;
+  id: string;
+  severity?: string | null;
+  target_id?: string | null;
+  target_type?: string | null;
+};
+
+export type AdminOverviewAlert = {
+  ctaHref?: string;
+  ctaLabel?: string;
+  description: string;
+  severity: "critical" | "info" | "warning";
+  source: string;
+  status: string;
+  time?: string | null;
+  title: string;
+};
+
 type AdminNotificationStatRow = {
   delivered_email?: boolean | null;
   metadata?: {
@@ -83,6 +104,36 @@ function startOfToday() {
   date.setHours(0, 0, 0, 0);
 
   return date.toISOString();
+}
+
+function daysFromNow(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function daysAgo(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function addCountAlert(
+  alerts: AdminOverviewAlert[],
+  input: Omit<AdminOverviewAlert, "description" | "title"> & {
+    count: number;
+    description: string;
+    title: string;
+  },
+) {
+  if (input.count <= 0) return;
+
+  alerts.push({
+    ctaHref: input.ctaHref,
+    ctaLabel: input.ctaLabel,
+    description: input.description,
+    severity: input.severity,
+    source: input.source,
+    status: input.status,
+    time: input.time,
+    title: input.title,
+  });
 }
 
 export async function getAdminOverviewData() {
@@ -169,6 +220,58 @@ export async function getAdminOverviewData() {
     .select("type,delivered_email,metadata")
     .gte("created_at", startOfToday())
     .limit(10000);
+  const [
+    unresolvedSecurityEventsResult,
+    recentCriticalSecurityEventsResult,
+    failedImportJobsResult,
+    failedPaymentsResult,
+    expiringSubscriptionsResult,
+    suspendedUsersResult,
+    recentAuditLogsResult,
+  ] = await Promise.all([
+    supabase
+      .from("security_events")
+      .select("id", { count: "exact", head: true })
+      .eq("resolved", false),
+    supabase
+      .from("security_events")
+      .select("id,event_type,severity,created_at")
+      .eq("resolved", false)
+      .in("severity", ["critical", "warning"])
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("import_jobs")
+      .select("id,status,created_at,updated_at", { count: "exact" })
+      .eq("status", "failed")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("payments")
+      .select("id,status,provider,created_at,updated_at", { count: "exact" })
+      .eq("status", "failed")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("subscriptions")
+      .select("id,user_id,status,current_period_end", { count: "exact" })
+      .eq("status", "active")
+      .not("current_period_end", "is", null)
+      .lte("current_period_end", daysFromNow(7))
+      .order("current_period_end", { ascending: true })
+      .limit(5),
+    supabase
+      .from("user_profiles")
+      .select("user_id,full_name,account_status,updated_at", { count: "exact" })
+      .eq("account_status", "suspended")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("admin_audit_logs")
+      .select("id,actor_role,action,target_type,target_id,severity,created_at")
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
   const notificationStats = (notificationStatsData ?? []) as AdminNotificationStatRow[];
   const supportTicketStats = (supportTicketsResult.data ?? []) as AdminSupportTicketStatRow[];
   const now = Date.now();
@@ -190,6 +293,15 @@ export async function getAdminOverviewData() {
   });
 
   const userCount = users.length;
+  const activeUsers = Math.max(
+    0,
+    userCount - Number(suspendedUsersResult.count ?? 0),
+  );
+  const newUsers7d = users.filter((user) => {
+    const createdAt = user.created_at;
+
+    return Boolean(createdAt && createdAt >= daysAgo(7));
+  }).length;
   const onboardingCount = profiles.filter((profile) => profile.onboarding_completed).length;
   const areaSearchUsers = new Set(
     mapSearches
@@ -273,9 +385,114 @@ export async function getAdminOverviewData() {
     ...item,
     userLabel: getUserLabel(item.user_id, profileMap, emailMap),
   }));
+  const failedImportJobs = failedImportJobsResult.count ?? 0;
+  const failedPayments = failedPaymentsResult.count ?? 0;
+  const emailFailuresToday = notificationStats.filter(
+    (item) => item.metadata?.emailStatus === "failed",
+  ).length;
+  const operationFailures = failedImportJobs + failedPayments + emailFailuresToday;
+  const unresolvedSecurityEvents = unresolvedSecurityEventsResult.count ?? 0;
+  const alerts: AdminOverviewAlert[] = [];
+
+  addCountAlert(alerts, {
+    count: pendingPaymentsResult.count ?? 0,
+    ctaHref: "/admin/payments?status=waiting_confirmation",
+    ctaLabel: "Mo payment queue",
+    description: `${pendingPaymentsResult.count ?? 0} payment dang can doi soat hoac xac nhan.`,
+    severity: "warning",
+    source: "payments",
+    status: "waiting",
+    title: "Payment dang cho xu ly",
+  });
+  addCountAlert(alerts, {
+    count: unresolvedSecurityEvents,
+    ctaHref: "/admin/security-events?resolved=false",
+    ctaLabel: "Mo security events",
+    description: `${unresolvedSecurityEvents} security event chua duoc review.`,
+    severity: unresolvedSecurityEvents > 5 ? "critical" : "warning",
+    source: "security",
+    status: "open",
+    title: "Security events chua xu ly",
+  });
+  addCountAlert(alerts, {
+    count: failedImportJobs,
+    ctaHref: "/admin/imports?status=failed",
+    ctaLabel: "Mo import jobs",
+    description: `${failedImportJobs} import job dang o trang thai failed.`,
+    severity: "warning",
+    source: "import",
+    status: "failed",
+    title: "Import job failed",
+  });
+  addCountAlert(alerts, {
+    count: failedPayments,
+    ctaHref: "/admin/payments?status=failed",
+    ctaLabel: "Mo failed payments",
+    description: `${failedPayments} payment failed can kiem tra neu co user lien he.`,
+    severity: "warning",
+    source: "payments",
+    status: "failed",
+    title: "Payment failed",
+  });
+  addCountAlert(alerts, {
+    count: expiringSubscriptionsResult.count ?? 0,
+    ctaHref: "/admin/subscriptions?expiring=soon",
+    ctaLabel: "Mo subscriptions",
+    description: `${expiringSubscriptionsResult.count ?? 0} subscription active sap het han trong 7 ngay.`,
+    severity: "info",
+    source: "subscriptions",
+    status: "expiring",
+    title: "Subscription sap het han",
+  });
+  addCountAlert(alerts, {
+    count: suspendedUsersResult.count ?? 0,
+    ctaHref: "/admin/users?accountStatus=suspended",
+    ctaLabel: "Mo users",
+    description: `${suspendedUsersResult.count ?? 0} user dang bi khoa tai khoan.`,
+    severity: "info",
+    source: "users",
+    status: "suspended",
+    title: "User dang suspended",
+  });
+  addCountAlert(alerts, {
+    count: process.env.CRON_SECRET?.trim() ? 0 : 1,
+    ctaHref: "/admin/system",
+    ctaLabel: "Mo system health",
+    description: "CRON_SECRET dang missing, cac cron route production se khong duoc bao ve/cau hinh dung.",
+    severity: "critical",
+    source: "system",
+    status: "missing_config",
+    title: "Missing CRON_SECRET",
+  });
+
+  const criticalSecurityAlerts = ((recentCriticalSecurityEventsResult.data ?? []) as Array<{
+    created_at?: string | null;
+    event_type?: string | null;
+    id: string;
+    severity?: string | null;
+  }>).map((event) => ({
+    ctaHref: "/admin/security-events?resolved=false",
+    ctaLabel: "Review",
+    description: `Event type: ${event.event_type || "unknown"}. Metadata da duoc sanitize trong detail list.`,
+    severity: event.severity === "critical" ? "critical" as const : "warning" as const,
+    source: "security",
+    status: "open",
+    time: event.created_at,
+    title: "Security event can review",
+  }));
+  const recentAuditLogs = (recentAuditLogsResult.data ?? []) as RecentAdminAuditLog[];
 
   return {
     funnel,
+    alerts: [...criticalSecurityAlerts, ...alerts].slice(0, 8),
+    operationKpis: {
+      activePaidSubscriptions: activePaidSubscriptionsResult.count ?? 0,
+      activeUsers,
+      newUsers7d,
+      operationFailures,
+      pendingPayments: pendingPaymentsResult.count ?? 0,
+      unresolvedSecurityEvents,
+    },
     kpis: {
       activePaidCustomers: activePaidSubscriptionsResult.count ?? 0,
       betaSignups: betaSignupCountResult.count ?? 0,
@@ -296,9 +513,7 @@ export async function getAdminOverviewData() {
       dailyDigestSentToday: notificationStats.filter(
         (item) => item.type === "daily_digest" && item.delivered_email,
       ).length,
-      emailFailuresToday: notificationStats.filter(
-        (item) => item.metadata?.emailStatus === "failed",
-      ).length,
+      emailFailuresToday,
       reminderEmailsSentToday: notificationStats.filter(
         (item) => item.type === "reminder_due" && item.delivered_email,
       ).length,
@@ -307,6 +522,7 @@ export async function getAdminOverviewData() {
     recent: {
       betaSignups: (recentBetaSignupsResult.data ?? []) as RecentBetaSignup[],
       feedback: recentFeedback,
+      auditLogs: recentAuditLogs,
       supportTickets: recentSupportTickets,
       upgradeInterests: recentUpgradeInterests,
       users: recentUsers,

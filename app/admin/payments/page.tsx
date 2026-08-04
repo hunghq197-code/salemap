@@ -4,6 +4,7 @@ import {
   markBillingPaymentFailedAction,
   markBillingPaymentPaidAction,
 } from "@/app/admin/payments/actions";
+import { AdminConfirmSubmitButton } from "@/components/admin/AdminConfirmSubmitButton";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminKpiCard } from "@/components/admin/AdminKpiCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -185,20 +186,30 @@ export default async function AdminPaymentsPage(props: AdminPaymentsPageProps) {
                     <div className="space-y-2">
                       <form action={markPaidAction} className="flex gap-2">
                         <input className="min-h-9 w-36 rounded-lg border border-slate-200 px-2 py-1 text-xs" name="adminNote" placeholder="Ghi chú" />
-                        <button className="min-h-9 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white" type="submit">
-                          Mark paid
-                        </button>
+                        <AdminConfirmSubmitButton
+                          confirmMessage="Xac nhan payment nay da duoc doi soat va mark paid?"
+                          icon="check"
+                          label="Mark paid"
+                          pendingLabel="Dang xu ly"
+                          variant="success"
+                        />
                       </form>
                       <div className="flex gap-2">
                         <form action={markFailedAction}>
-                          <button className="min-h-9 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white" type="submit">
-                            Failed
-                          </button>
+                          <AdminConfirmSubmitButton
+                            confirmMessage="Mark payment nay la failed?"
+                            icon="warning"
+                            label="Failed"
+                            variant="warning"
+                          />
                         </form>
                         <form action={cancelAction}>
-                          <button className="min-h-9 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white" type="submit">
-                            Cancel
-                          </button>
+                          <AdminConfirmSubmitButton
+                            confirmMessage="Cancel payment nay?"
+                            icon="x"
+                            label="Cancel"
+                            variant="danger"
+                          />
                         </form>
                       </div>
                     </div>

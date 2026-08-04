@@ -7,7 +7,7 @@ import {
 import { getAdminSecurityEvents } from "@/lib/admin/data/security";
 
 export async function GET(request: Request) {
-  return handleAdminApi(request, ADMIN_PERMISSIONS.VIEW_AUDIT_LOGS, async () =>
+  return handleAdminApi(request, ADMIN_PERMISSIONS.VIEW_SECURITY_EVENTS, async () =>
     adminJson(await getAdminSecurityEvents(searchParamsToObject(request.url))),
   );
 }

@@ -1440,3 +1440,49 @@ Production readiness notes:
 Next suggested implementation step:
 
 - Staging setup and manual QA with real Supabase data/accounts, then implement the add-on order to payOS/VietQR checkout bridge if automatic add-on commerce is required.
+
+## 2026-08-04 Update - Admin Operations Completion
+
+Implemented the Phase 2E2 Admin Operations control center completion.
+
+Created:
+
+- `ADMIN_OPERATIONS_AUDIT.md`
+- `/admin/security-events`
+- `components/admin/AdminConfirmSubmitButton.tsx`
+- `components/admin/dashboard/AdminAlertCenter.tsx`
+- `components/admin/dashboard/AdminAlertItem.tsx`
+
+Updated:
+
+- `/admin` now shows six operations KPIs and an action-first alert center instead of unreliable revenue-heavy dashboard metrics.
+- Admin navigation is permission-filtered and ordered around operations: dashboard, users, payments, subscriptions, usage/quota, feedback, security events, audit logs, system health, and settings.
+- Security event permissions are split into `VIEW_SECURITY_EVENTS` and `RESOLVE_SECURITY_EVENTS`.
+- Support role is now read-only by default in server permissions; it no longer has ticket/CRM mutation permissions.
+- User suspend/reactivate now requires confirmation UI; suspend requires a bounded reason, blocks self-suspension, blocks suspending the last active super admin, writes an audit log, and writes `admin_user_suspended`.
+- Payment, subscription, quota, and feature override admin actions now use confirmation submit buttons.
+- Admin security scan now checks admin API guards and blocks raw sensitive admin UI payload rendering.
+- `scripts/phase-2e2-regression.mjs` now includes Admin Operations checks.
+- RLS policy files were tightened so support cannot write admin CRM, support ticket, audit, or support-access rows directly:
+  - `supabase/admin-security.sql`
+  - `supabase/admin-customer-crm.sql`
+  - `supabase/support-tickets.sql`
+
+Known issues recorded in `ADMIN_OPERATIONS_AUDIT.md`:
+
+- `MOBILE_RELEASE_GATE.md`, `MOBILE_RECOVERY_AUDIT.md`, `MOBILE_STABILIZATION_RELEASE_REPORT.md`, and `UI_PHASE_2E1_SETTINGS_NOTIFICATIONS_REPORT.md` were not present, so the mobile release gate conclusion could not be verified from the requested file.
+- Authenticated browser QA was not run because seeded admin/support/user sessions were not available in this task.
+- `npm run test` and `npm run test:e2e` do not exist in `package.json`.
+- Admin user list/detail still use some broad `listAuthUsers()` and `listUserIdRows(...).limit(10000)` aggregate helpers; replace before large-scale production use.
+- Apply or rerun the three SQL files above before relying on support read-only behavior in staging/production.
+
+Validation target for this phase:
+
+```powershell
+npm run typecheck
+npm run lint
+npm run security:scan
+npm run test:phase2e2
+npm run build
+npm run smoke
+```

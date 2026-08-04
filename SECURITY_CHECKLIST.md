@@ -45,3 +45,14 @@
 - Chạy `npm run test:phase2e2` sau khi chạm CRM/orders/tickets/CMS.
 - Chạy `npm run build`.
 - Commit và push sau mỗi giai đoạn.
+
+## Admin Operations Phase 2E2
+
+- Support role is read-only by default in server permissions. It must not include payment, subscription, user-status, quota, security-resolve, CRM-write, ticket-write, catalog/order/CMS-write, admin-user, or system-settings permissions.
+- Admin UI may hide buttons, but every sensitive operation must still use server-side `requirePermission` or `handleAdminApi`.
+- Sensitive admin submit buttons should use confirmation UI.
+- User suspension requires a bounded reason, blocks self-suspension, blocks the last active super admin, writes an audit log, and writes `admin_user_suspended`.
+- Admin security events use separate read and resolve permissions.
+- Admin UI must not render raw provider payload, auth metadata, tokens, password hashes, or service metadata.
+- Apply updated support read-only RLS policies from `supabase/admin-security.sql`, `supabase/admin-customer-crm.sql`, and `supabase/support-tickets.sql`.
+- Run `npm run test:phase2e2` and `npm run security:scan` after admin operation changes.
