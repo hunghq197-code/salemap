@@ -91,6 +91,12 @@ const securityHeaders = [
     value: "DENY",
   },
 ];
+const adminNoStoreHeaders = [
+  {
+    key: "Cache-Control",
+    value: "no-store, no-cache, max-age=0, must-revalidate",
+  },
+];
 
 if (isProduction) {
   securityHeaders.push({
@@ -117,6 +123,14 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/admin",
+        headers: adminNoStoreHeaders,
+      },
+      {
+        source: "/admin/:path*",
+        headers: adminNoStoreHeaders,
       },
     ];
   },

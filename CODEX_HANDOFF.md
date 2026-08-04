@@ -1784,3 +1784,18 @@ Security:
 - `GEMINI_API_KEY` is server-only.
 - Do not add `NEXT_PUBLIC_GEMINI_API_KEY`.
 - `scripts/security-scan.mjs` now treats `GEMINI_API_KEY` as a client secret.
+
+## 2026-08-04 Update - Admin Server Action Deploy Skew Guard
+
+Fixed the admin error boundary for stale Server Action IDs after deployment.
+
+Context:
+
+- Next.js Server Action IDs are build-specific and can fail when an open admin tab calls an action from a previous deployment.
+- The admin error boundary previously called `reset()`, which can retry with the same stale client runtime.
+
+Changed:
+
+- `app/admin/error.tsx` now detects the Next.js "Server Action ... was not found on the server" message and performs a hard `window.location.reload()`.
+- Other admin errors still use the existing `reset()` behavior.
+- `next.config.mjs` now adds `Cache-Control: no-store, no-cache, max-age=0, must-revalidate` for `/admin` and `/admin/:path*`.
