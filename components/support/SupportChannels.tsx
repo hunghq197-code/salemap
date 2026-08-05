@@ -1,16 +1,22 @@
-import { ExternalLink, MessageCircle, PhoneCall } from "lucide-react";
+import { ExternalLink, PhoneCall } from "lucide-react";
 
 const supportChannels = [
   {
+    accentClassName: "bg-[#1877F2] text-white shadow-[#1877F2]/20",
+    brandMark: "f",
+    brandMarkClassName: "text-3xl font-black",
+    ctaLabel: "Mở Fanpage",
     description: "Cập nhật thông báo, phản hồi nhanh và tin tức SaleMap.",
     href: "https://www.facebook.com/salemap.io.vn/",
-    icon: ExternalLink,
     label: "Fanpage SaleMap",
   },
   {
+    accentClassName: "bg-[#0068FF] text-white shadow-[#0068FF]/20",
+    brandMark: "Zalo",
+    brandMarkClassName: "text-[13px] font-black",
+    ctaLabel: "Nhắn Zalo",
     description: "Nhắn Zalo hoặc gọi hỗ trợ khi cần xử lý nhanh.",
     href: "https://zalo.me/0963954197",
-    icon: MessageCircle,
     label: "Zalo: 0963.954.197",
   },
 ] as const;
@@ -39,35 +45,45 @@ export function SupportChannels({ compact = false }: SupportChannelsProps) {
             Dùng ticket để theo dõi vấn đề chi tiết; dùng Fanpage hoặc Zalo khi bạn cần hỗ trợ nhanh.
           </p>
         </div>
-        <PhoneCall aria-hidden="true" className="hidden h-6 w-6 shrink-0 text-primary sm:block" />
+        <PhoneCall
+          aria-hidden="true"
+          className="hidden h-6 w-6 shrink-0 text-primary sm:block"
+        />
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {supportChannels.map((channel) => {
-          const Icon = channel.icon;
-
-          return (
-            <a
-              className="group flex min-h-14 items-start gap-3 rounded-control border border-border-soft bg-background px-4 py-3 transition hover:border-primary/40 hover:bg-primary-soft"
-              href={channel.href}
-              key={channel.href}
-              rel="noopener noreferrer"
-              target="_blank"
+        {supportChannels.map((channel) => (
+          <a
+            className="group flex min-h-24 items-center gap-4 rounded-card border border-border-soft bg-background px-4 py-3 transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary-soft hover:shadow-sm"
+            href={channel.href}
+            key={channel.href}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <span
+              className={[
+                "flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-lg transition group-hover:scale-105",
+                channel.accentClassName,
+              ].join(" ")}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-primary-soft text-primary transition group-hover:bg-primary group-hover:text-white">
-                <Icon aria-hidden="true" className="h-4 w-4" />
+              <span aria-hidden="true" className={channel.brandMarkClassName}>
+                {channel.brandMark}
               </span>
-              <span>
-                <span className="block text-sm font-bold text-text-primary">
-                  {channel.label}
-                </span>
-                <span className="mt-1 block text-xs font-semibold leading-5 text-text-secondary">
-                  {channel.description}
-                </span>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-text-primary">
+                {channel.label}
               </span>
-            </a>
-          );
-        })}
+              <span className="mt-1 block text-xs font-semibold leading-5 text-text-secondary">
+                {channel.description}
+              </span>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">
+                {channel.ctaLabel}
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+              </span>
+            </span>
+          </a>
+        ))}
       </div>
     </section>
   );
