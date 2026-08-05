@@ -66,6 +66,8 @@ export const dictionaries = {
         { href: "/chinh-sach-bao-mat", label: "Chính sách bảo mật" },
         { href: "/dieu-khoan-su-dung", label: "Điều khoản sử dụng" },
         { href: "mailto:hello@salemap.vn", label: "Liên hệ" },
+        { href: "https://www.facebook.com/salemap.io.vn/", label: "Fanpage SaleMap" },
+        { href: "https://zalo.me/0963954197", label: "Zalo hỗ trợ: 0963.954.197" },
       ],
     },
     landing: {
@@ -369,6 +371,8 @@ export const dictionaries = {
         { href: "/chinh-sach-bao-mat", label: "Privacy policy" },
         { href: "/dieu-khoan-su-dung", label: "Terms" },
         { href: "mailto:hello@salemap.vn", label: "Contact" },
+        { href: "https://www.facebook.com/salemap.io.vn/", label: "Facebook page" },
+        { href: "https://zalo.me/0963954197", label: "Zalo support: 0963.954.197" },
       ],
     },
     landing: {

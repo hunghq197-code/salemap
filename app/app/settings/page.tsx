@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/app/LogoutButton";
 import { NotificationSettingsForm } from "@/components/notifications/NotificationSettingsForm";
+import { SupportChannels } from "@/components/support/SupportChannels";
 import { FeatureDisabledNotice } from "@/components/ui/FeatureDisabledNotice";
 import { Toast } from "@/components/ui/Toast";
 import { isFeatureEnabled } from "@/lib/data/feature-flags";
@@ -111,6 +112,10 @@ export default async function SettingsPage(props: SettingsPageProps) {
           emailNotificationsEnabled={emailNotificationsEnabled}
           settings={notificationSettings}
         />
+
+        <div className="mt-6">
+          <SupportChannels compact />
+        </div>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

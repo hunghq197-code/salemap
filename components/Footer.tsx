@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useLanguage } from "@/components/i18n/LanguageProvider";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
+function isExternalHref(href: string) {
+  return href.startsWith("https://") || href.startsWith("http://");
+}
+
 export function Footer() {
   const { dictionary } = useLanguage();
   const footer = dictionary.footer;
@@ -38,6 +42,8 @@ export function Footer() {
               className="inline-flex min-h-11 items-center text-sm font-medium text-slate-600 transition hover:text-ocean"
               href={link.href}
               key={link.label}
+              rel={isExternalHref(link.href) ? "noopener noreferrer" : undefined}
+              target={isExternalHref(link.href) ? "_blank" : undefined}
             >
               {link.label}
             </Link>

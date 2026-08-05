@@ -1,5 +1,6 @@
 import { MessageSquareText, PlusCircle } from "lucide-react";
 import Link from "next/link";
+import { SupportChannels } from "@/components/support/SupportChannels";
 import { SupportTicketCreateForm } from "@/components/tickets/SupportTicketCreateForm";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -69,6 +70,8 @@ export default async function SupportTicketsPage() {
           </div>
         </div>
       </div>
+
+      <SupportChannels />
 
       {!schemaReady ? (
         <Card>

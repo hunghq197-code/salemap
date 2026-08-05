@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { MessageSquareText } from "lucide-react";
 import Link from "next/link";
+import { SupportChannels } from "@/components/support/SupportChannels";
 import { SupportTicketReplyForm } from "@/components/tickets/SupportTicketReplyForm";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -91,6 +92,8 @@ export default async function SupportTicketDetailPage(props: SupportTicketDetail
           </div>
         </div>
       </Card>
+
+      <SupportChannels compact />
 
       <section className="space-y-3">
         {ticket.messages.map((message) => (

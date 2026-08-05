@@ -202,4 +202,6 @@ export const footerLinks = [
   { label: "Chính sách bảo mật", href: "/chinh-sach-bao-mat" },
   { label: "Điều khoản sử dụng", href: "/dieu-khoan-su-dung" },
   { label: "Liên hệ", href: "mailto:hello@salemap.vn" },
+  { label: "Fanpage SaleMap", href: "https://www.facebook.com/salemap.io.vn/" },
+  { label: "Zalo hỗ trợ: 0963.954.197", href: "https://zalo.me/0963954197" },
 ] as const;
