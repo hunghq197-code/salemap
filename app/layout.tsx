@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense, type ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { ClarityScript } from "@/components/analytics/ClarityScript";
 import { GoogleAnalyticsScript } from "@/components/analytics/GoogleAnalyticsScript";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
@@ -102,6 +103,7 @@ export default function RootLayout({
           {children}
           <ServiceWorkerRegister />
           <ClarityScript />
+          <Analytics />
         </LanguageProvider>
       </body>
     </html>
